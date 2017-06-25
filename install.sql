@@ -14,6 +14,7 @@ prompt &h2.grant user rights
 
 alter session set current_schema=&INSTALL_USER.;
 @set_compiler_flags.sql
+@utl_apex/sql/create_messages.sql
 
 prompt
 prompt &section.
@@ -21,10 +22,10 @@ prompt &h1.State UTL_APEX Installation at user &INSTALL_USER.
 prompt
 prompt &section.
 prompt &h1.Package UTL_APEX
-@plsql/utl_apex.pks
+@utl_apex/plsql/utl_apex.pks
 
 prompt &h1.Package Body UTL_APEX
-@plsql/utl_apex.pkb
+@utl_apex/plsql/utl_apex.pkb
 
 prompt
 prompt &section.
