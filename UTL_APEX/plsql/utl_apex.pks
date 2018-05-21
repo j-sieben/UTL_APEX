@@ -49,13 +49,22 @@ as
     return varchar2;
   
   
-  /** Funktion zur Erzeugung eines CLOB, das fuer eine View eine Zugriffsmethode aus APEX erstellt.
-   * @param  p_application_id  Technische ID der APEX-Anwendung
-   * @param  p_page_id         Technische ID der APEX-Anwendungsseite
-   * @param  p_insert_method   Name der Methode, die fuer Einfuegeoperationen verwendet werden soll
-   * @param  p_update_method   Name der Methode, die fuer Aktualisierungsoperationen verwendet werden soll
-   * @param  p_delete_method   Name der Methode, die fuer Loeschoperationen verwendet werden soll
+  /** Helper to create a PL/SQL stub to implement forms logic
+   * @param  p_application_id  APEX application ID
+   * @param  p_page_id         APEX page id
+   * @param  p_insert_method   name of the insert method of the BL package
+   * @param  p_update_method   name of the update method of the BL package
+   * @param  p_delete_method   name of the delete method of the BL package
    * @return CLOB mit Code-Schnippseln zur Integration in Packages
+   * @usage  This method assumes that the following conditions are met:
+   *         - The application page is based on a UI-View
+   *         - A package exists at the business logic layer that provides methods to
+   *           insert, update and delete a row. As an input parameter, these methods
+   *           expext a record of <UI-View>%ROWTYPE (or compatible, i.e. with the same declaration)
+   *         By passing in the application- and page-id, the method creates PL/SQL code to
+   *         - copy the session status into a local record
+   *         - cast datatypes to the required data types if necessary
+   *         - call the methods of the business layer
    */
   function get_form_methods(
     p_application_id in number,
@@ -66,10 +75,19 @@ as
     return clob;
   
   
-  /** Methode erstellt UI-View fuer eine eine Anwendungsseite mit Collection-API 
-   * @param  p_source_table  Name der Zieltabelle
-   * @param  p_page_view     Name der UI-View
-   * @return DDL-ANweisung, um die UI-View dieser Anwendungsseite zu erstellen.
+  /** Method to create a view that maps C_001-columns to intutitve column names
+   *  taken from the base table or view
+   * @param  p_source_table  Name of the table the data finally is stored at
+   * @param  p_page_view     Name of the UI-View that shows data from the collection
+   * @return DDL statement to create a view based on a collection
+   * @usage  This method assumes that the following conditions are met:
+   *         - it is called on an existing table or view.
+   *         - the collection name equals the view name
+   *         - the APEX page is built on the view, fetching the values from a 
+   *           FETCH ROW process from P_PAGE_VIEW
+   *         A limitation exists in that the method is unable to see or react on
+   *         format masks added while creating the page. If this is necessary,
+   *         adjust P_PAGE_VIEW by hand
    */
   function get_collection_view(
     p_source_table in varchar2,
@@ -77,10 +95,20 @@ as
     return clob;
   
   
-  /** Methode erstellt Package-Code fuer eine Collection-API einer Anwendungsseite
+  /** Method to create a package that works as an API on a form that is built as
+   *  an editor for a report based on a collection
    * @param  p_application_id  Anwendungs-ID
    * @param  p_page_id         Anwendungsseiten-ID
-   * @return Code, der als Tabellen-API dieser Seite verwendet werden kann.
+   * @return Code that creates a package with all necessary methods to maintain
+   *         a row of the collection
+   * @usage  This method assumes that the following conditions are met:
+   *         - An APEX page based on a view created by GET_COLLECTION_VIEW exists
+   *         - The values are inserted to the page using a FETCH ROW process
+   *         - No changes are made to the item names. They are identical to the
+   *           column names of the view
+   *         - the page calls this packages VALIDATE_<PAGE_ALIAS> and HANDLE_<PAGE_ALIAS> 
+   *           methods to storedata at the collection. HANDLE methods are used 
+   *           to insert, update and delete a row of the collection.
    */
   function get_collection_methods(
     p_application_id in number,
@@ -119,7 +147,7 @@ as
    * @param p_page_item Seitenelement, das durch die Validierung betroffen ist
    * @param p_message Meldungstext bzw. Referenz auf eine MSG_LOG-Meldung
    * @param p_msg_args Optionale Meldungsparameter
-   /
+   */
   procedure set_error(
     p_test in boolean,
     p_page_item in varchar2,

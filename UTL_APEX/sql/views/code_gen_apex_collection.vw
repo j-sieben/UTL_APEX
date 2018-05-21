@@ -37,7 +37,7 @@ create or replace view code_gen_apex_collection as
           and app.page_id = api.page_id
          left join apex_application_pages apa
            on app.application_id = apa.application_id
-          and app.page_id = app.page_id
+          and app.page_id = apa.page_id
          left join apex_applications apl
            on app.application_id = apl.application_id),
        -- Spalten der View nach Verfuegbarkeit auf Collectionspalten mappen

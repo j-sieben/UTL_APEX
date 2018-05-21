@@ -1,16 +1,5 @@
-create or replace package body      utl_apex
+create or replace package body utl_apex
 as
-  /**<pre>
-     Author       : $Author: juergen.sieben $
-     Created      : 28.04.2016
-     Last Changed : $LastChangedDate: 2018-04-13 13:48:47 +0200 (Fr, 13 Apr 2018) $
-     Revision     : $Revision: 11385 $
-     HeadURL      : $HeadURL: https://kerp-svn001.unity.media.corp/repos/dwh/Master/DWH_2.0/branches/FrameworkDev/APEX/Package/utl_apex.bdy $
-     ID           : $Id: utl_apex.bdy 11385 2018-04-13 11:48:47Z juergen.sieben $
-     Purpose      : allgemeine Utils
-     </pre>
-     @headcom
-  */
 
   -- Private type declarations
   -- Private constant declarations
@@ -149,8 +138,6 @@ as
     p_delete_method in varchar2)
     return clob
   as
-    l_view_name varchar2(30 byte);
-    l_page_alias varchar2(30 byte);
     l_column_list varchar2(32767);
     l_code clob;
   begin
@@ -168,63 +155,65 @@ as
     pit.assert_not_null(p_update_method, msg.UTL_PARAMETER_REQUIRED, msg_args('P_UPDATE_METHOD'));
     pit.assert_not_null(p_delete_method, msg.UTL_PARAMETER_REQUIRED, msg_args('P_DELETE_METHOD'));
     
-    select attribute_02, page_alias
-      into l_view_name, l_page_alias
-      from apex_application_pages p
-      join apex_application_page_proc pr
-        on p.application_id = pr.application_id
-       and p.page_id = pr.page_id
-     where p.application_id = p_application_id
-       and p.page_id = p_page_id
-       and pr.process_type = 'Automated Row Fetch';
-    
     -- generate column list
     select code_generator.generate_text(cursor(
-             with formats as(
-                    select 'DATE' data_type, date_format format_mask
-                      from apex_applications
-                     where application_id = p_application_id
-                    union all
-                    select 'NUMBER', '999999999999999999D999999999'
-                      from dual),
-                  ddl_templates as(
-                    select tmpl_text ddl_template, tmpl_type data_type
+             with page_elements as(
+                  select apl.application_id, app.page_id, apo.attribute_02 view_name, app.page_alias, api.item_name, utc.column_name,
+                         case when utc.data_type in ('NUMBER', 'DATE') then utc.data_type else 'DEFAULT' end data_type,
+                         case 
+                         when utc.data_type in ('DATE') then
+                           coalesce(upper(api.format_mask), apl.date_format, 'dd.mm.yyyy hh24:mi:ss')
+                         when utc.data_type in ('TIMESTAMP') then
+                           coalesce(upper(api.format_mask), apl.timestamp_format, 'dd.mm.yyyy hh24:mi:ss')
+                         when utc.data_type in ('NUMBER', 'INTEGER') then 
+                           coalesce(replace(upper(api.format_mask), 'G'), 'fm9999999999990d99999999') 
+                         end format_mask
+                    from apex_applications apl
+                    join apex_application_pages app
+                      on apl.application_id = app.application_id
+                    join apex_application_page_items api
+                      on app.application_id = api.application_id
+                     and app.page_id = api.page_id
+                    join apex_application_page_proc apo
+                      on app.application_id = apo.application_id
+                     and app.page_id = apo.page_id
+                    join user_tab_columns utc
+                      on apo.attribute_02 = utc.table_name
+                     and api.item_source = utc.column_name
+                   where apo.process_type_code = 'DML_FETCH_ROW'),
+                  template_list as(
+                    select tmpl_text ddl_template, tmpl_mode data_type
                       from templates
-                     where tmpl_id = 'APEX_FORM_COLUMN'
-                       and tmpl_type = 'STMT')
-          select t.ddl_template, p.page_alias, substr(i.item_name, instr(i.item_name, '_', 1) + 1) item_name,
-                 i.item_source column_name_upper, lower(i.item_source) column_name,
-                 coalesce(i.format_mask, f.format_mask) format_mask
-            from apex_application_pages p
-            join apex_application_page_items i
-              on p.application_id = i.application_id
-             and p.page_id = i.page_id
-            join all_tab_columns c
-              on i.item_source = c.column_name
-            join ddl_templates t
-              on t.data_type = case when c.data_type in ('NUMBER', 'DATE') then c.data_type else 'DEFAULT' end
-            left join formats f
-              on c.data_type = f.data_type
+                     where tmpl_id = 'COLUMN'
+                       and tmpl_type = 'APEX_FORM')
+          select t.ddl_template, p.page_alias, substr(p.item_name, instr(p.item_name, '_', 1) + 1) item_name,
+                 p.column_name column_name_upper, lower(p.column_name) column_name, p.format_mask
+            from page_elements p
+            join template_list t
+              on p.data_type = t.data_type
            where p.application_id = p_application_id
-             and p.page_id = p_page_id
-             and i.item_source_type = 'Database Column'
-             and c.table_name = l_view_name), chr(10)
+             and p.page_id = p_page_id), chr(10) || '    '
          )
     into l_column_list
     from dual;
     
     -- generate methods
     select code_generator.generate_text(cursor(
-             select tmpl_text template, l_column_list column_list,
-                    lower(l_view_name) view_name, upper(l_view_name) view_name_upper,
-                    lower(l_page_alias) page_alias, upper(l_page_alias) page_alias_upper,
+             select t.tmpl_text template, l_column_list column_list,
+                    lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
+                    lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
                     lower(p_insert_method) insert_method,
                     lower(p_update_method) update_method,
                     lower(p_delete_method) delete_method
-               from templates
-              where tmpl_id = 'APEX_FORM_METHODS'
-                and tmpl_type = 'STMT'
-                and tmpl_mode = c_default))
+               from apex_application_pages app
+               join apex_application_page_proc apo
+                 on app.application_id = apo.application_id
+                and app.page_id = apo.page_id
+              cross join templates t
+              where apo.process_type_code = 'DML_FETCH_ROW'
+                and t.tmpl_id = 'METHODS'
+                and t.tmpl_type = 'APEX_FORM'
+                and t.tmpl_mode = c_default))
       into l_code
       from dual;
       

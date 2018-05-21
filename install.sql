@@ -22,6 +22,11 @@ prompt &section.
 prompt &h1.State UTL_APEX Installation at user &INSTALL_USER.
 prompt
 prompt &section.
+prompt &h1.Remove existing installation
+@clean_up_install.sql
+
+prompt
+prompt &section.
 prompt &h1.Messages
 @utl_apex/sql/create_messages.sql
 
@@ -37,6 +42,7 @@ prompt &h1.Views
 prompt &h2.View CODE_GEN_APEX_COLLECTION
 @utl_apex/sql/views/code_gen_apex_collection.vw
 
+prompt
 prompt &section.
 prompt &h1.Package UTL_APEX
 @utl_apex/plsql/utl_apex.pks
