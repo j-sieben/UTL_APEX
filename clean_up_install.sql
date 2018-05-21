@@ -13,8 +13,8 @@ declare
            where object_name in (
                  '', -- Typen
                  'UTL_APEX', -- Packages
-                 '', -- Views
-                 '',  -- Tabellen
+                 'CODE_GEN_APEX_COLLECTION', -- Views
+                 'TEMPLATES',  -- Tabellen
                  '',  -- Synonyme
                  '' -- Sequenzen
                  )

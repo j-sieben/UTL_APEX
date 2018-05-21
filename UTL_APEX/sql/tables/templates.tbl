@@ -1,0 +1,146 @@
+
+create table templates(
+  tmpl_id varchar2(30 byte),
+  tmpl_type varchar2(30 byte),
+  tmpl_mode varchar2(30 byte) default 'DEFAULT',
+  tmpl_text varchar2(4000 byte),
+  constraint pk_templates primary key(tmpl_id, tmpl_type, tmpl_mode)
+);
+
+comment on table templates is 'Table to persist templates for UTL_APEX, requires CODE_GENERATOR';
+comment on column templates.tmpl_id is 'Primary key, alphanumeric'; 
+comment on column templates.tmpl_type is 'Group criteria, default to DEFAULT, is used to keep templates in groups, e.g. STMT, DDL etc.'; 
+comment on column templates.tmpl_mode is 'Criteria to differentiate between types of a similar kind, e.g. templates for data types: NUMERIC, DATE, VARCHAR etc.'; 
+comment on column templates.tmpl_text is 'Text of the template'; 
+
+merge into templates t
+using (select 'VIEW' tmpl_id,
+              'APEX_COLLECTION' tmpl_type,
+              'DEFAULT' tmpl_mode,
+              q'|create or replace view #VIEW_NAME# as
+select seq_id,
+       #COLUMN_LIST#
+  from apex_collections
+ where collection_name = '#VIEW_NAME#'
+|' tmpl_text
+         from dual
+        union all
+       select 'COLUMN_LIST', 'APEX_COLLECTION', 'DEFAULT', q'|#COLUMN_FROM_COLLECTION# #COLUMN_NAME#|' from dual union all
+       select 'COPY_LIST', 'APEX_COLLECTION', 'DEFAULT', q'|g_#PAGE_ALIAS#_row.#COLUMN_NAME# := #CONVERT_FROM_ITEM#|' from dual union all
+       select 'PACKAGE', 'APEX_COLLECTION', 'DEFAULT', q'|
+create or replace package #PAGE_ALIAS#_ui_pkg
+  authid definer
+as
+
+  function validate_#PAGE_ALIAS#
+    return boolean;
+    
+  procedure handle_#PAGE_ALIAS#;
+
+end #PAGE_ALIAS#_ui_pkg;
+/
+
+create or replace package body emp_ui_pkg
+as
+
+  c_pkg constant varchar2(30 byte) := $$PLSQL_UNIT;
+  c_yes constant varchar2(3 byte) := 'YES';
+  c_no constant varchar2(3 byte) := 'NO';
+  
+  g_page_values utl_apex.page_value_t;
+  g_#PAGE_ALIAS#_row app_ui_emp_main%rowtype;
+  
+  procedure copy_emp
+  as
+  begin
+    g_page_values := utl_apex.get_page_values;
+    #COPY_LIST#;
+  end copy_emp;
+  
+  
+  function validate_emp
+    return boolean
+  as
+  begin
+    -- copy_emp;
+    -- TODO: Validierungslogik implementieren
+    return true;
+  end validate_emp;
+  
+    
+  procedure handle_emp
+  as
+    c_collection_name constant varchar2(30 byte) := '#COLLECTION_NAME#';
+  begin
+    copy_emp;  
+    case
+    when utl_apex.INSERTING then
+      apex_collection.add_member(
+        p_collection_name => c_collection_name,
+        #PARAM_LIST#,
+        p_generate_md5 => c_no);
+    when utl_apex.UPDATING then
+      apex_collection.update_member(
+        p_seq => g_emp_row.seq_id,
+        p_collection_name => c_collection_name,
+        #PARAM_LIST#);
+    when utl_apex.DELETING then
+      apex_collection.delete_member(
+        p_seq => g_emp_row.seq_id,
+        p_collection_name => c_collection_name);
+    else
+      null;
+    end case;
+  end handle_emp;
+
+end;
+/|' from dual union all
+       select 'PARAMETER_LIST', 'APEX_COLLECTION', 'DEFAULT', q'|p_#COLLECTION_NAME# => #COLUMN_TO_COLLECTION#|' from dual union all
+       select 'BLOB', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#)|' from dual union all
+       select 'CHAR', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#)|' from dual union all
+       select 'CLOB', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#)|' from dual union all
+       select 'DATE', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|to_char(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#), 'yyyy-mm-dd hh24:mi:ss')|' from dual union all
+       select 'INTEGER', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|to_char(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#))|' from dual union all
+       select 'NUMBER', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|to_char(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#))|' from dual union all
+       select 'ROWID', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|rawtohex(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#))|' from dual union all
+       select 'TIMESTAMP', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|to_char(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#), 'yyyy-mm-dd hh24:mi:ss')|' from dual union all
+       select 'VARCHAR2', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|#COLUMN_NAME#|' from dual union all
+       select 'XMLTYPE', 'APEX_COLLECTION', 'CONVERT_TO_COLLECTION', q'|xmltype(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#))|' from dual union all
+       select 'BLOB', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'|#COLLECTION_NAME#|' from dual union all
+       select 'CHAR', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'|#COLLECTION_NAME#|' from dual union all
+       select 'CLOB', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'|#COLLECTION_NAME#|' from dual union all
+       select 'DATE', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'|to_date(#COLLECTION_NAME#, '#DATE_FORMAT#')|' from dual union all
+       select 'INTEGER', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'|to_number(#COLLECTION_NAME#, '#NUMBER_FORMAT#')|' from dual union all
+       select 'NUMBER', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'|to_number(#COLLECTION_NAME#, '#NUMBER_FORMAT#')|' from dual union all
+       select 'ROWID', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'|hextoraw(#COLLECTION_NAME#')|' from dual union all
+       select 'TIMESTAMP', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'|to_date(#COLLECTION_NAME#, '#TIMESTAMP_FORMAT#')|' from dual union all
+       select 'VARCHAR2', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'|#COLLECTION_NAME#|' from dual union all
+       select 'XMLTYPE', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'||' from dual union all
+       select 'BLOB', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|to_blob(utl_apex.get(g_page_values, '#COLUMN_NAME#'))|' from dual union all
+       select 'CHAR', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|utl_apex.get(g_page_values, '#COLUMN_NAME#')|' from dual union all
+       select 'CLOB', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|utl_apex.get(g_page_values, '#COLUMN_NAME#')|' from dual union all
+       select 'DATE', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|to_date(utl_apex.get(g_page_values, '#COLUMN_NAME#'), '#DATE_FORMAT#')|' from dual union all
+       select 'INTEGER', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|to_number(utl_apex.get(g_page_values, '#COLUMN_NAME#'), '#NUMBER_FORMAT#')|' from dual union all
+       select 'NUMBER', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|to_number(utl_apex.get(g_page_values, '#COLUMN_NAME#'), '#NUMBER_FORMAT#')|' from dual union all
+       select 'ROWID', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|hextoraw(utl_apex.get(g_page_values, '#COLUMN_NAME#'))|' from dual union all
+       select 'TIMESTAMP', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|to_timestamp(utl_apex.get(g_page_values, '#COLUMN_NAME#'), '#TIMESTAMP_FORMAT#')|' from dual union all
+       select 'VARCHAR2', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|utl_apex.get(g_page_values, '#COLUMN_NAME#')|' from dual union all
+       select 'XMLTYPE', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'|xmltype(utl_apex.get(g_page_values, '#COLUMN_NAME#'))|' from dual union all
+       select 'BLOB', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|BLOB|' from dual union all
+       select 'CHAR', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|C|' from dual union all
+       select 'CLOB', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|CLOB|' from dual union all
+       select 'DATE', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|D|' from dual union all
+       select 'INTEGER', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|N|' from dual union all
+       select 'NUMBER', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|N|' from dual union all
+       select 'ROWID', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|C|' from dual union all
+       select 'TIMESTAMP', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|D|' from dual union all
+       select 'VARCHAR2', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|C|' from dual union all
+       select 'XMLTYPE', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'|XMLTYPE|' from dual) s
+   on (t.tmpl_id = s.tmpl_id and t.tmpl_type = s.tmpl_type and t.tmpl_mode = s.tmpl_mode)
+ when matched then update set
+      t.tmpl_text = s.tmpl_text
+ when not matched then insert (tmpl_id, tmpl_type, tmpl_mode, tmpl_text)
+      values (s.tmpl_id, s.tmpl_type, s.tmpl_mode, s.tmpl_text);
+      
+commit;
+ 
