@@ -4,8 +4,10 @@ as
   /**
     APEX-bezogene Utility Sammlung
   */
+  ver_le_05 constant boolean := &VER_LE_05.;
   ver_le_0500 constant boolean := &VER_LE_0500.;
   ver_le_0501 constant boolean := &VER_LE_0501.;
+  ver_le_18 constant boolean := &VER_LE_18.;
   ver_le_1801 constant boolean := &VER_LE_1801.;
   
   /* Public constant declarations */
