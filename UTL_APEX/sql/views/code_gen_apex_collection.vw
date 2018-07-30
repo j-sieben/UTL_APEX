@@ -12,17 +12,17 @@ create or replace view code_gen_apex_collection as
               coalesce(replace(upper(case when utc.data_type in ('NUMBER', 'INTEGER') then api.format_mask end), 'G'), 'fm9999999999990d99999999') number_format,
               rank() over (partition by table_name, acm.collection_data_type order by column_id) column_rank
          from user_tab_columns utc 
-         join (select tmpl_id data_type, convert_to_collection, convert_from_collection, convert_from_item, collection_data_type
-                 from (select tmpl_id, tmpl_mode, tmpl_text
-                         from templates
-                        where tmpl_type = 'APEX_COLLECTION'
-                          and tmpl_mode in ('CONVERT_TO_COLLECTION', 'CONVERT_FROM_COLLECTION', 'CONVERT_FROM_ITEM', 'COLLECTION_DATA_TYPE'))
-                pivot (max(tmpl_text) for tmpl_mode in ('CONVERT_TO_COLLECTION' as convert_to_collection,
+         join (select cgtm_name data_type, convert_to_collection, convert_from_collection, convert_from_item, collection_data_type
+                 from (select cgtm_name, cgtm_mode, cgtm_text
+                         from code_generator_templates
+                        where cgtm_type = 'APEX_COLLECTION'
+                          and cgtm_mode in ('CONVERT_TO_COLLECTION', 'CONVERT_FROM_COLLECTION', 'CONVERT_FROM_ITEM', 'COLLECTION_DATA_TYPE'))
+                pivot (max(cgtm_text) for cgtm_mode in ('CONVERT_TO_COLLECTION' as convert_to_collection,
                                                         'CONVERT_FROM_COLLECTION' as convert_from_collection,
                                                         'CONVERT_FROM_ITEM' as convert_from_item, 
                                                         'COLLECTION_DATA_TYPE' as collection_data_type)))
                 acm
-           on utc.data_type = acm.data_type
+           on case utc.data_type when 'CLOB' then 'VARCHAR2' else utc.data_type end = acm.data_type
          left join 
               (select *
                  from apex_application_page_proc

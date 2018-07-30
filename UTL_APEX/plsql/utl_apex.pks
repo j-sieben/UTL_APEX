@@ -4,6 +4,9 @@ as
   /**
     APEX-bezogene Utility Sammlung
   */
+  ver_le_0500 constant boolean := &VER_LE_0500.;
+  ver_le_0501 constant boolean := &VER_LE_0501.;
+  ver_le_1801 constant boolean := &VER_LE_1801.;
   
   /* Public constant declarations */
   
@@ -34,6 +37,33 @@ as
    */
   function get_page_values
     return page_value_t;
+  
+  
+  /* Methode zum Auslesen der aktuellen Zeile eines APEX interaktiven Grids
+   * %param  p_target_table    Name der Zieltabelle, in die die Daten übernommen werden sollen  
+   * %param  p_static_id       Statische ID des interaktiven Grids (IG). Muss angegeben werden,
+   *                           da dieser Wert zum Benennen des Records verwendet wird.
+   * %param [p_application_id] Optionale Angabe der Anwendungs-ID. Falls NULL wird v('APP_ID') verwendet.
+   * %param [p_page_id]        Optionale Angabe der Seite-ID. Falls NULL wird v('APP_PAGE_ID') verwendet.
+   * %return Anonymer PL/SQL-Block, der eine OUT-Variable eines Records typsicher
+   *         mit den Zeilenwerten fuellt
+   * %usage  Generisches Utility, um alle Werte der aktuellen Zeile des IG
+   *         in eine Datenstruktur zu uebernehmen. Von hier aus koennen die
+   *         Werte entweder direkt verwendet oder typsicher auf einen lokalen
+   *         Record verteilt werden.
+   *         Kann entweder dynamisch auf der Seite aufgerufen werden, oder statisch zur Entwicklungszeit,
+   *         um den resultierenden Code in ein Package zu uebernehmen.
+   *         Beispiel dynamisch:
+   *         <code> execute immedite utl_apex.get_ig_values('FOO', 'FOO_EDIT') using out l_row;</code>
+   *         Beispiel statisch:
+   *         <code>select utl_apex.get_ig_values('FOO', 'FOO_EDIT', 123, 1) from dual </code>
+   */
+  function get_ig_values(
+    p_target_table in varchar2,
+    p_static_id in varchar2,
+    p_application_id in number default null,
+    p_page_id in number default null)
+    return varchar2;
   
   
   /** Funktion zum Lesen eines Seitenelementwerts aus einer Instanz von PAGE_VALUE_T.
@@ -208,6 +238,15 @@ as
     p_value_items in varchar2,
     p_hidden_item in varchar2,
     p_url_template in varchar2);
+    
+  
+  /** Methode zur Konvertierung einer CLOB-Instanz zu BLOB-Instanz
+   * @param  p_clob  CLOB-Instanz
+   * @return BLOB-Instanz
+   */
+  function clob_to_blob(
+    p_clob in clob) 
+    return blob;
   
   
   /** Methode zum Laden einer BLOB-Instanz ueber die Download-Funktion des Browsers.
@@ -227,5 +266,26 @@ as
     p_clob in clob,
     p_file_name in varchar2);
   
+  
+  /* ASSERTIONS-Wrapper */
+  procedure assert(
+    p_condition in boolean,
+    p_message_name in varchar2,
+    p_affected_id in varchar2,
+    p_arg_list msg_args);
+    
+    
+  procedure assert_exists(
+    p_stmt in varchar2,
+    p_message_name in varchar2,
+    p_affected_id in varchar2,
+    p_arg_list msg_args);
+    
+  
+  procedure assert_not_exists(
+    p_stmt in varchar2,
+    p_message_name in varchar2,
+    p_affected_id in varchar2,
+    p_arg_list msg_args);
   end utl_apex;
   /

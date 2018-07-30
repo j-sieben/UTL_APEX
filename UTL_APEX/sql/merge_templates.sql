@@ -1,28 +1,13 @@
-
-create table templates(
-  tmpl_id varchar2(30 byte),
-  tmpl_type varchar2(30 byte),
-  tmpl_mode varchar2(30 byte) default 'DEFAULT',
-  tmpl_text varchar2(4000 byte),
-  constraint pk_templates primary key(tmpl_id, tmpl_type, tmpl_mode)
-);
-
-comment on table templates is 'Table to persist templates for UTL_APEX, requires CODE_GENERATOR';
-comment on column templates.tmpl_id is 'Primary key, alphanumeric'; 
-comment on column templates.tmpl_type is 'Group criteria, default to DEFAULT, is used to keep templates in groups, e.g. STMT, DDL etc.'; 
-comment on column templates.tmpl_mode is 'Criteria to differentiate between types of a similar kind, e.g. templates for data types: NUMERIC, DATE, VARCHAR etc.'; 
-comment on column templates.tmpl_text is 'Text of the template'; 
-
-merge into templates t
-using (select 'VIEW' tmpl_id,
-              'APEX_COLLECTION' tmpl_type,
-              'DEFAULT' tmpl_mode,
-              q'^create or replace view #VIEW_NAME# as
+merge into code_generator_templates t
+using (select 'VIEW' cgtm_name,
+              'APEX_COLLECTION' cgtm_type,
+              'DEFAULT' cgtm_mode,
+              q'^create or replace view force #VIEW_NAME# as
 select seq_id,
        #COLUMN_LIST#
   from apex_collections
  where collection_name = '#VIEW_NAME#'
-^' tmpl_text
+^' cgtm_text
          from dual
         union all
        select 'COLUMN_LIST', 'APEX_COLLECTION', 'DEFAULT', q'^#COLUMN_FROM_COLLECTION# #COLUMN_NAME#^' from dual union all
@@ -114,7 +99,7 @@ q'^end;/^' from dual union all
        select 'ROWID', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'^hextoraw(#COLLECTION_NAME#')^' from dual union all
        select 'TIMESTAMP', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'^to_date(#COLLECTION_NAME#, '#TIMESTAMP_FORMAT#')^' from dual union all
        select 'VARCHAR2', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'^#COLLECTION_NAME#^' from dual union all
-       select 'XMLTYPE', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'^^' from dual union all
+       select 'XMLTYPE', 'APEX_COLLECTION', 'CONVERT_FROM_COLLECTION', q'^#COLLECTION_NAME#^' from dual union all
        select 'BLOB', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'^to_blob(utl_apex.get(g_page_values, '#COLUMN_NAME#'))^' from dual union all
        select 'CHAR', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'^utl_apex.get(g_page_values, '#COLUMN_NAME#')^' from dual union all
        select 'CLOB', 'APEX_COLLECTION', 'CONVERT_FROM_ITEM', q'^utl_apex.get(g_page_values, '#COLUMN_NAME#')^' from dual union all
@@ -135,12 +120,17 @@ q'^end;/^' from dual union all
        select 'TIMESTAMP', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'^D^' from dual union all
        select 'VARCHAR2', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'^C^' from dual union all
        select 'XMLTYPE', 'APEX_COLLECTION', 'COLLECTION_DATA_TYPE', q'^XMLTYPE^' from dual union all
-       select 'COLUMN', 'APEX_FORM', 'DATE', q'^g_#PAGE_ALIAS#_row.#COLUMN_NAME# := to_date(dwh_frame.apex_utils_pck.get_value(g_page_values, '#COLUMN_NAME_UPPER#'), '#FORMAT_MASK#');^' from dual union all
-       select 'COLUMN', 'APEX_FORM', 'DEFAULT', q'^g_#PAGE_ALIAS#_row.#COLUMN_NAME# := dwh_frame.apex_utils_pck.get_value(g_page_values, '#COLUMN_NAME_UPPER#'));^' from dual union all
-       select 'COLUMN', 'APEX_FORM', 'NUMBER', q'^g_#PAGE_ALIAS#_row.#COLUMN_NAME# := to_number(dwh_frame.apex_utils_pck.get_value(g_page_values, '#COLUMN_NAME_UPPER#'), '#FORMAT_MASK#');^' from dual union all
+       select 'GRID_DATA_TYPE', 'APEX_IG', 'NUMBER', q'^  g_#STATIC_ID#_row.#COLUMN_NAME# := to_number(v('#COLUMN_NAME_UPPER#')#FORMAT_MASK|, '|'|#);^' from dual union all
+       select 'GRID_DATA_TYPE', 'APEX_IG', 'DATE', q'^  g_#STATIC_ID#_row.#COLUMN_NAME# := to_date(v('#COLUMN_NAME_UPPER#'), '#FORMAT_MASK#');^' from dual union all
+       select 'GRID_DATA_TYPE', 'APEX_IG', 'DEFAULT', q'^  g_#STATIC_ID#_row.#COLUMN_NAME# := v('#COLUMN_NAME_UPPER#');^' from dual union all
+       select 'GRID_PROCEDURE', 'APEX_IG', 'DYNAMIC', q'^declare#CR#  g_#STATIC_ID#_row #TABLE_NAME#%rowtype;#CR#begin#CR##COLUMN_LIST##CR#  :x := g_row;#CR#end;^' from dual union all
+       select 'GRID_PROCEDURE', 'APEX_IG', 'STATIC', q'^  g_#STATIC_ID#_row #TABLE_NAME#%rowtype;#CR##CR#begin#CR##COLUMN_LIST##CR#end;^' from dual union all
+       select 'COLUMN', 'APEX_FORM', 'DATE', q'^g_#PAGE_ALIAS#_row.#COLUMN_NAME# := to_date(utl_apex.get(g_page_values, '#COLUMN_NAME_UPPER#'), '#FORMAT_MASK#');^' from dual union all
+       select 'COLUMN', 'APEX_FORM', 'DEFAULT', q'^g_#PAGE_ALIAS#_row.#COLUMN_NAME# := utl_apex.get(g_page_values, '#COLUMN_NAME_UPPER#'));^' from dual union all
+       select 'COLUMN', 'APEX_FORM', 'NUMBER', q'^g_#PAGE_ALIAS#_row.#COLUMN_NAME# := to_number(utl_apex.get(g_page_values, '#COLUMN_NAME_UPPER#'), '#FORMAT_MASK#');^' from dual union all
        select 'METHODS', 'APEX_FORM', 'DEFAULT', q'^-- UI_PACKAGE-Body^' || chr(10) || 
 q'^-- Globale Variablen^' || chr(10) || 
-q'^  g_page_values dwh_frame.apex_utils_pck.page_value_t;^' || chr(10) || 
+q'^  g_page_values utl_apex.page_value_t;^' || chr(10) || 
 q'^  g_#PAGE_ALIAS#_row #VIEW_NAME#%rowtype;^' || chr(10) || 
 q'^  ^' || chr(10) || 
 q'^-- COPY_ROW-Methode^' || chr(10) || 
@@ -152,7 +142,7 @@ q'^   */^' || chr(10) ||
 q'^  procedure copy_#PAGE_ALIAS#^' || chr(10) || 
 q'^  as^' || chr(10) || 
 q'^  begin^' || chr(10) || 
-q'^    g_page_values := dwh_frame.apex_utils_pck.get_page_values;^' || chr(10) || 
+q'^    g_page_values := utl_apex.get_page_values;^' || chr(10) || 
 q'^    #COLUMN_LIST#^' || chr(10) || 
 q'^  end copy_#PAGE_ALIAS#;^' || chr(10) || 
 q'^    ^' || chr(10) || 
@@ -181,11 +171,11 @@ q'^      #DELETE_METHOD#(g_#PAGE_ALIAS#_row);^' || chr(10) ||
 q'^    end case;^' || chr(10) || 
 q'^  end handle_#PAGE_ALIAS#;^' from dual
       ) s
-   on (t.tmpl_id = s.tmpl_id and t.tmpl_type = s.tmpl_type and t.tmpl_mode = s.tmpl_mode)
+   on (t.cgtm_name = s.cgtm_name and t.cgtm_type = s.cgtm_type and t.cgtm_mode = s.cgtm_mode)
  when matched then update set
-      t.tmpl_text = s.tmpl_text
- when not matched then insert (tmpl_id, tmpl_type, tmpl_mode, tmpl_text)
-      values (s.tmpl_id, s.tmpl_type, s.tmpl_mode, s.tmpl_text);
+      t.cgtm_text = s.cgtm_text
+ when not matched then insert (cgtm_name, cgtm_type, cgtm_mode, cgtm_text)
+      values (s.cgtm_name, s.cgtm_type, s.cgtm_mode, s.cgtm_text);
       
 commit;
 

@@ -14,7 +14,7 @@ declare
                  '', -- Typen
                  'UTL_APEX', -- Packages
                  'CODE_GEN_APEX_COLLECTION', -- Views
-                 'TEMPLATES',  -- Tabellen
+                 '',  -- Tabellen
                  '',  -- Synonyme
                  '' -- Sequenzen
                  )
@@ -39,5 +39,10 @@ begin
         raise;
     end;
   end loop;
+     
+  delete from code_generator_templates
+   where cgtm_type in ('APEX_COLLECTION', 'APEX_FORM');
+   
+  commit;
 end;
 /

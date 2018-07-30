@@ -32,9 +32,8 @@ prompt &h1.Messages
 
 prompt
 prompt &section.
-prompt &h1.Tables
-prompt &h2.Table TEMPLATES
-@utl_apex/sql/tables/templates.tbl
+prompt &h1.Templates
+@utl_apex/sql/merge_templates.sql
 
 prompt
 prompt &section.

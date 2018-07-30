@@ -9,47 +9,11 @@ as
   c_apex_schema constant varchar2(30 byte) := $$PLSQL_UNIT_OWNER;
   c_apex_tmpl_type constant varchar2(30 byte) := 'APEX_COLLECTION';
   c_default constant varchar2(30 byte) := 'DEFAULT';
+  c_pit_apex_module constant varchar2(30 byte) := 'PIT_APEX';
 
   -- Private variable declarations
   
-  -- Helper methods  
-  function clob_to_blob(
-    p_clob in clob) 
-    return blob 
-  as
-    c_chunk_size constant integer := 4096;
-    l_blob blob;
-    l_offset number default 1;
-    l_amount number default c_chunk_size;
-    l_offsetwrite number default 1;
-    l_amountwrite number;
-    l_buffer varchar2(c_chunk_size char);
-  begin
-    if p_clob is not null then
-    dbms_lob.createtemporary(l_blob, true);
-      loop
-        dbms_lob.read (lob_loc => p_clob,
-          amount => l_amount,
-          offset => l_offset,
-          buffer => l_buffer);
-  
-        l_amountwrite := utl_raw.length (utl_raw.cast_to_raw(l_buffer));
-  
-        dbms_lob.write (lob_loc => l_blob,
-          amount => l_amountwrite,
-          offset => l_offsetwrite,
-          buffer => utl_raw.cast_to_raw(l_buffer));
-  
-        l_offsetwrite := l_offsetwrite + l_amountwrite;
-  
-        l_offset := l_offset + l_amount;
-        l_amount := c_chunk_size;
-      end loop;
-    end if;
-    return l_blob;
-  end clob_to_blob;
-
-  -- Function and procedure implementations
+  -- INTERFACE
   procedure create_apex_session(
     p_apex_user in apex_workspace_activity_log.apex_user%type,
     p_application_id in apex_applications.application_id%type,
@@ -115,7 +79,63 @@ as
     return page_values;
   end get_page_values;
 
-
+  function get_ig_values(
+    p_target_table in varchar2,
+    p_static_id in varchar2,
+    p_application_id in number default null,
+    p_page_id in number default null)
+    return varchar2
+  as
+  $IF utl_apex.ver_le_0500 $THEN
+  begin
+    return 'APEX version does not support Interactive Grids. Minimum is 5.1';
+  $ELSE
+    l_result varchar2(32767);
+  begin
+    select code_generator.generate_text(
+             cursor(
+               select cgtm_text template,
+                      chr(10) cr,
+                      lower(p_target_table) table_name,
+                      lower(p_static_id) static_id,
+                      code_generator.generate_text(cursor(
+                          with params as(
+                               select coalesce(p_application_id, to_number(v('APP_ID'))) app_id,
+                                      coalesce(p_page_id, to_number(v('APP_PAGE_ID'))) page_id,
+                                      lower(p_static_id) static_id
+                                 from dual)
+                        select /*+ NO_MERGE (p) */
+                               cgtm_text template,
+                               lower(name) column_name,
+                               name column_name_upper,
+                               case data_type
+                               when 'DATE' then coalesce(format_mask, a.date_format)
+                               when 'NUMBER' then format_mask
+                               else null end format_mask
+                          from apex_appl_page_ig_columns ig
+                          join params p
+                            on ig.application_id = p.app_id
+                           and ig.page_id = p.page_id
+                          join apex_application_page_regions r
+                            on ig.region_id = r.region_id
+                          join apex_applications a
+                            on r.application_id = a.application_id
+                          join code_generator_templates t
+                            on case when data_type in ('NUMBER', 'DATE') then data_type else 'DEFAULT' end = cgtm_mode
+                         where ig.source_type_code = 'DB_COLUMN'
+                           and t.cgtm_name = 'GRID_DATA_TYPE'
+                           and t.cgtm_type = 'APEX_IG')) column_list
+                 from code_generator_templates
+                where cgtm_name = 'GRID_PROCEDURE'
+                  and cgtm_type = 'APEX_IG'
+                  and cgtm_mode = case when p_application_id is null then 'DYNAMIC' else 'STATIC' end)) resultat
+      into l_result
+      from dual;
+    return l_result;
+  $END
+  end get_ig_values;
+  
+  
   function get(
     p_page_values in page_value_t,
     p_element_name in varchar2)
@@ -182,11 +202,12 @@ as
                      and api.item_source = utc.column_name
                    where apo.process_type_code = 'DML_FETCH_ROW'),
                   template_list as(
-                    select tmpl_text ddl_template, tmpl_mode data_type
-                      from templates
-                     where tmpl_id = 'COLUMN'
-                       and tmpl_type = 'APEX_FORM')
-          select t.ddl_template, p.page_alias, substr(p.item_name, instr(p.item_name, '_', 1) + 1) item_name,
+                    select cgtm_text ddl_template, cgtm_mode data_type
+                      from code_generator_templates
+                     where cgtm_name = 'COLUMN'
+                       and cgtm_type = 'APEX_FORM')
+          select t.ddl_template, p.page_alias page_alias_upper, lower(p.page_alias) page_aliasl, 
+                 substr(p.item_name, instr(p.item_name, '_', 1) + 1) item_name,
                  p.column_name column_name_upper, lower(p.column_name) column_name, p.format_mask
             from page_elements p
             join template_list t
@@ -199,7 +220,7 @@ as
     
     -- generate methods
     select code_generator.generate_text(cursor(
-             select t.tmpl_text template, l_column_list column_list,
+             select t.cgtm_text template, l_column_list column_list,
                     lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
                     lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
                     lower(p_insert_method) insert_method,
@@ -209,11 +230,13 @@ as
                join apex_application_page_proc apo
                  on app.application_id = apo.application_id
                 and app.page_id = apo.page_id
-              cross join templates t
-              where apo.process_type_code = 'DML_FETCH_ROW'
-                and t.tmpl_id = 'METHODS'
-                and t.tmpl_type = 'APEX_FORM'
-                and t.tmpl_mode = c_default))
+              cross join code_generator_templates t
+              where app.application_id = p_application_id
+                and app.page_id = p_page_id
+                and apo.process_type_code = 'DML_FETCH_ROW'
+                and t.cgtm_name = 'METHODS'
+                and t.cgtm_type = 'APEX_FORM'
+                and t.cgtm_mode = c_default))
       into l_code
       from dual;
       
@@ -247,20 +270,20 @@ as
       
     -- generate DDL for view
       with tmpl_list as(
-           select tmpl_id, tmpl_text
-             from templates
-            where tmpl_type = c_apex_tmpl_type
-              and tmpl_mode = c_default)
+           select cgtm_name, cgtm_text
+             from code_generator_templates
+            where cgtm_type = c_apex_tmpl_type
+              and cgtm_mode = c_default)
     select code_generator.generate_text(cursor(
-             select tmpl_text, p_page_view view_name, 
+             select cgtm_text, p_page_view view_name, 
                     code_generator.generate_text(cursor(
-                      select t.tmpl_text, collection_name, column_name, column_from_collection
+                      select t.cgtm_text, collection_name, column_name, column_from_collection
                         from code_gen_apex_collection c
                        cross join tmpl_list t
-                       where t.tmpl_id = 'COLUMN_LIST'
+                       where t.cgtm_name = 'COLUMN_LIST'
                          and c.table_name = p_source_table), ',' || chr(10) || '       ') column_list
                from tmpl_list
-              where tmpl_id = 'VIEW'))
+              where cgtm_name = 'VIEW'))
       into l_code
       from dual;
     
@@ -300,45 +323,45 @@ as
     pit.assert_not_null(p_page_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_ID'));
     -- APEX page has PAGE ALIAS
     pit.assert_exists(
-      p_stmt => code_generator.bulk_replace(c_has_alias_stmt, clob_table(
+      p_stmt => code_generator.bulk_replace(c_has_alias_stmt, char_table(
                   '#APPLICATION_ID#', to_clob(p_application_id),
                   '#PAGE_ID#', to_clob(p_page_id))),
       p_message_name => msg.UTL_PAGE_ALIAS_REQUIRED,
       p_arg_list => msg_args(to_char(p_page_id)));
     -- APEX page has FETCH ROW process
     pit.assert_exists(
-      p_stmt => code_generator.bulk_replace(c_has_fetch_row_process, clob_table(
+      p_stmt => code_generator.bulk_replace(c_has_fetch_row_process, char_table(
                   '#APPLICATION_ID#', to_clob(p_application_id),
                   '#PAGE_ID#', to_clob(p_page_id))),
       p_message_name => msg.UTL_FETCH_ROW_REQUIRED);
     
     -- generate package code
       with tmpl_list as(
-           select tmpl_id, tmpl_text
-             from templates
-            where tmpl_type = c_apex_tmpl_type
-              and tmpl_mode = c_default)
+           select cgtm_name, cgtm_text
+             from code_generator_templates
+            where cgtm_type = c_apex_tmpl_type
+              and cgtm_mode = c_default)
     select code_generator.generate_text(cursor(
-             select t.tmpl_text, app.attribute_02 view_name, app.attribute_02 collection_name, apa.page_alias, 
+             select t.cgtm_text, app.attribute_02 view_name, app.attribute_02 collection_name, apa.page_alias, 
                     code_generator.generate_text(cursor(
-                      select t.tmpl_text, c.collection_name, c.column_to_collection, c.page_alias, c.column_name
+                      select t.cgtm_text, c.collection_name, c.column_to_collection, c.page_alias, c.column_name
                         from code_gen_apex_collection c
                        cross join tmpl_list t
-                       where t.tmpl_id = 'PARAMETER_LIST'
+                       where t.cgtm_name = 'PARAMETER_LIST'
                          and c.application_id = apa.application_id
                          and c.page_id = apa.page_id), ',' || chr(10) || '        ') param_list,
                     code_generator.generate_text(cursor(
-                      select t.tmpl_text, c.collection_name, c.column_to_collection, c.page_alias, 
+                      select t.cgtm_text, c.collection_name, c.column_to_collection, c.page_alias, 
                              column_name, convert_from_item, number_format, date_format, timestamp_format
                         from code_gen_apex_collection c
                        cross join tmpl_list t
-                       where t.tmpl_id = 'COPY_LIST'
+                       where t.cgtm_name = 'COPY_LIST'
                          and c.application_id = apa.application_id
                          and c.page_id = apa.page_id), ';' || chr(10) || '    ') copy_list
-               from templates t
-              where tmpl_id = 'PACKAGE'
-                and tmpl_type = 'APEX_COLLECTION'
-                and tmpl_mode = 'DEFAULT')) trigger_stmt
+               from code_generator_templates t
+              where cgtm_name = 'PACKAGE'
+                and cgtm_type = 'APEX_COLLECTION'
+                and cgtm_mode = 'DEFAULT')) trigger_stmt
       into l_code
       from apex_application_pages apa
       join apex_application_page_proc app
@@ -527,6 +550,43 @@ as
     pit.leave_optional;
   end create_modal_dialog_url;
 
+  
+  function clob_to_blob(
+    p_clob in clob) 
+    return blob 
+  as
+    c_chunk_size constant integer := 4096;
+    l_blob blob;
+    l_offset number default 1;
+    l_amount number default c_chunk_size;
+    l_offsetwrite number default 1;
+    l_amountwrite number;
+    l_buffer varchar2(c_chunk_size char);
+  begin
+    if p_clob is not null then
+    dbms_lob.createtemporary(l_blob, true);
+      loop
+        dbms_lob.read (lob_loc => p_clob,
+          amount => l_amount,
+          offset => l_offset,
+          buffer => l_buffer);
+  
+        l_amountwrite := utl_raw.length (utl_raw.cast_to_raw(l_buffer));
+  
+        dbms_lob.write (lob_loc => l_blob,
+          amount => l_amountwrite,
+          offset => l_offsetwrite,
+          buffer => utl_raw.cast_to_raw(l_buffer));
+  
+        l_offsetwrite := l_offsetwrite + l_amountwrite;
+  
+        l_offset := l_offset + l_amount;
+        l_amount := c_chunk_size;
+      end loop;
+    end if;
+    return l_blob;
+  end clob_to_blob;
+  
 
   procedure download_blob(
     p_blob in out nocopy blob,
@@ -562,6 +622,66 @@ as
     l_blob := clob_to_blob(p_clob);
     download_blob(l_blob, p_file_name);
   end download_clob;
+  
+
+  procedure assert(
+    p_condition in boolean,
+    p_message_name in varchar2,
+    p_affected_id in varchar2,
+    p_arg_list msg_args)
+  is
+  begin
+    pit.assert(
+      p_condition => p_condition);
+  exception
+    when msg.ASSERT_TRUE_ERR then
+      pit.log_specific(
+        p_message_name => p_message_name,
+        p_affected_id => p_affected_id,
+        p_arg_list => p_arg_list,
+        p_log_threshold => pit.level_error,
+        p_log_modules => c_pit_apex_module);
+  end assert;
+    
+    
+  procedure assert_exists(
+    p_stmt in varchar2,
+    p_message_name in varchar2,
+    p_affected_id in varchar2,
+    p_arg_list msg_args)
+  is
+  begin
+    pit.assert_exists(
+      p_stmt => p_stmt);
+  exception
+    when msg.ASSERT_EXISTS_ERR then
+      pit.log_specific(
+        p_message_name => p_message_name,
+        p_affected_id => p_affected_id,
+        p_arg_list => p_arg_list,
+        p_log_threshold => pit.level_error,
+        p_log_modules => c_pit_apex_module);
+  end assert_exists;
+    
+  
+  procedure assert_not_exists(
+    p_stmt in varchar2,
+    p_message_name in varchar2,
+    p_affected_id in varchar2,
+    p_arg_list msg_args)
+  is
+  begin
+    pit.assert_not_exists(
+      p_stmt => p_stmt);
+  exception
+    when msg.ASSERT_NOT_EXISTS_ERR then
+      pit.log_specific(
+        p_message_name => p_message_name,
+        p_affected_id => p_affected_id,
+        p_arg_list => p_arg_list,
+        p_log_threshold => pit.level_error,
+        p_log_modules => c_pit_apex_module);
+  end assert_not_exists;
 
 end utl_apex;
 /
