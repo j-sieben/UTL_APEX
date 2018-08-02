@@ -21,7 +21,11 @@ declare
              and object_type not like '%BODY'
              and owner = upper('&INSTALL_USER.')
            order by object_type, object_name;
-       
+  
+  cursor message_cur is
+    select pms_name, pms_pml_name
+      from pit_message
+     where pms_pmg_name = 'UTL';
 begin
   for obj in delete_object_cur loop
     begin
@@ -39,9 +43,13 @@ begin
         raise;
     end;
   end loop;
+  
+  for msg in message_cur loop
+    pit_admin.remove_message(msg.pms_name, msg.pms_pml_name);
+  end loop;
      
   delete from code_generator_templates
-   where cgtm_type in ('APEX_COLLECTION', 'APEX_FORM');
+   where cgtm_type in ('APEX_COLLECTION', 'APEX_FORM', 'APEX_IG');
    
   commit;
 end;

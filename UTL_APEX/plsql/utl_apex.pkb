@@ -627,8 +627,8 @@ as
   procedure assert(
     p_condition in boolean,
     p_message_name in varchar2,
-    p_affected_id in varchar2,
-    p_arg_list msg_args)
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null)
   is
   begin
     pit.assert(
@@ -644,11 +644,125 @@ as
   end assert;
     
     
+  procedure assert_is_null(
+    p_condition in varchar2,
+    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null)
+  as
+  begin
+    pit.assert_is_null(p_condition);
+  exception
+    when msg.ASSERT_EXISTS_ERR then
+      pit.log_specific(
+        p_message_name => p_message_name,
+        p_affected_id => p_affected_id,
+        p_arg_list => p_arg_list,
+        p_log_threshold => pit.level_error,
+        p_log_modules => c_pit_apex_module);
+  end assert_is_null;
+    
+    
+  procedure assert_is_null(
+    p_condition in number,
+    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null)
+  as
+  begin
+    pit.assert_is_null(p_condition);
+  exception
+    when msg.ASSERT_EXISTS_ERR then
+      pit.log_specific(
+        p_message_name => p_message_name,
+        p_affected_id => p_affected_id,
+        p_arg_list => p_arg_list,
+        p_log_threshold => pit.level_error,
+        p_log_modules => c_pit_apex_module);
+  end assert_is_null;
+    
+    
+  procedure assert_is_null(
+    p_condition in date,
+    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null)
+  as
+  begin
+    pit.assert_is_null(p_condition);
+  exception
+    when msg.ASSERT_EXISTS_ERR then
+      pit.log_specific(
+        p_message_name => p_message_name,
+        p_affected_id => p_affected_id,
+        p_arg_list => p_arg_list,
+        p_log_threshold => pit.level_error,
+        p_log_modules => c_pit_apex_module);
+  end assert_is_null;
+  
+  
+  procedure assert_not_null(
+    p_condition in varchar2,
+    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null)
+  as
+  begin
+    pit.assert_not_null(p_condition);
+  exception
+    when msg.ASSERT_EXISTS_ERR then
+      pit.log_specific(
+        p_message_name => p_message_name,
+        p_affected_id => p_affected_id,
+        p_arg_list => p_arg_list,
+        p_log_threshold => pit.level_error,
+        p_log_modules => c_pit_apex_module);
+  end assert_not_null;
+    
+    
+  procedure assert_not_null(
+    p_condition in number,
+    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null)
+  as
+  begin
+    pit.assert_not_null(p_condition);
+  exception
+    when msg.ASSERT_EXISTS_ERR then
+      pit.log_specific(
+        p_message_name => p_message_name,
+        p_affected_id => p_affected_id,
+        p_arg_list => p_arg_list,
+        p_log_threshold => pit.level_error,
+        p_log_modules => c_pit_apex_module);
+  end assert_not_null;
+    
+    
+  procedure assert_not_null(
+    p_condition in date,
+    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null)
+  as
+  begin
+    pit.assert_not_null(p_condition);
+  exception
+    when msg.ASSERT_EXISTS_ERR then
+      pit.log_specific(
+        p_message_name => p_message_name,
+        p_affected_id => p_affected_id,
+        p_arg_list => p_arg_list,
+        p_log_threshold => pit.level_error,
+        p_log_modules => c_pit_apex_module);
+  end assert_not_null;
+    
+    
   procedure assert_exists(
     p_stmt in varchar2,
     p_message_name in varchar2,
-    p_affected_id in varchar2,
-    p_arg_list msg_args)
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null)
   is
   begin
     pit.assert_exists(
@@ -667,8 +781,8 @@ as
   procedure assert_not_exists(
     p_stmt in varchar2,
     p_message_name in varchar2,
-    p_affected_id in varchar2,
-    p_arg_list msg_args)
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null)
   is
   begin
     pit.assert_not_exists(

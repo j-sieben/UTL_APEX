@@ -1,7 +1,8 @@
 -- Parameters:
 -- 1: Owner of UTL_APEX, into which UTL_APEX will be installed
+-- 2: Default Language of PIT (if present), to decide which message language to install
 
-@init.sql &1.
+@init.sql &1. &2.
 
 alter session set current_schema=sys;
 prompt
@@ -28,7 +29,7 @@ prompt &h1.Remove existing installation
 prompt
 prompt &section.
 prompt &h1.Messages
-@utl_apex/sql/create_messages.sql
+@utl_apex/messages/&DEFAULT_LANGUAGE./create_messages.sql
 
 prompt
 prompt &section.

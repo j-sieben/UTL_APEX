@@ -21,7 +21,7 @@ as
   /** Method to create an APEX session outside a browser. Used for test purposes
    * @param  p_apex_user       APEX session user
    * @param  p_application_id  ID of the application
-   * @param  p_page_id         ID of the application page
+   * @param [p_page_id]        ID of the application page
    * @usage  Generates an APEX session for testing purposes. After calling this method,
    *         item values may be set by calling APEX_UTIL.SET_SESSION_STATE.
    *         Output is visible via OWA output window in SQL Developer
@@ -71,7 +71,7 @@ as
   /** Funktion zum Lesen eines Seitenelementwerts aus einer Instanz von PAGE_VALUE_T.
    * @usage  Wrapper, wird verwendet, um sprechende Fehlermeldung bei nicht vorhandenen Seitenelementen
    *         zu generieren.
-   * @param  p_page_values  Instanz der Seitenwerte
+   * @param  p_page_values   Instanz der Seitenwerte
    * @param  p_element_name  Name des Seitenelements
    * @return Sessionstatuswert
    */
@@ -175,10 +175,10 @@ as
    * Die Prozedur wird aufgerufen, um eine Validierung durchzufuehren und, falls die Pruefung nicht TRUE war, 
    * direkt eine Fehlermeldung auszugeben.
    * Entspricht inhaltlich msg_log.assert, erlaubt aber die Zuordnung der Meldung zu einem Seitenelement.
-   * @param p_test Validierung, die zu TRUE, FALSE oder NULL evaluiert
-   * @param p_page_item Seitenelement, das durch die Validierung betroffen ist
-   * @param p_message Meldungstext bzw. Referenz auf eine MSG_LOG-Meldung
-   * @param p_msg_args Optionale Meldungsparameter
+   * @param  p_test       Validierung, die zu TRUE, FALSE oder NULL evaluiert
+   * @param  p_page_item  Seitenelement, das durch die Validierung betroffen ist
+   * @param  p_message    Meldungstext bzw. Referenz auf eine MSG_LOG-Meldung
+   * @param [p_msg_args]  Optionale Meldungsparameter
    */
   procedure set_error(
     p_test in boolean,
@@ -243,8 +243,8 @@ as
     
   
   /** Methode zur Konvertierung einer CLOB-Instanz zu BLOB-Instanz
-   * @param  p_clob  CLOB-Instanz
-   * @return BLOB-Instanz
+   * @param  p_clob  CLOB-Instanz, die konvertiert werden soll
+   * @return konvertierte BLOB-Instanz
    */
   function clob_to_blob(
     p_clob in clob) 
@@ -270,24 +270,72 @@ as
   
   
   /* ASSERTIONS-Wrapper */
+  /* Methoden rufen PIT.ASSERT... auf, fangen eventuelle Fehler und geben sie ueber 
+   * PIT.LOG_SPECIFIC nur an APEX aus. P_AFFECTED_ID stellt das Seitenelement dar, an
+   * das die Fehlermeldung gebunden wird.
+   * DOKU siehe PIT
+   */
   procedure assert(
     p_condition in boolean,
     p_message_name in varchar2,
-    p_affected_id in varchar2,
-    p_arg_list msg_args);
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null);
+    
+    
+  procedure assert_is_null(
+    p_condition in varchar2,
+    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null);
+    
+    
+  procedure assert_is_null(
+    p_condition in number,
+    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null);
+    
+    
+  procedure assert_is_null(
+    p_condition in date,
+    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null);
+  
+  
+  procedure assert_not_null(
+    p_condition in varchar2,
+    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null);
+    
+    
+  procedure assert_not_null(
+    p_condition in number,
+    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null);
+    
+    
+  procedure assert_not_null(
+    p_condition in date,
+    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null);
     
     
   procedure assert_exists(
     p_stmt in varchar2,
     p_message_name in varchar2,
-    p_affected_id in varchar2,
-    p_arg_list msg_args);
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null);
     
   
   procedure assert_not_exists(
     p_stmt in varchar2,
     p_message_name in varchar2,
-    p_affected_id in varchar2,
-    p_arg_list msg_args);
-  end utl_apex;
-  /
+    p_affected_id in varchar2 default null,
+    p_arg_list msg_args default null);
+  
+end utl_apex;
+/
