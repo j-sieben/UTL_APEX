@@ -14,6 +14,21 @@ as
   -- Private variable declarations
   
   -- INTERFACE
+  function user_is_authorized(
+    p_authorization_scheme in varchar2)
+    return integer
+  as
+    l_result pls_integer;
+  begin
+    if apex_authorization.is_authorized(p_authorization_scheme) then
+      l_result := c_true;
+    else
+      l_result := c_false;
+    end if;
+    return l_result;
+  end user_is_authorized;
+  
+  
   procedure create_apex_session(
     p_apex_user in apex_workspace_activity_log.apex_user%type,
     p_application_id in apex_applications.application_id%type,

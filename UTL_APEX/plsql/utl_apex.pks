@@ -18,6 +18,18 @@ as
   /* Public variable declarations */
   
   /* Public function and procedure declarations */
+  /** Method to check whether actual user has got an authorization
+   * %param  p_authorization_scheme  Name of the authorization scheme that is requested for a given ressource.
+   *                                 This name may be taken from the APEX data dictionary
+   * %return 1 if user is authorized, 0 otherwise
+   * %usage  Is called to check whether the actual user has got an authorization
+   *         for a requested ressource. Wrapper around APEX_AUTHORIZATION
+   */
+  function user_is_authorized(
+    p_authorization_scheme in varchar2)
+    return integer;
+    
+    
   /** Method to create an APEX session outside a browser. Used for test purposes
    * @param  p_apex_user       APEX session user
    * @param  p_application_id  ID of the application
