@@ -11,7 +11,20 @@ as
   c_default constant varchar2(30 byte) := 'DEFAULT';
   c_pit_apex_module constant varchar2(30 byte) := 'PIT_APEX';
 
-  -- Private variable declarations
+  -- HELPER
+  function get_page_element(
+    p_affected_id in varchar2)
+    return varchar2
+  as
+    l_element varchar2(100);
+  begin
+    l_element := p_affected_id;
+    if not regexp_like(l_element, '^P[0-9]+_') then
+      l_element := get_page || l_element;
+    end if;
+    return l_element;
+  end get_page_element;
+  
   
   -- INTERFACE
   function user_is_authorized(
@@ -650,9 +663,10 @@ as
       p_condition => p_condition);
   exception
     when msg.ASSERT_TRUE_ERR then
+      
       pit.log_specific(
         p_message_name => p_message_name,
-        p_affected_id => p_affected_id,
+        p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
         p_log_modules => c_pit_apex_module);
@@ -671,7 +685,7 @@ as
     when msg.ASSERT_EXISTS_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
-        p_affected_id => p_affected_id,
+        p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
         p_log_modules => c_pit_apex_module);
@@ -690,7 +704,7 @@ as
     when msg.ASSERT_EXISTS_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
-        p_affected_id => p_affected_id,
+        p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
         p_log_modules => c_pit_apex_module);
@@ -709,7 +723,7 @@ as
     when msg.ASSERT_EXISTS_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
-        p_affected_id => p_affected_id,
+        p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
         p_log_modules => c_pit_apex_module);
@@ -728,7 +742,7 @@ as
     when msg.ASSERT_EXISTS_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
-        p_affected_id => p_affected_id,
+        p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
         p_log_modules => c_pit_apex_module);
@@ -747,7 +761,7 @@ as
     when msg.ASSERT_EXISTS_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
-        p_affected_id => p_affected_id,
+        p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
         p_log_modules => c_pit_apex_module);
@@ -766,7 +780,7 @@ as
     when msg.ASSERT_EXISTS_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
-        p_affected_id => p_affected_id,
+        p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
         p_log_modules => c_pit_apex_module);
@@ -786,7 +800,7 @@ as
     when msg.ASSERT_EXISTS_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
-        p_affected_id => p_affected_id,
+        p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
         p_log_modules => c_pit_apex_module);
@@ -806,7 +820,7 @@ as
     when msg.ASSERT_NOT_EXISTS_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
-        p_affected_id => p_affected_id,
+        p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
         p_log_modules => c_pit_apex_module);
