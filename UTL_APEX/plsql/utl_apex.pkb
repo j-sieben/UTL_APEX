@@ -178,6 +178,144 @@ as
   end get;
   
   
+  function get_table_api(
+    p_owner in varchar2,
+    p_table_name in varchar2,
+    p_short_name in varchar2,
+    p_pk_insert in number default 1,
+    p_pk_columns in char_table default null,
+    p_exclude_columns in char_table default null)
+    return clob
+  as
+    l_clob clob;
+    c_cgrtm_type constant varchar2(30) := 'TABLE_API';
+    c_column constant varchar2(30) := 'COLUMN';
+  begin
+    
+    with params as (
+           -- Get input params and templates
+           select lower(p_owner) owner,
+                  lower(p_table_name) table_name,
+                  lower(p_short_name) short_name,
+                  p_exclude_columns exclusion_list,
+                  p_pk_insert pk_insert,
+                  cgtm_name, cgtm_mode, cgtm_text
+             from code_generator_templates
+            where cgtm_type = c_cgrtm_type
+         ),
+         column_data as(
+           -- prepare column list
+           select lower(col.table_name) table_name, lower(p.short_name) short_name,
+                  lower(col.column_name) column_name, lower(col.data_type) data_type,
+                  case when con.column_name is not null then 1 else 0 end is_pk,
+                  cgtm_name, cgtm_mode, cgtm_text
+             from all_tab_columns col
+             left join (
+                  select col.owner, col.table_name, col.column_name
+                    from all_cons_columns col 
+                    join all_constraints con
+                      on col.owner = con.owner
+                     and col.constraint_name = con.constraint_name
+                   where con.constraint_type = 'P'
+                   union all
+                  select distinct upper(owner) owner, upper(table_name) table_name, column_name
+                    from params p
+                   cross join (
+                         select upper(column_value) column_name
+                           from table(p_pk_columns))) con
+               on col.owner = con.owner
+              and col.table_name = con.table_name
+              and col.column_name = con.column_name
+             join params p
+               on upper(p.owner) = col.owner
+              and upper(p.table_name) = col.table_name
+            where col.column_name not in (
+                  select upper(column_value)
+                    from table(p.exclusion_list))
+            order by col.column_id)
+  select /*+ no_merge (column_data) */
+         code_generator.generate_text(cursor(
+           -- generate method specs and implementation
+           select cgtm_text, table_name, short_name,
+                    code_generator.generate_text(cursor(
+                      -- generate explicit param list including PK
+                      select cgtm_text template,
+                             column_name, data_type
+                        from column_data
+                       where cgtm_name = c_column
+                         and cgtm_mode = 'PARAM_LIST'), ',' || chr(10), 4) param_list,
+                    code_generator.generate_text(cursor(
+                      -- generate code to copy parameter values to record instance
+                      select cgtm_text template,
+                             column_name
+                        from column_data
+                       where cgtm_name = c_column
+                         and cgtm_mode = 'RECORD_LIST'), ';' || chr(10), 4) record_list,
+                    code_generator.generate_text(cursor(
+                      -- generate list of PK columns for delete
+                      select cgtm_text template,
+                             column_name
+                        from column_data
+                       where cgtm_name = c_column
+                         and cgtm_mode = 'PK_LIST'
+                         and is_pk = 1), chr(10) || '       and ') pk_list,
+                    code_generator.generate_text(cursor(
+                      -- generate merge statement
+                      select cgtm_text template,
+                             table_name,
+                             short_name,
+                             code_generator.generate_text(cursor(
+                               -- generate using clause (parameter to columns)
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = c_column
+                                  and cgtm_mode = 'USING_LIST'), ',' || chr(10), 18) using_list,
+                             code_generator.generate_text(cursor(
+                               -- generate list of PK columns for on clause
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = c_column
+                                  and cgtm_mode = 'ON_LIST'
+                                  and is_pk = 1), chr(10) || '       and ') on_list,
+                             code_generator.generate_text(cursor(
+                               -- generate list update columns (w/o PK list)
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = c_column
+                                  and cgtm_mode = 'UPDATE_LIST'
+                                  and is_pk = 0), ',' || chr(10), 12) update_list,
+                             code_generator.generate_text(cursor(
+                               -- generate list of insert columns
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = c_column
+                                  and cgtm_mode = 'INSERT_LIST'
+                                  and is_pk in (0, pk_insert)), ',', 1) insert_list,
+                             code_generator.generate_text(cursor(
+                               -- generate column list for insert clause
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = 'COLUMN'
+                                  and cgtm_mode = 'COL_LIST'
+                                  and is_pk in (0, pk_insert)), ',', 1) col_list
+                        from params
+                       where cgtm_name = 'MERGE'
+                         and cgtm_mode = 'DEFAULT')) merge_stmt
+             from params p
+            where cgtm_name = 'METHODS'
+              and cgtm_mode = 'DEFAULT')) resultat
+    into l_clob
+    from dual;
+  
+    return l_clob;
+  end get_table_api;
+  
+  
   function get_form_methods(
     p_application_id in number,
     p_page_id in number,
@@ -187,6 +325,7 @@ as
     return clob
   as
     l_column_list varchar2(32767);
+    l_mode code_generator_templates.cgtm_mode%type := c_default;
     l_code clob;
   begin
     pit.enter_mandatory(c_pkg, 'get_form_methods', msg_params(
@@ -202,6 +341,11 @@ as
     pit.assert_not_null(p_insert_method, msg.UTL_PARAMETER_REQUIRED, msg_args('P_INSET_METHOD'));
     pit.assert_not_null(p_update_method, msg.UTL_PARAMETER_REQUIRED, msg_args('P_UPDATE_METHOD'));
     pit.assert_not_null(p_delete_method, msg.UTL_PARAMETER_REQUIRED, msg_args('P_DELETE_METHOD'));
+    
+    -- Analyze whether one methode for insert and update are requested
+    if p_insert_method = p_update_method then
+      l_mode := 'MERGE';
+    end if;
     
     -- generate column list
     select code_generator.generate_text(cursor(
@@ -264,7 +408,7 @@ as
                 and apo.process_type_code = 'DML_FETCH_ROW'
                 and t.cgtm_name = 'METHODS'
                 and t.cgtm_type = 'APEX_FORM'
-                and t.cgtm_mode = c_default))
+                and t.cgtm_mode = l_mode))
       into l_code
       from dual;
       
@@ -682,7 +826,7 @@ as
   begin
     pit.assert_is_null(p_condition);
   exception
-    when msg.ASSERT_EXISTS_ERR then
+    when msg.ASSERT_IS_NULL_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
@@ -701,7 +845,7 @@ as
   begin
     pit.assert_is_null(p_condition);
   exception
-    when msg.ASSERT_EXISTS_ERR then
+    when msg.ASSERT_IS_NULL_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
@@ -720,7 +864,7 @@ as
   begin
     pit.assert_is_null(p_condition);
   exception
-    when msg.ASSERT_EXISTS_ERR then
+    when msg.ASSERT_IS_NULL_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
@@ -739,7 +883,7 @@ as
   begin
     pit.assert_not_null(p_condition);
   exception
-    when msg.ASSERT_EXISTS_ERR then
+    when msg.ASSERT_IS_NOT_NULL_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
@@ -758,7 +902,7 @@ as
   begin
     pit.assert_not_null(p_condition);
   exception
-    when msg.ASSERT_EXISTS_ERR then
+    when msg.ASSERT_IS_NOT_NULL_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
@@ -777,7 +921,7 @@ as
   begin
     pit.assert_not_null(p_condition);
   exception
-    when msg.ASSERT_EXISTS_ERR then
+    when msg.ASSERT_IS_NOT_NULL_ERR then
       pit.log_specific(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),

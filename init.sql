@@ -24,17 +24,17 @@ col ver_le_05 new_val VER_LE_05 format a5
 col ver_le_1801 new_val VER_LE_1801 format a5
 col ver_le_18 new_val VER_LE_18 format a5
 
-select case when username like 'APEX_05%' then 'true'
+select case when max(username) like 'APEX_05%' then 'true'
        else 'false' end ver_le_05,
-       case username
+       case max(username)
        when 'APEX_050000' then 'true'
        else 'false' end ver_le_0500,
-       case username
+       case max(username)
        when 'APEX_050100' then 'true'
        else 'false' end ver_le_0501,
-       case when username like 'APEX_18%' then 'true'
+       case when max(username) like 'APEX_18%' then 'true'
        else 'false' end ver_le_18,
-       case username
+       case max(username)
        when 'APEX_180100' then 'true'
        else 'false' end ver_le_1801
   from all_users

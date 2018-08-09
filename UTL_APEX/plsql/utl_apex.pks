@@ -93,13 +93,41 @@ as
     return varchar2;
   
   
+  /** Helper to create a basic table api
+   * @param  p_owner            Owner of the table or view the API aims at
+   * @param  p_table_name       Name of the table or view the API aims at
+   * @param  p_short_name       Abbreviated table name. Is used for method names
+   * @param  p_pk_insert        Flag to indicate whether PK columns are part of the insert 1 or not 0
+   *                            Useful if the PK is created using a trigger (e.g. SYS_GUID())
+   *                            Default 1: PK columns are part of insert.
+   * @param  p_pk_columns       Optional list of pk column names if P_TABLE_NAME is a view
+   * @param  p_exclude_columns  Optional list of column names the API shall ignore
+   *                            Useful to suppress housekeeping columns like VALID_FROM/TO etc.
+   * @return CLOB containing code snippets to be included into a package
+   * @usage  This method assumes that the objects (table and or view) ar accessible by
+   *         the actual schema.
+   *         Three methods are provided:
+   *         - DELETE method, expecting a record of table/view%rowtype
+   *         - MERGE  method, expecting a record of table/view%rowtype
+   *         - MERGE  method, overloaded version with parameter list
+   */
+  function get_table_api(
+    p_owner in varchar2,
+    p_table_name in varchar2,
+    p_short_name in varchar2,
+    p_pk_insert in number default 1,
+    p_pk_columns in char_table default null,
+    p_exclude_columns in char_table default null)
+    return clob;
+  
+  
   /** Helper to create a PL/SQL stub to implement forms logic
    * @param  p_application_id  APEX application ID
    * @param  p_page_id         APEX page id
    * @param  p_insert_method   name of the insert method of the BL package
    * @param  p_update_method   name of the update method of the BL package
    * @param  p_delete_method   name of the delete method of the BL package
-   * @return CLOB mit Code-Schnippseln zur Integration in Packages
+   * @return CLOB containing code snippets to be included into a package
    * @usage  This method assumes that the following conditions are met:
    *         - The application page is based on a UI-View
    *         - A package exists at the business logic layer that provides methods to
