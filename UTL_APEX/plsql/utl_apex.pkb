@@ -179,9 +179,9 @@ as
   
   
   function get_table_api(
-    p_owner in varchar2,
     p_table_name in varchar2,
     p_short_name in varchar2,
+    p_owner in varchar2 default user,
     p_pk_insert in number default 1,
     p_pk_columns in char_table default null,
     p_exclude_columns in char_table default null)
@@ -191,13 +191,11 @@ as
     c_cgrtm_type constant varchar2(30) := 'TABLE_API';
     c_column constant varchar2(30) := 'COLUMN';
   begin
-    
-    with params as (
+      with params as (
            -- Get input params and templates
            select lower(p_owner) owner,
                   lower(p_table_name) table_name,
                   lower(p_short_name) short_name,
-                  p_exclude_columns exclusion_list,
                   p_pk_insert pk_insert,
                   cgtm_name, cgtm_mode, cgtm_text
              from code_generator_templates
@@ -207,105 +205,109 @@ as
            -- prepare column list
            select lower(col.table_name) table_name, lower(p.short_name) short_name,
                   lower(col.column_name) column_name, lower(col.data_type) data_type,
-                  case when con.column_name is not null then 1 else 0 end is_pk,
+                  case when coalesce(con.column_name, pk.col_name) is not null then 1 else 0 end is_pk,
                   cgtm_name, cgtm_mode, cgtm_text
              from all_tab_columns col
+             join params p
+               on upper(p.owner) = col.owner
+              and upper(p.table_name) = col.table_name
+             -- get list of pk columns. In case of a table we can read them from the data dictionary, otherwise from P_PK_COLUMNS
              left join (
+                  -- list of pk columns from data dictionary
                   select col.owner, col.table_name, col.column_name
                     from all_cons_columns col 
                     join all_constraints con
                       on col.owner = con.owner
                      and col.constraint_name = con.constraint_name
-                   where con.constraint_type = 'P'
-                   union all
-                  select distinct upper(owner) owner, upper(table_name) table_name, column_name
-                    from params p
-                   cross join (
-                         select upper(column_value) column_name
-                           from table(p_pk_columns))) con
+                   where con.constraint_type = 'P') con
                on col.owner = con.owner
               and col.table_name = con.table_name
               and col.column_name = con.column_name
-             join params p
-               on upper(p.owner) = col.owner
-              and upper(p.table_name) = col.table_name
-            where col.column_name not in (
-                  select upper(column_value)
-                    from table(p.exclusion_list))
+             left join (
+                  -- list of pk columns from P_PK_COLUMNS
+                  -- Don't refactor COL_NAME to COLUMN_NAME, as this leads to a strange Oracle error
+                  select upper(column_value) col_name
+                    from table(p_pk_columns)) pk
+               on col.column_name = pk.col_name
+             left join (
+                  select upper(column_value) column_name
+                    from table(p_exclude_columns)) ec
+               on col.column_name = ec.column_name
+            where ec.column_name is null
             order by col.column_id)
-  select /*+ no_merge (column_data) */
+  select /*+ no_mrge (params, column_data) */
          code_generator.generate_text(cursor(
            -- generate method specs and implementation
            select cgtm_text, table_name, short_name,
-                    code_generator.generate_text(cursor(
-                      -- generate explicit param list including PK
-                      select cgtm_text template,
-                             column_name, data_type
-                        from column_data
-                       where cgtm_name = c_column
-                         and cgtm_mode = 'PARAM_LIST'), ',' || chr(10), 4) param_list,
-                    code_generator.generate_text(cursor(
-                      -- generate code to copy parameter values to record instance
-                      select cgtm_text template,
-                             column_name
-                        from column_data
-                       where cgtm_name = c_column
-                         and cgtm_mode = 'RECORD_LIST'), ';' || chr(10), 4) record_list,
-                    code_generator.generate_text(cursor(
-                      -- generate list of PK columns for delete
-                      select cgtm_text template,
-                             column_name
-                        from column_data
-                       where cgtm_name = c_column
-                         and cgtm_mode = 'PK_LIST'
-                         and is_pk = 1), chr(10) || '       and ') pk_list,
-                    code_generator.generate_text(cursor(
-                      -- generate merge statement
-                      select cgtm_text template,
-                             table_name,
-                             short_name,
-                             code_generator.generate_text(cursor(
-                               -- generate using clause (parameter to columns)
-                               select cgtm_text template,
-                                      column_name
-                                 from column_data
-                                where cgtm_name = c_column
-                                  and cgtm_mode = 'USING_LIST'), ',' || chr(10), 18) using_list,
-                             code_generator.generate_text(cursor(
-                               -- generate list of PK columns for on clause
-                               select cgtm_text template,
-                                      column_name
-                                 from column_data
-                                where cgtm_name = c_column
-                                  and cgtm_mode = 'ON_LIST'
-                                  and is_pk = 1), chr(10) || '       and ') on_list,
-                             code_generator.generate_text(cursor(
-                               -- generate list update columns (w/o PK list)
-                               select cgtm_text template,
-                                      column_name
-                                 from column_data
-                                where cgtm_name = c_column
-                                  and cgtm_mode = 'UPDATE_LIST'
-                                  and is_pk = 0), ',' || chr(10), 12) update_list,
-                             code_generator.generate_text(cursor(
-                               -- generate list of insert columns
-                               select cgtm_text template,
-                                      column_name
-                                 from column_data
-                                where cgtm_name = c_column
-                                  and cgtm_mode = 'INSERT_LIST'
-                                  and is_pk in (0, pk_insert)), ',', 1) insert_list,
-                             code_generator.generate_text(cursor(
-                               -- generate column list for insert clause
-                               select cgtm_text template,
-                                      column_name
-                                 from column_data
-                                where cgtm_name = 'COLUMN'
-                                  and cgtm_mode = 'COL_LIST'
-                                  and is_pk in (0, pk_insert)), ',', 1) col_list
-                        from params
-                       where cgtm_name = 'MERGE'
-                         and cgtm_mode = 'DEFAULT')) merge_stmt
+                  code_generator.generate_text(cursor(
+                    -- generate explicit param list including PK
+                    select cgtm_text template,
+                           column_name, data_type
+                      from column_data
+                     where cgtm_name = c_column
+                       and cgtm_mode = 'PARAM_LIST'), ',' || chr(10), 4) param_list,
+                  code_generator.generate_text(cursor(
+                    -- generate code to copy parameter values to record instance
+                    select cgtm_text template,
+                           column_name
+                      from column_data
+                     where cgtm_name = c_column
+                       and cgtm_mode = 'RECORD_LIST'), ';' || chr(10), 4) record_list,
+                  code_generator.generate_text(cursor(
+                    -- generate list of PK columns for delete
+                    select cgtm_text template,
+                           column_name
+                      from column_data
+                     where cgtm_name = c_column
+                       and cgtm_mode = 'PK_LIST'
+                       and is_pk = 1), chr(10) || '       and ') pk_list,
+                  code_generator.generate_text(cursor(
+                    -- generate merge statement
+                    select cgtm_text template,
+                           table_name,
+                           short_name,
+                           code_generator.generate_text(cursor(
+                             -- generate using clause (parameter to columns)
+                             select cgtm_text template,
+                                    column_name
+                               from column_data
+                              where cgtm_name = c_column
+                                and cgtm_mode = 'USING_LIST'), ',' || chr(10), 18) using_list,
+                           code_generator.generate_text(cursor(
+                             -- generate list of PK columns for on clause
+                             select cgtm_text template,
+                                    column_name
+                               from column_data
+                              where cgtm_name = c_column
+                                and cgtm_mode = 'ON_LIST'
+                                and is_pk = 1), chr(10) || '       and ') on_list,
+                           code_generator.generate_text(cursor(
+                             -- generate list update columns (w/o PK list)
+                             select cgtm_text template,
+                                    column_name
+                               from column_data
+                              where cgtm_name = c_column
+                                and cgtm_mode = 'UPDATE_LIST'
+                                and is_pk = 0), ',' || chr(10), 12) update_list,
+                           code_generator.generate_text(cursor(
+                             -- generate list of insert columns
+                             select cgtm_text template,
+                                    column_name
+                               from column_data
+                              where cgtm_name = c_column
+                                and cgtm_mode = 'INSERT_LIST'
+                                and is_pk in (0, pk_insert)), ',', 1) insert_list,
+                           code_generator.generate_text(cursor(
+                             -- generate column list for insert clause
+                             select cgtm_text template,
+                                    column_name
+                               from column_data
+                              where cgtm_name = 'COLUMN'
+                                and cgtm_mode = 'COL_LIST'
+                                and is_pk in (0, pk_insert)), ',', 1) col_list
+                      from params
+                     where cgtm_name = 'MERGE'
+                       and cgtm_mode = 'DEFAULT')) merge_stmt
              from params p
             where cgtm_name = 'METHODS'
               and cgtm_mode = 'DEFAULT')) resultat

@@ -112,9 +112,9 @@ as
    *         - MERGE  method, overloaded version with parameter list
    */
   function get_table_api(
-    p_owner in varchar2,
     p_table_name in varchar2,
     p_short_name in varchar2,
+    p_owner in varchar2 default user,
     p_pk_insert in number default 1,
     p_pk_columns in char_table default null,
     p_exclude_columns in char_table default null)
