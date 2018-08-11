@@ -46,9 +46,13 @@ prompt
 prompt &section.
 prompt &h1.Package UTL_APEX
 @utl_apex/plsql/utl_apex.pks
+prompt &h1.Package UTL_APEX_DDL
+@utl_apex/plsql/utl_apex_ddl.pks
 
 prompt &h1.Package Body UTL_APEX
 @utl_apex/plsql/utl_apex.pkb
+prompt &h1.Package Body UTL_APEX_DDL
+@utl_apex/plsql/utl_apex_ddl.pkb
 
 prompt
 prompt &section.

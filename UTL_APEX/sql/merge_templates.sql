@@ -1,4 +1,5 @@
 set define off
+set sqlprefix off
 
 begin
   code_generator.merge_template(
