@@ -246,7 +246,7 @@ q'^    #RECORD_LIST#;^' || chr(10) ||
 q'^    ^' || chr(10) ||
 q'^    merge_#SHORT_NAME#(l_row);^' || chr(10) ||
 q'^  end merge_#SHORT_NAME#;^' from dual union all 
-       select 'COLUMN', 'TABLE_API', 'PARAM_LIST', q'^p_#COLUMN_NAME# in #DATA_TYPE#^' from dual union all
+       select 'COLUMN', 'TABLE_API', 'PARAM_LIST', q'^p_#COLUMN_NAME_RPAD# in #TABLE_NAME#.#COLUMN_NAME#%type^' from dual union all
        select 'COLUMN', 'TABLE_API', 'PK_LIST', q'^#COLUMN_NAME# = p_row.#COLUMN_NAME#^' from dual union all
        select 'COLUMN', 'TABLE_API', 'UPDATE_LIST', q'^t.#COLUMN_NAME# = s.#COLUMN_NAME#^' from dual union all
        select 'COLUMN', 'TABLE_API', 'RECORD_LIST', q'^l_row.#COLUMN_NAME# := p_#COLUMN_NAME#^' from dual union all

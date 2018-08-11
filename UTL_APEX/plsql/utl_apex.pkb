@@ -204,7 +204,7 @@ as
          column_data as(
            -- prepare column list
            select lower(col.table_name) table_name, lower(p.short_name) short_name,
-                  lower(col.column_name) column_name, lower(col.data_type) data_type,
+                  lower(col.column_name) column_name, max(length(col.column_name)) over () max_length,
                   case when coalesce(con.column_name, pk.col_name) is not null then 1 else 0 end is_pk,
                   cgtm_name, cgtm_mode, cgtm_text
              from all_tab_columns col
@@ -218,6 +218,7 @@ as
                     from all_cons_columns col 
                     join all_constraints con
                       on col.owner = con.owner
+                     and col.table_name = con.table_name
                      and col.constraint_name = con.constraint_name
                    where con.constraint_type = 'P') con
                on col.owner = con.owner
@@ -235,14 +236,15 @@ as
                on col.column_name = ec.column_name
             where ec.column_name is null
             order by col.column_id)
-  select /*+ no_mrge (params, column_data) */
+  select /*+ no_merge (column_data) */
          code_generator.generate_text(cursor(
            -- generate method specs and implementation
-           select cgtm_text, table_name, short_name,
+           select cgtm_text template, table_name, short_name,
                   code_generator.generate_text(cursor(
                     -- generate explicit param list including PK
                     select cgtm_text template,
-                           column_name, data_type
+                           rpad(column_name, max_length, ' ') column_name_rpad,
+                           column_name
                       from column_data
                      where cgtm_name = c_column
                        and cgtm_mode = 'PARAM_LIST'), ',' || chr(10), 4) param_list,
@@ -290,21 +292,21 @@ as
                                 and cgtm_mode = 'UPDATE_LIST'
                                 and is_pk = 0), ',' || chr(10), 12) update_list,
                            code_generator.generate_text(cursor(
-                             -- generate list of insert columns
-                             select cgtm_text template,
-                                    column_name
-                               from column_data
-                              where cgtm_name = c_column
-                                and cgtm_mode = 'INSERT_LIST'
-                                and is_pk in (0, pk_insert)), ',', 1) insert_list,
-                           code_generator.generate_text(cursor(
                              -- generate column list for insert clause
                              select cgtm_text template,
                                     column_name
                                from column_data
                               where cgtm_name = 'COLUMN'
                                 and cgtm_mode = 'COL_LIST'
-                                and is_pk in (0, pk_insert)), ',', 1) col_list
+                                and is_pk in (0, pk_insert)), ',', 1) col_list,
+                           code_generator.generate_text(cursor(
+                             -- generate list of insert columns
+                             select cgtm_text template,
+                                    column_name
+                               from column_data
+                              where cgtm_name = c_column
+                                and cgtm_mode = 'INSERT_LIST'
+                                and is_pk in (0, pk_insert)), ',', 1) insert_list
                       from params
                      where cgtm_name = 'MERGE'
                        and cgtm_mode = 'DEFAULT')) merge_stmt
