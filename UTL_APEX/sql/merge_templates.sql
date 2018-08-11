@@ -1,16 +1,157 @@
 set define off
-set sqlprefix off
 
 begin
+  code_generator.merge_template(
+    p_cgtm_name => 'METHODS',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'DEFAULT',
+    p_cgtm_text => q'°  -- SPEC\CR\°' || 
+q'°  procedure delete_#SHORT_NAME#(\CR\°' || 
+q'°    p_row #TABLE_NAME#%rowtype);\CR\°' || 
+q'°    \CR\°' || 
+q'°  procedure merge_#SHORT_NAME#(\CR\°' || 
+q'°    p_row #TABLE_NAME#%rowtype);\CR\°' || 
+q'°    \CR\°' || 
+q'°  procedure merge_#SHORT_NAME#(\CR\°' || 
+q'°    #PARAM_LIST#);\CR\°' || 
+q'°    \CR\°' || 
+q'°  -- IMPLEMENTATION\CR\°' || 
+q'°  procedure delete_#SHORT_NAME#(\CR\°' || 
+q'°    p_row #TABLE_NAME#%rowtype)\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    delete from #TABLE_NAME#\CR\°' || 
+q'°     where #PK_LIST#;\CR\°' || 
+q'°  end delete_#SHORT_NAME#;\CR\°' || 
+q'°    \CR\°' || 
+q'°  procedure merge_#SHORT_NAME#(\CR\°' || 
+q'°    p_row #TABLE_NAME#%rowtype)\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    #MERGE_STMT#\CR\°' || 
+q'°  end merge_#SHORT_NAME#;\CR\°' || 
+q'°    \CR\°' || 
+q'°  procedure merge_#SHORT_NAME#(\CR\°' || 
+q'°    #PARAM_LIST#) \CR\°' || 
+q'°  as\CR\°' || 
+q'°    l_row #TABLE_NAME#%rowtype;\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    #RECORD_LIST#;\CR\°' || 
+q'°    \CR\°' || 
+q'°    merge_#SHORT_NAME#(l_row);\CR\°' || 
+q'°  end merge_#SHORT_NAME#;°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'COLUMN',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'PARAM_LIST',
+    p_cgtm_text => q'°p_#COLUMN_NAME_RPAD# in #TABLE_NAME#.#COLUMN_NAME#%type°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'COLUMN',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'PK_LIST',
+    p_cgtm_text => q'°#COLUMN_NAME# = p_row.#COLUMN_NAME#°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'COLUMN',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'UPDATE_LIST',
+    p_cgtm_text => q'°t.#COLUMN_NAME# = s.#COLUMN_NAME#°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'COLUMN',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'RECORD_LIST',
+    p_cgtm_text => q'°l_row.#COLUMN_NAME# := p_#COLUMN_NAME#°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'COLUMN',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'USING_LIST',
+    p_cgtm_text => q'°p_row.#COLUMN_NAME# #COLUMN_NAME#°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'COLUMN',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'ON_LIST',
+    p_cgtm_text => q'°t.#COLUMN_NAME# = s.#COLUMN_NAME#°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'COLUMN',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'INSERT_LIST',
+    p_cgtm_text => q'°s.#COLUMN_NAME#°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'COLUMN',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'COL_LIST',
+    p_cgtm_text => q'°t.#COLUMN_NAME#°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'MERGE',
+    p_cgtm_type => 'TABLE_API',
+    p_cgtm_mode => 'DEFAULT',
+    p_cgtm_text => q'°merge into #TABLE_NAME# t\CR\°' || 
+q'°    using (select #USING_LIST#\CR\°' || 
+q'°             from dual) s\CR\°' || 
+q'°       on (#ON_LIST#)\CR\°' || 
+q'°     when matched then update set\CR\°' || 
+q'°            #UPDATE_LIST#\CR\°' || 
+q'°     when not matched then insert(\CR\°' || 
+q'°            #COL_LIST#)\CR\°' || 
+q'°          values(\CR\°' || 
+q'°            #INSERT_LIST#);°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => 70
+  );
+
+  code_generator.merge_template(
+    p_cgtm_name => 'RULE_EXPRESSION',
+    p_cgtm_type => 'REDACT',
+    p_cgtm_mode => 'DEFAULT',
+    p_cgtm_text => q'°SYS_CONTEXT('USERENV','OS_USER') != '#EXPRESSION#'°',
+    p_cgtm_log_text => q'°°',
+    p_cgtm_log_severity => null
+  );
+
   code_generator.merge_template(
     p_cgtm_name => 'VIEW',
     p_cgtm_type => 'APEX_COLLECTION',
     p_cgtm_mode => 'DEFAULT',
-    p_cgtm_text => q'°create or replace view force #VIEW_NAME# as°' ||
-q'°select seq_id,°' ||
-q'°       #COLUMN_LIST#°' ||
-q'°  from apex_collections°' ||
-q'° where collection_name = '#VIEW_NAME#'°' ||
+    p_cgtm_text => q'°create or replace view force #VIEW_NAME# as\CR\°' || 
+q'°select seq_id,\CR\°' || 
+q'°       #COLUMN_LIST#\CR\°' || 
+q'°  from apex_collections\CR\°' || 
+q'° where collection_name = '#VIEW_NAME#'\CR\°' || 
 q'°°',
     p_cgtm_log_text => q'°°',
     p_cgtm_log_severity => 70
@@ -38,71 +179,71 @@ q'°°',
     p_cgtm_name => 'PACKAGE',
     p_cgtm_type => 'APEX_COLLECTION',
     p_cgtm_mode => 'DEFAULT',
-    p_cgtm_text => q'°create or replace package #PAGE_ALIAS#_ui_pkg°' ||
-q'°  authid definer°' ||
-q'°as°' ||
-q'°°' ||
-q'°  function validate_#PAGE_ALIAS#°' ||
-q'°    return boolean;°' ||
-q'°    °' ||
-q'°  procedure process_#PAGE_ALIAS#;°' ||
-q'°°' ||
-q'°end #PAGE_ALIAS#_ui_pkg;°' ||
-q'°/°' ||
-q'°°' ||
-q'°create or replace package body emp_ui_pkg°' ||
-q'°as°' ||
-q'°°' ||
-q'°  c_pkg constant varchar2(30 byte) := $$PLSQL_UNIT;°' ||
-q'°  c_yes constant varchar2(3 byte) := 'YES';°' ||
-q'°  c_no constant varchar2(3 byte) := 'NO';°' ||
-q'°  °' ||
-q'°  g_page_values utl_apex.page_value_t;°' ||
-q'°  g_#PAGE_ALIAS#_row app_ui_emp_main%rowtype;°' ||
-q'°  °' ||
-q'°  procedure copy_emp°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    g_page_values := utl_apex.get_page_values;°' ||
-q'°    #COPY_LIST#;°' ||
-q'°  end copy_emp;°' ||
-q'°  °' ||
-q'°  °' ||
-q'°  function validate_emp°' ||
-q'°    return boolean°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    -- copy_emp;°' ||
-q'°    -- TODO: Validierungslogik implementieren°' ||
-q'°    return true;°' ||
-q'°  end validate_emp;°' ||
-q'°  °' ||
-q'°    °' ||
-q'°  procedure process_emp°' ||
-q'°  as°' ||
-q'°    c_collection_name constant varchar2(30 byte) := '#COLLECTION_NAME#';°' ||
-q'°  begin°' ||
-q'°    copy_emp;  °' ||
-q'°    case°' ||
-q'°    when utl_apex.INSERTING then°' ||
-q'°      apex_collection.add_member(°' ||
-q'°        p_collection_name => c_collection_name,°' ||
-q'°        #PARAM_LIST#,°' ||
-q'°        p_generate_md5 => c_no);°' ||
-q'°    when utl_apex.UPDATING then°' ||
-q'°      apex_collection.update_member(°' ||
-q'°        p_seq => g_emp_row.seq_id,°' ||
-q'°        p_collection_name => c_collection_name,°' ||
-q'°        #PARAM_LIST#);°' ||
-q'°    when utl_apex.DELETING then°' ||
-q'°      apex_collection.delete_member(°' ||
-q'°        p_seq => g_emp_row.seq_id,°' ||
-q'°        p_collection_name => c_collection_name);°' ||
-q'°    else°' ||
-q'°      null;°' ||
-q'°    end case;°' ||
-q'°  end process_emp;°' ||
-q'°°' ||
+    p_cgtm_text => q'°create or replace package #PAGE_ALIAS#_ui_pkg\CR\°' || 
+q'°  authid definer\CR\°' || 
+q'°as\CR\°' || 
+q'°\CR\°' || 
+q'°  function validate_#PAGE_ALIAS#\CR\°' || 
+q'°    return boolean;\CR\°' || 
+q'°    \CR\°' || 
+q'°  procedure process_#PAGE_ALIAS#;\CR\°' || 
+q'°\CR\°' || 
+q'°end #PAGE_ALIAS#_ui_pkg;\CR\°' || 
+q'°/\CR\°' || 
+q'°\CR\°' || 
+q'°create or replace package body emp_ui_pkg\CR\°' || 
+q'°as\CR\°' || 
+q'°\CR\°' || 
+q'°  c_pkg constant varchar2(30 byte) := $$PLSQL_UNIT;\CR\°' || 
+q'°  c_yes constant varchar2(3 byte) := 'YES';\CR\°' || 
+q'°  c_no constant varchar2(3 byte) := 'NO';\CR\°' || 
+q'°  \CR\°' || 
+q'°  g_page_values utl_apex.page_value_t;\CR\°' || 
+q'°  g_#PAGE_ALIAS#_row app_ui_emp_main%rowtype;\CR\°' || 
+q'°  \CR\°' || 
+q'°  procedure copy_emp\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    g_page_values := utl_apex.get_page_values;\CR\°' || 
+q'°    #COPY_LIST#;\CR\°' || 
+q'°  end copy_emp;\CR\°' || 
+q'°  \CR\°' || 
+q'°  \CR\°' || 
+q'°  function validate_emp\CR\°' || 
+q'°    return boolean\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    -- copy_emp;\CR\°' || 
+q'°    -- TODO: Validierungslogik implementieren\CR\°' || 
+q'°    return true;\CR\°' || 
+q'°  end validate_emp;\CR\°' || 
+q'°  \CR\°' || 
+q'°    \CR\°' || 
+q'°  procedure process_emp\CR\°' || 
+q'°  as\CR\°' || 
+q'°    c_collection_name constant varchar2(30 byte) := '#COLLECTION_NAME#';\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    copy_emp;  \CR\°' || 
+q'°    case\CR\°' || 
+q'°    when utl_apex.INSERTING then\CR\°' || 
+q'°      apex_collection.add_member(\CR\°' || 
+q'°        p_collection_name => c_collection_name,\CR\°' || 
+q'°        #PARAM_LIST#,\CR\°' || 
+q'°        p_generate_md5 => c_no);\CR\°' || 
+q'°    when utl_apex.UPDATING then\CR\°' || 
+q'°      apex_collection.update_member(\CR\°' || 
+q'°        p_seq => g_emp_row.seq_id,\CR\°' || 
+q'°        p_collection_name => c_collection_name,\CR\°' || 
+q'°        #PARAM_LIST#);\CR\°' || 
+q'°    when utl_apex.DELETING then\CR\°' || 
+q'°      apex_collection.delete_member(\CR\°' || 
+q'°        p_seq => g_emp_row.seq_id,\CR\°' || 
+q'°        p_collection_name => c_collection_name);\CR\°' || 
+q'°    else\CR\°' || 
+q'°      null;\CR\°' || 
+q'°    end case;\CR\°' || 
+q'°  end process_emp;\CR\°' || 
+q'°\CR\°' || 
 q'°end;/°',
     p_cgtm_log_text => q'°°',
     p_cgtm_log_severity => 70
@@ -562,47 +703,47 @@ end;°',
     p_cgtm_name => 'METHODS',
     p_cgtm_type => 'APEX_FORM',
     p_cgtm_mode => 'DEFAULT',
-    p_cgtm_text => q'°-- UI_PACKAGE-Body°' ||
-q'°-- Globale Variablen°' ||
-q'°  g_page_values utl_apex.page_value_t;°' ||
-q'°  g_#PAGE_ALIAS#_row #VIEW_NAME#%rowtype;°' ||
-q'°  °' ||
-q'°-- COPY_ROW-Methode°' ||
-q'°  °' ||
-q'°  /* Hilfsfunktion zur Uebernahme der Seitenelementwerte °' ||
-q'°   * %usage  Wird aufgerufen, um fuer die aktuell ausgefuehrte APEX-Seite den Sessionstatus°' ||
-q'°   *         zu kopieren und in einer PL/SQL-Tabelle verfuegbar zu machen°' ||
-q'°   */°' ||
-q'°  procedure copy_#PAGE_ALIAS#°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    g_page_values := utl_apex.get_page_values;°' ||
-q'°    #COLUMN_LIST#°' ||
-q'°  end copy_#PAGE_ALIAS#;°' ||
-q'°    °' ||
-q'°-- METHOD IMPELEMENTATON°' ||
-q'°°' ||
-q'°  function validate_#PAGE_ALIAS#°' ||
-q'°    return boolean°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    -- copy_#PAGE_ALIAS#;°' ||
-q'°    -- Validierungen. Falls keine Validierung, copy-Methode auskommentiert lassen°' ||
-q'°    return true;°' ||
-q'°  end validate_#PAGE_ALIAS#;°' ||
-q'°  °' ||
-q'°  °' ||
-q'°  procedure process_#PAGE_ALIAS#°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    copy_#PAGE_ALIAS#;°' ||
-q'°    case when utl_apex.inserting then°' ||
-q'°      #INSERT_METHOD#(g_#PAGE_ALIAS#_row);°' ||
-q'°    case when utl_apex.updating then°' ||
-q'°      #UPDATE_METHOD#(g_#PAGE_ALIAS#_row);°' ||
-q'°    else°' ||
-q'°      #DELETE_METHOD#(g_#PAGE_ALIAS#_row);°' ||
-q'°    end case;°' ||
+    p_cgtm_text => q'°-- UI_PACKAGE-Body\CR\°' || 
+q'°-- Globale Variablen\CR\°' || 
+q'°  g_page_values utl_apex.page_value_t;\CR\°' || 
+q'°  g_#PAGE_ALIAS#_row #VIEW_NAME#%rowtype;\CR\°' || 
+q'°  \CR\°' || 
+q'°-- COPY_ROW-Methode\CR\°' || 
+q'°  \CR\°' || 
+q'°  /* Hilfsfunktion zur Uebernahme der Seitenelementwerte \CR\°' || 
+q'°   * %usage  Wird aufgerufen, um fuer die aktuell ausgefuehrte APEX-Seite den Sessionstatus\CR\°' || 
+q'°   *         zu kopieren und in einer PL/SQL-Tabelle verfuegbar zu machen\CR\°' || 
+q'°   */\CR\°' || 
+q'°  procedure copy_#PAGE_ALIAS#\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    g_page_values := utl_apex.get_page_values;\CR\°' || 
+q'°    #COLUMN_LIST#\CR\°' || 
+q'°  end copy_#PAGE_ALIAS#;\CR\°' || 
+q'°    \CR\°' || 
+q'°-- METHOD IMPELEMENTATON\CR\°' || 
+q'°\CR\°' || 
+q'°  function validate_#PAGE_ALIAS#\CR\°' || 
+q'°    return boolean\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    -- copy_#PAGE_ALIAS#;\CR\°' || 
+q'°    -- Validierungen. Falls keine Validierung, copy-Methode auskommentiert lassen\CR\°' || 
+q'°    return true;\CR\°' || 
+q'°  end validate_#PAGE_ALIAS#;\CR\°' || 
+q'°  \CR\°' || 
+q'°  \CR\°' || 
+q'°  procedure process_#PAGE_ALIAS#\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    copy_#PAGE_ALIAS#;\CR\°' || 
+q'°    case when utl_apex.inserting then\CR\°' || 
+q'°      #INSERT_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' || 
+q'°    case when utl_apex.updating then\CR\°' || 
+q'°      #UPDATE_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' || 
+q'°    else\CR\°' || 
+q'°      #DELETE_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' || 
+q'°    end case;\CR\°' || 
 q'°  end process_#PAGE_ALIAS#;°',
     p_cgtm_log_text => q'°°',
     p_cgtm_log_severity => 70
@@ -612,190 +753,48 @@ q'°  end process_#PAGE_ALIAS#;°',
     p_cgtm_name => 'METHODS',
     p_cgtm_type => 'APEX_FORM',
     p_cgtm_mode => 'MERGE',
-    p_cgtm_text => q'°-- UI_PACKAGE-Body°' ||
-q'°-- Globale Variablen°' ||
-q'°  g_page_values utl_apex.page_value_t;°' ||
-q'°  g_#PAGE_ALIAS#_row #VIEW_NAME#%rowtype;°' ||
-q'°  °' ||
-q'°-- COPY_ROW-Methode°' ||
-q'°  °' ||
-q'°  /* Hilfsfunktion zur Uebernahme der Seitenelementwerte °' ||
-q'°   * %usage  Wird aufgerufen, um fuer die aktuell ausgefuehrte APEX-Seite den Sessionstatus°' ||
-q'°   *         zu kopieren und in einer PL/SQL-Tabelle verfuegbar zu machen°' ||
-q'°   */°' ||
-q'°  procedure copy_#PAGE_ALIAS#°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    g_page_values := utl_apex.get_page_values;°' ||
-q'°    #COLUMN_LIST#°' ||
-q'°  end copy_#PAGE_ALIAS#;°' ||
-q'°    °' ||
-q'°-- METHOD IMPELEMENTATON°' ||
-q'°°' ||
-q'°  function validate_#PAGE_ALIAS#°' ||
-q'°    return boolean°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    -- copy_#PAGE_ALIAS#;°' ||
-q'°    -- Validierungen. Falls keine Validierung, copy-Methode auskommentiert lassen°' ||
-q'°    return true;°' ||
-q'°  end validate_#PAGE_ALIAS#;°' ||
-q'°  °' ||
-q'°  °' ||
-q'°  procedure process_#PAGE_ALIAS#°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    copy_#PAGE_ALIAS#;°' ||
-q'°    case when utl_apex.inserting or utl_apex.updating then°' ||
-q'°      #UPDATE_METHOD#(g_#PAGE_ALIAS#_row);°' ||
-q'°    else°' ||
-q'°      #DELETE_METHOD#(g_#PAGE_ALIAS#_row);°' ||
-q'°    end case;°' ||
+    p_cgtm_text => q'°-- UI_PACKAGE-Body\CR\°' || 
+q'°-- Globale Variablen\CR\°' || 
+q'°  g_page_values utl_apex.page_value_t;\CR\°' || 
+q'°  g_#PAGE_ALIAS#_row #VIEW_NAME#%rowtype;\CR\°' || 
+q'°  \CR\°' || 
+q'°-- COPY_ROW-Methode\CR\°' || 
+q'°  \CR\°' || 
+q'°  /* Hilfsfunktion zur Uebernahme der Seitenelementwerte \CR\°' || 
+q'°   * %usage  Wird aufgerufen, um fuer die aktuell ausgefuehrte APEX-Seite den Sessionstatus\CR\°' || 
+q'°   *         zu kopieren und in einer PL/SQL-Tabelle verfuegbar zu machen\CR\°' || 
+q'°   */\CR\°' || 
+q'°  procedure copy_#PAGE_ALIAS#\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    g_page_values := utl_apex.get_page_values;\CR\°' || 
+q'°    #COLUMN_LIST#\CR\°' || 
+q'°  end copy_#PAGE_ALIAS#;\CR\°' || 
+q'°    \CR\°' || 
+q'°-- METHOD IMPELEMENTATON\CR\°' || 
+q'°\CR\°' || 
+q'°  function validate_#PAGE_ALIAS#\CR\°' || 
+q'°    return boolean\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    -- copy_#PAGE_ALIAS#;\CR\°' || 
+q'°    -- Validierungen. Falls keine Validierung, copy-Methode auskommentiert lassen\CR\°' || 
+q'°    return true;\CR\°' || 
+q'°  end validate_#PAGE_ALIAS#;\CR\°' || 
+q'°  \CR\°' || 
+q'°  \CR\°' || 
+q'°  procedure process_#PAGE_ALIAS#\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°    copy_#PAGE_ALIAS#;\CR\°' || 
+q'°    case when utl_apex.inserting or utl_apex.updating then\CR\°' || 
+q'°      #UPDATE_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' || 
+q'°    else\CR\°' || 
+q'°      #DELETE_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' || 
+q'°    end case;\CR\°' || 
 q'°  end process_#PAGE_ALIAS#;°',
     p_cgtm_log_text => q'°°',
     p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'METHODS',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'DEFAULT',
-    p_cgtm_text => q'°  -- SPEC°' ||
-q'°  procedure delete_#SHORT_NAME#(°' ||
-q'°    p_row #TABLE_NAME#%rowtype);°' ||
-q'°    °' ||
-q'°  procedure merge_#SHORT_NAME#(°' ||
-q'°    p_row #TABLE_NAME#%rowtype);°' ||
-q'°    °' ||
-q'°  procedure merge_#SHORT_NAME#(°' ||
-q'°    #PARAM_LIST#);°' ||
-q'°    °' ||
-q'°  -- IMPLEMENTATION°' ||
-q'°  procedure delete_#SHORT_NAME#(°' ||
-q'°    p_row #TABLE_NAME#%rowtype)°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    delete from #TABLE_NAME#°' ||
-q'°     where #PK_LIST#;°' ||
-q'°  end delete_#SHORT_NAME#;°' ||
-q'°    °' ||
-q'°  procedure merge_#SHORT_NAME#(°' ||
-q'°    p_row #TABLE_NAME#%rowtype)°' ||
-q'°  as°' ||
-q'°  begin°' ||
-q'°    #MERGE_STMT#°' ||
-q'°  end merge_#SHORT_NAME#;°' ||
-q'°    °' ||
-q'°  procedure merge_#SHORT_NAME#(°' ||
-q'°    #PARAM_LIST#) °' ||
-q'°  as°' ||
-q'°    l_row #TABLE_NAME#%rowtype;°' ||
-q'°  begin°' ||
-q'°    #RECORD_LIST#;°' ||
-q'°    °' ||
-q'°    merge_#SHORT_NAME#(l_row);°' ||
-q'°  end merge_#SHORT_NAME#;°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'COLUMN',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'PARAM_LIST',
-    p_cgtm_text => q'°p_#COLUMN_NAME_RPAD# in #TABLE_NAME#.#COLUMN_NAME#%type°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'COLUMN',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'PK_LIST',
-    p_cgtm_text => q'°#COLUMN_NAME# = p_row.#COLUMN_NAME#°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'COLUMN',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'UPDATE_LIST',
-    p_cgtm_text => q'°t.#COLUMN_NAME# = s.#COLUMN_NAME#°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'COLUMN',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'RECORD_LIST',
-    p_cgtm_text => q'°l_row.#COLUMN_NAME# := p_#COLUMN_NAME#°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'COLUMN',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'USING_LIST',
-    p_cgtm_text => q'°p_row.#COLUMN_NAME# #COLUMN_NAME#°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'COLUMN',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'ON_LIST',
-    p_cgtm_text => q'°t.#COLUMN_NAME# = s.#COLUMN_NAME#°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'COLUMN',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'INSERT_LIST',
-    p_cgtm_text => q'°s.#COLUMN_NAME#°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'COLUMN',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'COL_LIST',
-    p_cgtm_text => q'°t.#COLUMN_NAME#°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'MERGE',
-    p_cgtm_type => 'TABLE_API',
-    p_cgtm_mode => 'DEFAULT',
-    p_cgtm_text => q'°merge into #TABLE_NAME# t°' ||
-q'°    using (select #USING_LIST#°' ||
-q'°             from dual) s°' ||
-q'°       on (#ON_LIST#)°' ||
-q'°     when matched then update set°' ||
-q'°            #UPDATE_LIST#°' ||
-q'°     when not matched then insert(°' ||
-q'°            #COL_LIST#)°' ||
-q'°          values(°' ||
-q'°            #INSERT_LIST#);°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => 70
-  );
-
-  code_generator.merge_template(
-    p_cgtm_name => 'RULE_EXPRESSION',
-    p_cgtm_type => 'REDACT',
-    p_cgtm_mode => 'DEFAULT',
-    p_cgtm_text => q'°SYS_CONTEXT('USERENV','OS_USER') != '#EXPRESSION#'°',
-    p_cgtm_log_text => q'°°',
-    p_cgtm_log_severity => null
   );
   commit;
 end;
