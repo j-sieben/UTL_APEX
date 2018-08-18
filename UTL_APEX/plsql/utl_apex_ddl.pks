@@ -25,10 +25,10 @@ as
    *         - MERGE  method, overloaded version with parameter list
    */
   function get_table_api(
-    p_table_name in varchar2,
-    p_short_name in varchar2,
-    p_owner in varchar2 default user,
-    p_pk_insert in number default 1,
+    p_table_name in utl_apex.ora_name_type,
+    p_short_name in utl_apex.ora_name_type,
+    p_owner in utl_apex.ora_name_type default user,
+    p_pk_insert in utl_apex.flag_type default utl_apex.C_TRUE,
     p_pk_columns in char_table default null,
     p_exclude_columns in char_table default null)
     return clob;
@@ -52,8 +52,8 @@ as
    *         - call the methods of the business layer
    */
   function get_form_methods(
-    p_application_id in number,
-    p_page_id in number,
+    p_application_id in binary_integer,
+    p_page_id in binary_integer,
     p_insert_method in varchar2,
     p_update_method in varchar2,
     p_delete_method in varchar2)
@@ -75,8 +75,8 @@ as
    *         adjust P_PAGE_VIEW by hand
    */
   function get_collection_view(
-    p_source_table in varchar2,
-    p_page_view in varchar2)
+    p_source_table in utl_apex.ora_name_type,
+    p_page_view in utl_apex.ora_name_type)
     return clob;
   
   
@@ -96,8 +96,8 @@ as
    *           to insert, update and delete a row of the collection.
    */
   function get_collection_methods(
-    p_application_id in number,
-    p_page_id in number)
+    p_application_id in binary_integer,
+    p_page_id in binary_integer)
     return clob;
 end utl_apex_ddl;
 /

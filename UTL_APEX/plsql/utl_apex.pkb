@@ -6,8 +6,6 @@ as
   C_PKG constant ora_name_type := $$PLSQL_UNIT;
   C_APEX_SCHEMA constant ora_name_type := $$PLSQL_UNIT_OWNER;
   C_PIT_APEX_MODULE constant ora_name_type := 'PIT_APEX';
-  C_TRUE constant flag_type := 'Y';
-  C_FALSE constant flag_type := 'N';
 
   -- HELPER
   function get_page_element(

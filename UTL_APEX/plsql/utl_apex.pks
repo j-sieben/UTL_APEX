@@ -2,17 +2,23 @@ create or replace package utl_apex
    authid definer
 as
   /**
-    APEX-bezogene Utility Sammlung
+    Oracle APEX related utilites
   */
-  ver_le_05 constant boolean := &VER_LE_05.;
-  ver_le_0500 constant boolean := &VER_LE_0500.;
-  ver_le_0501 constant boolean := &VER_LE_0501.;
-  ver_le_18 constant boolean := &VER_LE_18.;
-  ver_le_1801 constant boolean := &VER_LE_1801.;
   
+  /* Types */
   subtype ora_name_type is &ORA_NAME_TYPE.;
   subtype max_char is varchar2(32767);
   subtype flag_type is char(1 byte);
+  
+  /* Package constants */
+  VER_LE_05 constant boolean := &VER_LE_05.;
+  VER_LE_0500 constant boolean := &VER_LE_0500.;
+  VER_LE_0501 constant boolean := &VER_LE_0501.;
+  VER_LE_18 constant boolean := &VER_LE_18.;
+  VER_LE_1801 constant boolean := &VER_LE_1801.;
+  
+  C_TRUE constant flag_type := 'Y';
+  C_FALSE constant flag_type := 'N';
   
   /* Public constant declarations */
   

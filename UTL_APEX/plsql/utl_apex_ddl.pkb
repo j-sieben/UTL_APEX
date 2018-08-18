@@ -1,24 +1,22 @@
 create or replace package body utl_apex_ddl
 as
 
-  c_pkg constant varchar2(30 byte) := $$PLSQL_UNIT;
-  c_true constant integer := 1;
-  c_false constant integer := 0;
-  c_apex_tmpl_type constant varchar2(30 byte) := 'APEX_COLLECTION';
-  c_default constant varchar2(30 byte) := 'DEFAULT';
+  C_PKG constant utl_apex.ora_name_type := $$PLSQL_UNIT;
+  c_apex_tmpl_type constant utl_apex.ora_name_type := 'APEX_COLLECTION';
+  c_default constant utl_apex.ora_name_type := 'DEFAULT';
 
   function get_table_api(
-    p_table_name in varchar2,
-    p_short_name in varchar2,
-    p_owner in varchar2 default user,
-    p_pk_insert in number default 1,
+    p_table_name in utl_apex.ora_name_type,
+    p_short_name in utl_apex.ora_name_type,
+    p_owner in utl_apex.ora_name_type default user,
+    p_pk_insert in utl_apex.flag_type default utl_apex.c_true,
     p_pk_columns in char_table default null,
     p_exclude_columns in char_table default null)
     return clob
   as
     l_clob clob;
-    c_cgrtm_type constant varchar2(30) := 'TABLE_API';
-    c_column constant varchar2(30) := 'COLUMN';
+    c_cgrtm_type constant utl_apex.ora_name_type := 'TABLE_API';
+    c_column constant utl_apex.ora_name_type := 'COLUMN';
   begin
       with params as (
            -- Get input params and templates
@@ -91,7 +89,7 @@ as
                       from column_data
                      where cgtm_name = c_column
                        and cgtm_mode = 'PK_LIST'
-                       and is_pk = c_true), chr(10) || '       and ') pk_list,
+                       and is_pk = utl_apex.C_TRUE), chr(10) || '       and ') pk_list,
                   code_generator.generate_text(cursor(
                     -- generate merge statement
                     select cgtm_text template,
@@ -111,7 +109,7 @@ as
                                from column_data
                               where cgtm_name = c_column
                                 and cgtm_mode = 'ON_LIST'
-                                and is_pk = c_true), chr(10) || '       and ') on_list,
+                                and is_pk = utl_apex.C_TRUE), chr(10) || '       and ') on_list,
                            code_generator.generate_text(cursor(
                              -- generate list update columns (w/o PK list)
                              select cgtm_text template,
@@ -119,7 +117,7 @@ as
                                from column_data
                               where cgtm_name = c_column
                                 and cgtm_mode = 'UPDATE_LIST'
-                                and is_pk = c_false), ',' || chr(10), 12) update_list,
+                                and is_pk = utl_apex.C_FALSE), ',' || chr(10), 12) update_list,
                            code_generator.generate_text(cursor(
                              -- generate column list for insert clause
                              select cgtm_text template,
@@ -127,7 +125,7 @@ as
                                from column_data
                               where cgtm_name = 'COLUMN'
                                 and cgtm_mode = 'COL_LIST'
-                                and is_pk in (c_false, pk_insert)), ',', 1) col_list,
+                                and is_pk in (utl_apex.C_FALSE, pk_insert)), ',', 1) col_list,
                            code_generator.generate_text(cursor(
                              -- generate list of insert columns
                              select cgtm_text template,
@@ -135,7 +133,7 @@ as
                                from column_data
                               where cgtm_name = c_column
                                 and cgtm_mode = 'INSERT_LIST'
-                                and is_pk in (c_false, pk_insert)), ',', 1) insert_list
+                                and is_pk in (utl_apex.C_FALSE, pk_insert)), ',', 1) insert_list
                       from params
                      where cgtm_name = 'MERGE'
                        and cgtm_mode = 'DEFAULT')) merge_stmt
@@ -150,18 +148,18 @@ as
   
   
   function get_form_methods(
-    p_application_id in number,
-    p_page_id in number,
+    p_application_id in binary_integer,
+    p_page_id in binary_integer,
     p_insert_method in varchar2,
     p_update_method in varchar2,
     p_delete_method in varchar2)
     return clob
   as
-    l_column_list varchar2(32767);
+    l_column_list utl_apex.max_char;
     l_mode code_generator_templates.cgtm_mode%type := c_default;
     l_code clob;
   begin
-    pit.enter_mandatory(c_pkg, 'get_form_methods', msg_params(
+    pit.enter_mandatory(C_PKG, 'get_form_methods', msg_params(
       msg_param('p_application_id', to_char(p_application_id)),
       msg_param('p_page_id', to_char(p_page_id)),
       msg_param('p_insert_method', p_insert_method),
@@ -251,8 +249,8 @@ as
   
   
   function get_collection_view(
-    p_source_table in varchar2,
-    p_page_view in varchar2)
+    p_source_table in utl_apex.ora_name_type,
+    p_page_view in utl_apex.ora_name_type)
     return clob
   as
     c_object_exists constant varchar2(1000) := q'^select 1
@@ -261,7 +259,7 @@ as
    and object_type in ('VIEW', 'TABLE')^';
     l_code clob;
   begin
-    pit.enter_mandatory(c_pkg, 'get_collection_view', msg_params(
+    pit.enter_mandatory(C_PKG, 'get_collection_view', msg_params(
       msg_param('p_source_table', p_source_table),
       msg_param('p_page_view', p_page_view)));
       
@@ -298,8 +296,8 @@ as
   
   
   function get_collection_methods(
-    p_application_id in number,
-    p_page_id in number)
+    p_application_id in binary_integer,
+    p_page_id in binary_integer)
     return clob
   as
     c_has_alias_stmt constant varchar2(1000) := q'^select 1
@@ -318,7 +316,7 @@ as
    
     l_code clob;
   begin
-    pit.enter_mandatory(c_pkg, 'get_collection_methods', msg_params(
+    pit.enter_mandatory(C_PKG, 'get_collection_methods', msg_params(
       msg_param('p_application_id', to_char(p_application_id)),
       msg_param('p_page_id', to_char(p_page_id))));
       
