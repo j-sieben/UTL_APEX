@@ -1,4 +1,5 @@
 set define off
+set sqlprefix off
 
 begin
   code_generator.merge_template(
@@ -800,3 +801,4 @@ q'°  end process_#PAGE_ALIAS#;°',
 end;
 /
 set define on
+set sqlprefix #

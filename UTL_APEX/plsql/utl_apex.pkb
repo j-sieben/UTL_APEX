@@ -3,18 +3,18 @@ as
 
   -- Private type declarations
   -- Private constant declarations
-  c_pkg constant varchar2(30 byte) := $$PLSQL_UNIT;
-  c_true constant integer := 1;
-  c_false constant integer := 0;
-  c_apex_schema constant varchar2(30 byte) := $$PLSQL_UNIT_OWNER;
-  c_pit_apex_module constant varchar2(30 byte) := 'PIT_APEX';
+  C_PKG constant ora_name_type := $$PLSQL_UNIT;
+  C_APEX_SCHEMA constant ora_name_type := $$PLSQL_UNIT_OWNER;
+  C_PIT_APEX_MODULE constant ora_name_type := 'PIT_APEX';
+  C_TRUE constant flag_type := 'Y';
+  C_FALSE constant flag_type := 'N';
 
   -- HELPER
   function get_page_element(
-    p_affected_id in varchar2)
+    p_affected_id in ora_name_type)
     return varchar2
   as
-    l_element varchar2(100);
+    l_element ora_name_type;
   begin
     l_element := p_affected_id;
     if not regexp_like(l_element, '^P[0-9]+_') then
@@ -29,12 +29,12 @@ as
     p_authorization_scheme in varchar2)
     return integer
   as
-    l_result pls_integer;
+    l_result binary_integer;
   begin
     if apex_authorization.is_authorized(p_authorization_scheme) then
       l_result := c_true;
     else
-      l_result := c_false;
+      l_result := C_FALSE;
     end if;
     return l_result;
   end user_is_authorized;
@@ -49,7 +49,7 @@ as
     l_param_name owa.vc_arr;
     l_param_val owa.vc_arr;
   begin
-    pit.enter_mandatory(c_pkg, 'create_apex_session', msg_params(
+    pit.enter_mandatory(C_PKG, 'create_apex_session', msg_params(
       msg_param('p_apex_user', p_apex_user),
       msg_param('p_application_id', to_char(p_application_id)),
       msg_param('p_page_id', to_char(p_page_id))));
@@ -95,7 +95,7 @@ as
          and page_id = p_page_id;
     page_values page_value_t;
   begin
-    pit.enter_optional(c_pkg, 'get_page_values');
+    pit.enter_optional(C_PKG, 'get_page_values');
     
     for itm in page_item_cur(v('APP_ID'), v('APP_PAGE_ID')) loop
       page_values(itm.item_name) := itm.item_value;
@@ -105,11 +105,12 @@ as
     return page_values;
   end get_page_values;
 
+
   function get_ig_values(
-    p_target_table in varchar2,
-    p_static_id in varchar2,
-    p_application_id in number default null,
-    p_page_id in number default null)
+    p_target_table in ora_name_type,
+    p_static_id in ora_name_type,
+    p_application_id in binary_integer default null,
+    p_page_id in binary_integer default null)
     return varchar2
   as
   $IF utl_apex.ver_le_0500 $THEN
@@ -164,7 +165,7 @@ as
   
   function get(
     p_page_values in page_value_t,
-    p_element_name in varchar2)
+    p_element_name in ora_name_type)
     return varchar2
   as
   begin
@@ -181,11 +182,11 @@ as
     return varchar2
   as
     c_umlaut_regex constant varchar2(25) := '^[A-Z][_A-Z0-9#$]*$';
-    l_position pls_integer;
-    l_name varchar2(50);
+    l_position binary_integer;
+    l_name ora_name_type;
     c_max_length constant number := 26;
   begin
-    pit.enter(c_pkg, 'validate_simple_sql_name', msg_params(
+    pit.enter(C_PKG, 'validate_simple_sql_name', msg_params(
       msg_param('p_name', p_name)));
       
     -- exclude names with double quotes
@@ -221,14 +222,14 @@ as
   
   
   procedure set_error(
-    p_page_item in varchar2,
-    p_message in varchar2,
+    p_page_item in ora_name_type,
+    p_message in ora_name_type,
     p_msg_args in msg_args default null)
   as
-    l_message varchar2(32767);
-    l_page_item varchar2(50);
+    l_message max_char;
+    l_page_item ora_name_type;
   begin
-    pit.enter_detailed(c_pkg, 'set_error', msg_params(
+    pit.enter_detailed(C_PKG, 'set_error', msg_params(
       msg_param('p_page_item', p_page_item),
       msg_param('p_message', p_message)));
     if p_message is not null then
@@ -256,11 +257,11 @@ as
   
   procedure set_error(
     p_test in boolean,
-    p_page_item in varchar2,
-    p_message in varchar2,
+    p_page_item in ora_name_type,
+    p_message in ora_name_type,
     p_msg_args in msg_args default null)
   as
-    l_page_item varchar2(50);
+    l_page_item ora_name_type;
   begin
     if not p_test then
       l_page_item := get_page || replace(p_page_item, get_page);
@@ -330,7 +331,7 @@ as
     l_item_param varchar2(32767);
     l_value_param varchar2(32767);
   begin
-    pit.enter_optional(c_pkg, 'create_modal_dialog_url', msg_params(
+    pit.enter_optional(C_PKG, 'create_modal_dialog_url', msg_params(
       msg_param('p_param_items', p_param_items),
       msg_param('p_value_items', p_value_items),
       msg_param('p_hidden_item', p_hidden_item),
@@ -355,13 +356,13 @@ as
     p_clob in clob) 
     return blob 
   as
-    c_chunk_size constant integer := 4096;
+    C_CHUNK_SIZE constant integer := 4096;
     l_blob blob;
     l_offset number default 1;
-    l_amount number default c_chunk_size;
+    l_amount number default C_CHUNK_SIZE;
     l_offsetwrite number default 1;
     l_amountwrite number;
-    l_buffer varchar2(c_chunk_size char);
+    l_buffer max_char;
   begin
     if p_clob is not null then
     dbms_lob.createtemporary(l_blob, true);
@@ -381,7 +382,7 @@ as
         l_offsetwrite := l_offsetwrite + l_amountwrite;
   
         l_offset := l_offset + l_amount;
-        l_amount := c_chunk_size;
+        l_amount := C_CHUNK_SIZE;
       end loop;
     end if;
     return l_blob;
@@ -393,7 +394,7 @@ as
     p_file_name in varchar2)
   as
   begin
-    pit.enter_mandatory(c_pkg, 'download_blob', msg_params(
+    pit.enter_mandatory(C_PKG, 'download_blob', msg_params(
       msg_param('p_blob.length', to_char(dbms_lob.getlength(p_blob))),
       msg_param('p_file_name', p_file_name)));
       
@@ -426,8 +427,8 @@ as
 
   procedure assert(
     p_condition in boolean,
-    p_message_name in varchar2,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   is
   begin
@@ -441,14 +442,14 @@ as
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => c_pit_apex_module);
+        p_log_modules => C_PIT_APEX_MODULE);
   end assert;
     
     
   procedure assert_is_null(
     p_condition in varchar2,
-    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   as
   begin
@@ -460,14 +461,14 @@ as
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => c_pit_apex_module);
+        p_log_modules => C_PIT_APEX_MODULE);
   end assert_is_null;
     
     
   procedure assert_is_null(
     p_condition in number,
-    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   as
   begin
@@ -479,14 +480,14 @@ as
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => c_pit_apex_module);
+        p_log_modules => C_PIT_APEX_MODULE);
   end assert_is_null;
     
     
   procedure assert_is_null(
     p_condition in date,
-    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   as
   begin
@@ -498,14 +499,14 @@ as
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => c_pit_apex_module);
+        p_log_modules => C_PIT_APEX_MODULE);
   end assert_is_null;
   
   
   procedure assert_not_null(
     p_condition in varchar2,
-    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   as
   begin
@@ -517,14 +518,14 @@ as
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => c_pit_apex_module);
+        p_log_modules => C_PIT_APEX_MODULE);
   end assert_not_null;
     
     
   procedure assert_not_null(
     p_condition in number,
-    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   as
   begin
@@ -536,14 +537,14 @@ as
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => c_pit_apex_module);
+        p_log_modules => C_PIT_APEX_MODULE);
   end assert_not_null;
     
     
   procedure assert_not_null(
     p_condition in date,
-    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   as
   begin
@@ -555,14 +556,14 @@ as
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => c_pit_apex_module);
+        p_log_modules => C_PIT_APEX_MODULE);
   end assert_not_null;
     
     
   procedure assert_exists(
     p_stmt in varchar2,
-    p_message_name in varchar2,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   is
   begin
@@ -575,14 +576,14 @@ as
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => c_pit_apex_module);
+        p_log_modules => C_PIT_APEX_MODULE);
   end assert_exists;
     
   
   procedure assert_not_exists(
     p_stmt in varchar2,
-    p_message_name in varchar2,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   is
   begin
@@ -595,7 +596,7 @@ as
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => c_pit_apex_module);
+        p_log_modules => C_PIT_APEX_MODULE);
   end assert_not_exists;
 
 end utl_apex;

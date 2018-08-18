@@ -10,10 +10,14 @@ as
   ver_le_18 constant boolean := &VER_LE_18.;
   ver_le_1801 constant boolean := &VER_LE_1801.;
   
+  subtype ora_name_type is &ORA_NAME_TYPE.;
+  subtype max_char is varchar2(32767);
+  subtype flag_type is char(1 byte);
+  
   /* Public constant declarations */
   
   /* Public type declarations  */
-  type page_value_t is table of varchar2(32767) index by varchar2(30);
+  type page_value_t is table of max_char index by ora_name_type;
   
   /* Public variable declarations */
   
@@ -73,10 +77,10 @@ as
    *         <code>select utl_apex.get_ig_values('FOO', 'FOO_EDIT', 123, 1) from dual </code>
    */
   function get_ig_values(
-    p_target_table in varchar2,
-    p_static_id in varchar2,
-    p_application_id in number default null,
-    p_page_id in number default null)
+    p_target_table in ora_name_type,
+    p_static_id in ora_name_type,
+    p_application_id in binary_integer default null,
+    p_page_id in binary_integer default null)
     return varchar2;
   
   
@@ -89,7 +93,7 @@ as
    */
   function get(
     p_page_values in page_value_t,
-    p_element_name in varchar2)
+    p_element_name in ora_name_type)
     return varchar2;
   
   
@@ -111,8 +115,8 @@ as
    * @param [p_msg_args]  Optionale Meldungsparameter
    */
   procedure set_error(
-    p_page_item in varchar2,
-    p_message in varchar2,
+    p_page_item in ora_name_type,
+    p_message in ora_name_type,
     p_msg_args in msg_args default null);
   
   
@@ -127,8 +131,8 @@ as
    */
   procedure set_error(
     p_test in boolean,
-    p_page_item in varchar2,
-    p_message in varchar2,
+    p_page_item in ora_name_type,
+    p_message in ora_name_type,
     p_msg_args in msg_args default null);
   
   
@@ -222,64 +226,64 @@ as
    */
   procedure assert(
     p_condition in boolean,
-    p_message_name in varchar2,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
     
   procedure assert_is_null(
     p_condition in varchar2,
-    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
     
   procedure assert_is_null(
     p_condition in number,
-    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
     
   procedure assert_is_null(
     p_condition in date,
-    p_message_name in varchar2 default msg.ASSERT_IS_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
   
   
   procedure assert_not_null(
     p_condition in varchar2,
-    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
     
   procedure assert_not_null(
     p_condition in number,
-    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
     
   procedure assert_not_null(
     p_condition in date,
-    p_message_name in varchar2 default msg.ASSERT_IS_NOT_NULL,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
     
   procedure assert_exists(
     p_stmt in varchar2,
-    p_message_name in varchar2,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
   
   procedure assert_not_exists(
     p_stmt in varchar2,
-    p_message_name in varchar2,
-    p_affected_id in varchar2 default null,
+    p_message_name in ora_name_type,
+    p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
   
 end utl_apex;

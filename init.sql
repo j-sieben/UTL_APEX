@@ -6,6 +6,7 @@ set lines 120
 set pages 9999
 whenever sqlerror exit
 clear screen
+set termout off
 
 col sys_user new_val SYS_USER format a30
 col install_user new_val INSTALL_USER format a30
@@ -40,8 +41,17 @@ select case when max(username) like 'APEX_05%' then 'true'
   from all_users
  where regexp_like (username, 'APEX_[0-9]{6}');
 
+col ora_name_type new_val ORA_NAME_TYPE format a30
+
+select 'varchar2(' || data_length || ' byte)' ORA_NAME_TYPE
+  from all_tab_columns
+ where table_name = 'USER_TABLES'
+   and column_name = 'TABLE_NAME';
+   
 define section="********************************************************************************"
 define h1="*** "
 define h2="**  "
 define h3="*   "
 define s1=".    - "
+
+set termout on
