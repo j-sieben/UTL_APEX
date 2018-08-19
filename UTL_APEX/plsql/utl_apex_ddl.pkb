@@ -2,8 +2,9 @@ create or replace package body utl_apex_ddl
 as
 
   C_PKG constant utl_apex.ora_name_type := $$PLSQL_UNIT;
-  c_apex_tmpl_type constant utl_apex.ora_name_type := 'APEX_COLLECTION';
-  c_default constant utl_apex.ora_name_type := 'DEFAULT';
+  C_APEX_TMPL_TYPE constant utl_apex.ora_name_type := 'APEX_COLLECTION';
+  C_DEFAULT constant utl_apex.ora_name_type := 'DEFAULT';
+  C_CR constant varchar2(2) := chr(10);
 
   function get_table_api(
     p_table_name in utl_apex.ora_name_type,
@@ -15,9 +16,22 @@ as
     return clob
   as
     l_clob clob;
-    c_cgrtm_type constant utl_apex.ora_name_type := 'TABLE_API';
-    c_column constant utl_apex.ora_name_type := 'COLUMN';
+    C_CGTM_TYPE constant utl_apex.ora_name_type := 'TABLE_API';
+    C_COLUMN constant utl_apex.ora_name_type := 'COLUMN';
   begin
+    pit.enter_mandatory(C_PKG, 'get_table_api', msg_params(
+      msg_param('p_table_name', p_table_name),
+      msg_param('p_short_name', p_short_name),
+      msg_param('p_owner', p_owner),
+      msg_param('p_pk_insert', p_pk_insert),
+      msg_param('p_pk_columns', to_char(p_pk_columns.count)),
+      msg_param('p_exclude_columns', to_char(p_exclude_columns.count))));
+      
+    -- check input parameters
+    pit.assert_not_null(p_table_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_TABLE_NAME'));
+    pit.assert_not_null(p_short_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_SHORT_NAME'));
+    
+    -- generate method list
       with params as (
            -- Get input params and templates
            select lower(p_owner) owner,
@@ -26,13 +40,13 @@ as
                   p_pk_insert pk_insert,
                   cgtm_name, cgtm_mode, cgtm_text
              from code_generator_templates
-            where cgtm_type = c_cgrtm_type
+            where cgtm_type = C_CGTM_TYPE
          ),
          column_data as(
            -- prepare column list
            select lower(col.table_name) table_name, lower(p.short_name) short_name,
                   lower(col.column_name) column_name, max(length(col.column_name)) over () max_length,
-                  case when coalesce(con.column_name, pk.col_name) is not null then 1 else 0 end is_pk,
+                  case when coalesce(con.column_name, pk.col_name) is not null then utl_apex.C_TRUE else utl_apex.C_FALSE end is_pk,
                   cgtm_name, cgtm_mode, cgtm_text
              from all_tab_columns col
              join params p
@@ -63,86 +77,87 @@ as
                on col.column_name = ec.column_name
             where ec.column_name is null
             order by col.column_id)
-  select /*+ no_merge (column_data) */
-         code_generator.generate_text(cursor(
-           -- generate method specs and implementation
-           select cgtm_text template, table_name, short_name,
-                  code_generator.generate_text(cursor(
-                    -- generate explicit param list including PK
-                    select cgtm_text template,
-                           rpad(column_name, max_length, ' ') column_name_rpad,
-                           column_name
-                      from column_data
-                     where cgtm_name = c_column
-                       and cgtm_mode = 'PARAM_LIST'), ',' || chr(10), 4) param_list,
-                  code_generator.generate_text(cursor(
-                    -- generate code to copy parameter values to record instance
-                    select cgtm_text template,
-                           column_name
-                      from column_data
-                     where cgtm_name = c_column
-                       and cgtm_mode = 'RECORD_LIST'), ';' || chr(10), 4) record_list,
-                  code_generator.generate_text(cursor(
-                    -- generate list of PK columns for delete
-                    select cgtm_text template,
-                           column_name
-                      from column_data
-                     where cgtm_name = c_column
-                       and cgtm_mode = 'PK_LIST'
-                       and is_pk = utl_apex.C_TRUE), chr(10) || '       and ') pk_list,
-                  code_generator.generate_text(cursor(
-                    -- generate merge statement
-                    select cgtm_text template,
-                           table_name,
-                           short_name,
-                           code_generator.generate_text(cursor(
-                             -- generate using clause (parameter to columns)
-                             select cgtm_text template,
-                                    column_name
-                               from column_data
-                              where cgtm_name = c_column
-                                and cgtm_mode = 'USING_LIST'), ',' || chr(10), 18) using_list,
-                           code_generator.generate_text(cursor(
-                             -- generate list of PK columns for on clause
-                             select cgtm_text template,
-                                    column_name
-                               from column_data
-                              where cgtm_name = c_column
-                                and cgtm_mode = 'ON_LIST'
-                                and is_pk = utl_apex.C_TRUE), chr(10) || '       and ') on_list,
-                           code_generator.generate_text(cursor(
-                             -- generate list update columns (w/o PK list)
-                             select cgtm_text template,
-                                    column_name
-                               from column_data
-                              where cgtm_name = c_column
-                                and cgtm_mode = 'UPDATE_LIST'
-                                and is_pk = utl_apex.C_FALSE), ',' || chr(10), 12) update_list,
-                           code_generator.generate_text(cursor(
-                             -- generate column list for insert clause
-                             select cgtm_text template,
-                                    column_name
-                               from column_data
-                              where cgtm_name = 'COLUMN'
-                                and cgtm_mode = 'COL_LIST'
-                                and is_pk in (utl_apex.C_FALSE, pk_insert)), ',', 1) col_list,
-                           code_generator.generate_text(cursor(
-                             -- generate list of insert columns
-                             select cgtm_text template,
-                                    column_name
-                               from column_data
-                              where cgtm_name = c_column
-                                and cgtm_mode = 'INSERT_LIST'
-                                and is_pk in (utl_apex.C_FALSE, pk_insert)), ',', 1) insert_list
-                      from params
-                     where cgtm_name = 'MERGE'
-                       and cgtm_mode = 'DEFAULT')) merge_stmt
-             from params p
-            where cgtm_name = 'METHODS'
-              and cgtm_mode = 'DEFAULT')) resultat
-    into l_clob
-    from dual;
+    select /*+ no_merge (column_data) */
+           code_generator.generate_text(cursor(
+             -- generate method specs and implementation
+             select cgtm_text template, table_name, short_name,
+                    code_generator.generate_text(cursor(
+                      -- generate explicit param list including PK
+                      select cgtm_text template,
+                             rpad(column_name, max_length, ' ') column_name_rpad,
+                             column_name
+                        from column_data
+                       where cgtm_name = C_COLUMN
+                         and cgtm_mode = 'PARAM_LIST'), ',' || C_CR, 4) param_list,
+                    code_generator.generate_text(cursor(
+                      -- generate code to copy parameter values to record instance
+                      select cgtm_text template,
+                             column_name
+                        from column_data
+                       where cgtm_name = C_COLUMN
+                         and cgtm_mode = 'RECORD_LIST'), ';' || C_CR, 4) record_list,
+                    code_generator.generate_text(cursor(
+                      -- generate list of PK columns for delete
+                      select cgtm_text template,
+                             column_name
+                        from column_data
+                       where cgtm_name = C_COLUMN
+                         and cgtm_mode = 'PK_LIST'
+                         and is_pk = utl_apex.C_TRUE), C_CR || '       and ') pk_list,
+                    code_generator.generate_text(cursor(
+                      -- generate merge statement
+                      select cgtm_text template,
+                             table_name,
+                             short_name,
+                             code_generator.generate_text(cursor(
+                               -- generate using clause (parameter to columns)
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = C_COLUMN
+                                  and cgtm_mode = 'USING_LIST'), ',' || C_CR, 18) using_list,
+                             code_generator.generate_text(cursor(
+                               -- generate list of PK columns for on clause
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = C_COLUMN
+                                  and cgtm_mode = 'ON_LIST'
+                                  and is_pk = utl_apex.C_TRUE), C_CR || '       and ') on_list,
+                             code_generator.generate_text(cursor(
+                               -- generate list update columns (w/o PK list)
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = C_COLUMN
+                                  and cgtm_mode = 'UPDATE_LIST'
+                                  and is_pk = utl_apex.C_FALSE), ',' || C_CR, 12) update_list,
+                             code_generator.generate_text(cursor(
+                               -- generate column list for insert clause
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = C_COLUMN
+                                  and cgtm_mode = 'COL_LIST'
+                                  and is_pk in (utl_apex.C_FALSE, pk_insert)), ',', 1) col_list,
+                             code_generator.generate_text(cursor(
+                               -- generate list of insert columns
+                               select cgtm_text template,
+                                      column_name
+                                 from column_data
+                                where cgtm_name = C_COLUMN
+                                  and cgtm_mode = 'INSERT_LIST'
+                                  and is_pk in (utl_apex.C_FALSE, pk_insert)), ',', 1) insert_list
+                        from params
+                       where cgtm_name = 'MERGE'
+                         and cgtm_mode = C_DEFAULT)) merge_stmt
+               from params p
+              where cgtm_name = 'METHODS'
+                and cgtm_mode = C_DEFAULT)) resultat
+      into l_clob
+      from dual;
   
+    pit.leave_mandatory;
     return l_clob;
   end get_table_api;
   
@@ -156,7 +171,7 @@ as
     return clob
   as
     l_column_list utl_apex.max_char;
-    l_mode code_generator_templates.cgtm_mode%type := c_default;
+    l_mode code_generator_templates.cgtm_mode%type := C_DEFAULT;
     l_code clob;
   begin
     pit.enter_mandatory(C_PKG, 'get_form_methods', msg_params(
@@ -182,7 +197,7 @@ as
     select code_generator.generate_text(cursor(
              with page_elements as(
                   select apl.application_id, app.page_id, apo.attribute_02 view_name, app.page_alias, api.item_name, utc.column_name,
-                         case when utc.data_type in ('NUMBER', 'DATE') then utc.data_type else 'DEFAULT' end data_type,
+                         case when utc.data_type in ('NUMBER', 'DATE') then utc.data_type else C_DEFAULT end data_type,
                          case 
                          when utc.data_type in ('DATE') then
                            coalesce(upper(api.format_mask), apl.date_format, 'dd.mm.yyyy hh24:mi:ss')
@@ -216,7 +231,7 @@ as
             join template_list t
               on p.data_type = t.data_type
            where p.application_id = p_application_id
-             and p.page_id = p_page_id), chr(10) || '    '
+             and p.page_id = p_page_id), C_CR || '    '
          )
     into l_column_list
     from dual;
@@ -253,7 +268,7 @@ as
     p_page_view in utl_apex.ora_name_type)
     return clob
   as
-    c_object_exists constant varchar2(1000) := q'^select 1
+    C_OBJECT_EXISTS constant varchar2(1000) := q'^select 1
   from user_objects
  where object_name = upper('#OBJECT_NAME#')
    and object_type in ('VIEW', 'TABLE')^';
@@ -267,7 +282,7 @@ as
     pit.assert_not_null(p_source_table, msg.UTL_PARAMETER_REQUIRED, msg_args('P_SOURCE_TABLE'));
     pit.assert_not_null(p_page_view, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_VIEW'));
     pit.assert_exists(
-      p_stmt => replace(c_object_exists, '#OBJECT_NAME#', p_source_table),
+      p_stmt => replace(C_OBJECT_EXISTS, '#OBJECT_NAME#', p_source_table),
       p_message_name => msg.UTL_OBJECT_DOES_NOT_EXIST,
       p_arg_list => msg_args('View/table', p_source_table));
       
@@ -275,8 +290,8 @@ as
       with tmpl_list as(
            select cgtm_name, cgtm_text
              from code_generator_templates
-            where cgtm_type = c_apex_tmpl_type
-              and cgtm_mode = c_default)
+            where cgtm_type = C_APEX_TMPL_TYPE
+              and cgtm_mode = C_DEFAULT)
     select code_generator.generate_text(cursor(
              select cgtm_text, p_page_view view_name, 
                     code_generator.generate_text(cursor(
@@ -284,7 +299,7 @@ as
                         from code_gen_apex_collection c
                        cross join tmpl_list t
                        where t.cgtm_name = 'COLUMN_LIST'
-                         and c.table_name = p_source_table), ',' || chr(10) || '       ') column_list
+                         and c.table_name = p_source_table), ',' || C_CR || '       ') column_list
                from tmpl_list
               where cgtm_name = 'VIEW'))
       into l_code
@@ -300,15 +315,12 @@ as
     p_page_id in binary_integer)
     return clob
   as
-    c_has_alias_stmt constant varchar2(1000) := q'^select 1
+    C_HAS_ALIAS_STMT constant varchar2(1000) := q'^select 1
   from apex_application_pages
  where application_id = #APPLICATION_ID#
    and page_id = #PAGE_ID#
    and page_alias is not null^';
-    c_view_exists constant varchar2(1000) := q'^select 1
-  from user_views
- where view_name = upper('#VIEW_NAME#')^';
-    c_has_fetch_row_process constant varchar2(1000) := q'^select 1
+    C_HAS_FETCH_ROW_PROCESS constant varchar2(1000) := q'^select 1
   from apex_application_page_proc
  where application_id = #APPLICATION_ID#
    and page_id = #PAGE_ID#
@@ -326,14 +338,14 @@ as
     pit.assert_not_null(p_page_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_ID'));
     -- APEX page has PAGE ALIAS
     pit.assert_exists(
-      p_stmt => code_generator.bulk_replace(c_has_alias_stmt, char_table(
+      p_stmt => code_generator.bulk_replace(C_HAS_ALIAS_STMT, char_table(
                   '#APPLICATION_ID#', to_clob(p_application_id),
                   '#PAGE_ID#', to_clob(p_page_id))),
       p_message_name => msg.UTL_PAGE_ALIAS_REQUIRED,
       p_arg_list => msg_args(to_char(p_page_id)));
     -- APEX page has FETCH ROW process
     pit.assert_exists(
-      p_stmt => code_generator.bulk_replace(c_has_fetch_row_process, char_table(
+      p_stmt => code_generator.bulk_replace(C_HAS_FETCH_ROW_PROCESS, char_table(
                   '#APPLICATION_ID#', to_clob(p_application_id),
                   '#PAGE_ID#', to_clob(p_page_id))),
       p_message_name => msg.UTL_FETCH_ROW_REQUIRED);
@@ -342,8 +354,8 @@ as
       with tmpl_list as(
            select cgtm_name, cgtm_text
              from code_generator_templates
-            where cgtm_type = c_apex_tmpl_type
-              and cgtm_mode = c_default)
+            where cgtm_type = C_APEX_TMPL_TYPE
+              and cgtm_mode = C_DEFAULT)
     select code_generator.generate_text(cursor(
              select t.cgtm_text, app.attribute_02 view_name, app.attribute_02 collection_name, apa.page_alias, 
                     code_generator.generate_text(cursor(
@@ -352,7 +364,7 @@ as
                        cross join tmpl_list t
                        where t.cgtm_name = 'PARAMETER_LIST'
                          and c.application_id = apa.application_id
-                         and c.page_id = apa.page_id), ',' || chr(10) || '        ') param_list,
+                         and c.page_id = apa.page_id), ',' || C_CR || '        ') param_list,
                     code_generator.generate_text(cursor(
                       select t.cgtm_text, c.collection_name, c.column_to_collection, c.page_alias, 
                              column_name, convert_from_item, number_format, date_format, timestamp_format
@@ -360,11 +372,9 @@ as
                        cross join tmpl_list t
                        where t.cgtm_name = 'COPY_LIST'
                          and c.application_id = apa.application_id
-                         and c.page_id = apa.page_id), ';' || chr(10) || '    ') copy_list
-               from code_generator_templates t
-              where cgtm_name = 'PACKAGE'
-                and cgtm_type = 'APEX_COLLECTION'
-                and cgtm_mode = 'DEFAULT')) trigger_stmt
+                         and c.page_id = apa.page_id), ';' || C_CR || '    ') copy_list
+               from tmpl_list t
+              where cgtm_name = 'PACKAGE')) trigger_stmt
       into l_code
       from apex_application_pages apa
       join apex_application_page_proc app
