@@ -125,7 +125,7 @@ as
                                   and cgtm_mode = 'ON_LIST'
                                   and is_pk = utl_apex.C_TRUE), C_CR || '       and ') on_list,
                              code_generator.generate_text(cursor(
-                               -- generate list update columns (w/o PK list)
+                               -- generate list of update columns (w/o PK list)
                                select cgtm_text template,
                                       column_name
                                  from column_data

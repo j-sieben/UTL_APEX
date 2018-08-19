@@ -1,5 +1,5 @@
 create or replace package utl_apex_ddl
-   authid definer
+  authid definer
 as
   /**
     APEX-bezogene Utility Sammlung, DDL-Anweisung und CodeGeneratoren
@@ -91,8 +91,8 @@ as
    *         - The values are inserted to the page using a FETCH ROW process
    *         - No changes are made to the item names. They are identical to the
    *           column names of the view
-   *         - the page calls this packages VALIDATE_<PAGE_ALIAS> and HANDLE_<PAGE_ALIAS> 
-   *           methods to storedata at the collection. HANDLE methods are used 
+   *         - the page calls this packages VALIDATE_<PAGE_ALIAS> and PROCESS_<PAGE_ALIAS> 
+   *           methods to storedata at the collection. PROCESS methods are used 
    *           to insert, update and delete a row of the collection.
    */
   function get_collection_methods(
