@@ -23,9 +23,7 @@ as
       msg_param('p_table_name', p_table_name),
       msg_param('p_short_name', p_short_name),
       msg_param('p_owner', p_owner),
-      msg_param('p_pk_insert', p_pk_insert),
-      msg_param('p_pk_columns', to_char(p_pk_columns.count)),
-      msg_param('p_exclude_columns', to_char(p_exclude_columns.count))));
+      msg_param('p_pk_insert', p_pk_insert)));
       
     -- check input parameters
     pit.assert_not_null(p_table_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_TABLE_NAME'));

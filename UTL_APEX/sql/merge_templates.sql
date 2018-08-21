@@ -8,17 +8,17 @@ begin
     p_cgtm_mode => 'DEFAULT',
     p_cgtm_text => q'°  -- SPEC\CR\°' || 
 q'°  procedure delete_#SHORT_NAME#(\CR\°' || 
-q'°    p_row #TABLE_NAME#%rowtype);\CR\°' || 
+q'°    p_row in #TABLE_NAME#%rowtype);\CR\°' || 
 q'°    \CR\°' || 
 q'°  procedure merge_#SHORT_NAME#(\CR\°' || 
-q'°    p_row #TABLE_NAME#%rowtype);\CR\°' || 
+q'°    p_row in out nocopy #TABLE_NAME#%rowtype);\CR\°' || 
 q'°    \CR\°' || 
 q'°  procedure merge_#SHORT_NAME#(\CR\°' || 
 q'°    #PARAM_LIST#);\CR\°' || 
 q'°    \CR\°' || 
 q'°  -- IMPLEMENTATION\CR\°' || 
 q'°  procedure delete_#SHORT_NAME#(\CR\°' || 
-q'°    p_row #TABLE_NAME#%rowtype)\CR\°' || 
+q'°    p_row in #TABLE_NAME#%rowtype)\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
 q'°    delete from #TABLE_NAME#\CR\°' || 
@@ -26,7 +26,7 @@ q'°     where #PK_LIST#;\CR\°' ||
 q'°  end delete_#SHORT_NAME#;\CR\°' || 
 q'°    \CR\°' || 
 q'°  procedure merge_#SHORT_NAME#(\CR\°' || 
-q'°    p_row #TABLE_NAME#%rowtype)\CR\°' || 
+q'°    p_row in out nocopy #TABLE_NAME#%rowtype)\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
 q'°    #MERGE_STMT#\CR\°' || 
