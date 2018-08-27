@@ -12,7 +12,7 @@ declare
             from all_objects
            where object_name in (
                  '', -- Typen
-                 'UTL_APEX', -- Packages
+                 'UTL_APEX', 'UTL_APEX_DDL', -- Packages
                  'CODE_GEN_APEX_COLLECTION', -- Views
                  '',  -- Tabellen
                  '',  -- Synonyme

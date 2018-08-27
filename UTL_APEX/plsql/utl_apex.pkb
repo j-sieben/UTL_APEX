@@ -503,7 +503,7 @@ as
   
   procedure assert_not_null(
     p_condition in varchar2,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
     p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   as
@@ -514,7 +514,7 @@ as
       pit.log_specific(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => p_arg_list,
+        p_arg_list => coalesce(p_arg_list, msg_args(p_affected_id)),
         p_log_threshold => pit.level_error,
         p_log_modules => C_PIT_APEX_MODULE);
   end assert_not_null;
@@ -522,7 +522,7 @@ as
     
   procedure assert_not_null(
     p_condition in number,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
     p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   as
@@ -533,7 +533,7 @@ as
       pit.log_specific(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => p_arg_list,
+        p_arg_list => coalesce(p_arg_list, msg_args(p_affected_id)),
         p_log_threshold => pit.level_error,
         p_log_modules => C_PIT_APEX_MODULE);
   end assert_not_null;
@@ -541,7 +541,7 @@ as
     
   procedure assert_not_null(
     p_condition in date,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
     p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null)
   as
@@ -552,7 +552,7 @@ as
       pit.log_specific(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => p_arg_list,
+        p_arg_list => coalesce(p_arg_list, msg_args(p_affected_id)),
         p_log_threshold => pit.level_error,
         p_log_modules => C_PIT_APEX_MODULE);
   end assert_not_null;

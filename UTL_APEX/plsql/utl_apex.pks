@@ -260,21 +260,21 @@ as
   
   procedure assert_not_null(
     p_condition in varchar2,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
     p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
     
   procedure assert_not_null(
     p_condition in number,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
     p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
     
   procedure assert_not_null(
     p_condition in date,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NOT_NULL,
+    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
     p_affected_id in ora_name_type default null,
     p_arg_list msg_args default null);
     
