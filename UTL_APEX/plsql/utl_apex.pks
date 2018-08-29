@@ -17,13 +17,16 @@ as
   VER_LE_18 constant boolean := &VER_LE_18.;
   VER_LE_1801 constant boolean := &VER_LE_1801.;
   
+  FORMAT_JSON constant char(4 byte) := 'JSON';
+  FORMAT_HTML constant char(4 byte) := 'HTML';
+  
   C_TRUE constant flag_type := 'Y';
   C_FALSE constant flag_type := 'N';
   
   /* Public constant declarations */
   
   /* Public type declarations  */
-  type page_value_t is table of max_char index by ora_name_type;
+  subtype page_value_t is code_generator.clob_tab;
   
   /* Public variable declarations */
   
@@ -55,11 +58,14 @@ as
     
     
   /** Funktion liest alle Elementwerte der aktuellen Seite und packt sie in eine Instanz des Typs PAGE_VALUE_T.
+   * %param [p_format] Optionale Formatangabe. Erlaubte Werte: Package-Konstanten FORMAT_...
+   *                   Falls gesetzt, werden bei der Uebernahme der Seitenwerte diese durch APEX_ESCAPE geschuetzt.
    * @return Instanz von PAGE_VALUE_T, Schluessel ist der Name des Seitenelements OHNE Seitennummer,
    *         also anstatt P14_ENAME lediglich ENAME, um unabhängig von der Seitennummer zu sein.<br/>
    *         Als Wert enthält der Datensatz den aktuellen Elementwert des Sessionstatus
    */
-  function get_page_values
+  function get_page_values(
+    p_format in varchar2 default null)
     return page_value_t;
   
   

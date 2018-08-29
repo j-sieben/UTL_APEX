@@ -81,7 +81,8 @@ as
   end create_apex_session;
 
 
-  function get_page_values
+  function get_page_values(
+    p_format in varchar2 default null)
     return page_value_t
   as
     cursor page_item_cur(
@@ -96,7 +97,14 @@ as
     pit.enter_optional(C_PKG, 'get_page_values');
     
     for itm in page_item_cur(v('APP_ID'), v('APP_PAGE_ID')) loop
-      page_values(itm.item_name) := itm.item_value;
+      case p_format
+      when FORMAT_JSON then
+        page_values(itm.item_name) := apex_escape.json(itm.item_value);
+      when FORMAT_HTML then
+        page_values(itm.item_name) := apex_escape.html(itm.item_value);
+      else
+        page_values(itm.item_name) := itm.item_value;
+      end case;
     end loop;
     
     pit.leave_optional;
