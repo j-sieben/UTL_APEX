@@ -48,8 +48,8 @@ begin
     pit_admin.remove_message(msg.pms_name, msg.pms_pml_name);
   end loop;
      
-  delete from code_generator_templates
-   where cgtm_type in ('APEX_COLLECTION', 'APEX_FORM', 'APEX_IG');
+  delete from utl_text_templates
+   where uttm_type in ('APEX_COLLECTION', 'APEX_FORM', 'APEX_IG');
    
   commit;
 end;

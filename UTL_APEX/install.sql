@@ -29,30 +29,32 @@ prompt &h1.Remove existing installation
 prompt
 prompt &section.
 prompt &h1.Messages
-@utl_apex/messages/&DEFAULT_LANGUAGE./create_messages.sql
+@messages/&DEFAULT_LANGUAGE./create_messages.sql
 
 prompt
 prompt &section.
 prompt &h1.Templates
-@utl_apex/sql/merge_templates.sql
+@scripts/merge_templates.sql
 
 prompt
 prompt &section.
 prompt &h1.Views
 prompt &h2.View CODE_GEN_APEX_COLLECTION
-@utl_apex/sql/views/code_gen_apex_collection.vw
+@views/code_gen_apex_collection.vw
 
 prompt
 prompt &section.
 prompt &h1.Package UTL_APEX
-@utl_apex/plsql/utl_apex.pks
+@packages/utl_apex.pks
+
 prompt &h1.Package UTL_APEX_DDL
-@utl_apex/plsql/utl_apex_ddl.pks
+@packages/utl_apex_ddl.pks
 
 prompt &h1.Package Body UTL_APEX
-@utl_apex/plsql/utl_apex.pkb
+@packages/utl_apex.pkb
+
 prompt &h1.Package Body UTL_APEX_DDL
-@utl_apex/plsql/utl_apex_ddl.pkb
+@packages/utl_apex_ddl.pkb
 
 prompt
 prompt &section.
