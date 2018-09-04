@@ -10,6 +10,7 @@ set termout off
 
 col sys_user new_val SYS_USER format a30
 col install_user new_val INSTALL_USER format a30
+col remote_user new_val REMOTE_USER format a30
 col default_language new_val DEFAULT_LANGUAGE format a30
 
 select user sys_user,
@@ -18,6 +19,11 @@ select user sys_user,
   from V$NLS_VALID_VALUES
  where parameter = 'LANGUAGE'
    and value = upper('&2.');
+   
+select owner remote_user
+  from dba_tab_privs
+ where grantee = '&INSTALL_USER.'
+   and table_name = 'PIT_ADMIN';
   
 col ver_le_0500 new_val VER_LE_0500 format a5
 col ver_le_0501 new_val VER_LE_0501 format a5

@@ -12,6 +12,8 @@ begin
   $ELSE
   dbms_output.put_line('&s1.INHERIT PRIVILEGES from &SYS_USER. to &INSTALL_USER. granted');
   execute immediate 'grant inherit privileges on user &SYS_USER. to &INSTALL_USER.';
+  dbms_output.put_line('&s1.INHERIT PRIVILEGES from &SYS_USER. to &REMOTE_USER. granted');
+  execute immediate 'grant inherit privileges on user &SYS_USER. to &REMOTE_USER.';
   $END
 end;
 /

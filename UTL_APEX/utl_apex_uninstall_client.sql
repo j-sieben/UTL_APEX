@@ -6,6 +6,9 @@
 
 prompt &h1.Revoking access to UTL_APEX from &REMOTE_USER.
 
+prompt &h2.grant user rights
+@set_grants.sql
+
 alter session set current_schema=&INSTALL_USER.;
 prompt &h3.Revoke user rights
 prompt &s1.Revoke execute on UTL_APEX
@@ -22,5 +25,13 @@ prompt &s1.Drop synonym for UTL_APEX_DDL
 drop synonym utl_apex_ddl;
 
 prompt &h1.UTL_APEX revoked from &REMOTE_USER.
+
+prompt
+prompt &section.
+prompt &h1.Finalize installation
+prompt &h2.Revoke user rights
+@revoke_grants.sql
+
+prompt &h1.Finished UTL_APEX-Installation
 
 exit

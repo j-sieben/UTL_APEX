@@ -22,10 +22,6 @@ declare
              and owner = upper('&INSTALL_USER.')
            order by object_type, object_name;
   
-  cursor message_cur is
-    select pms_name, pms_pml_name
-      from pit_message
-     where pms_pmg_name = 'UTL';
 begin
   for obj in delete_object_cur loop
     begin
@@ -44,12 +40,15 @@ begin
     end;
   end loop;
   
-  for msg in message_cur loop
-    pit_admin.remove_message(msg.pms_name, msg.pms_pml_name);
-  end loop;
+  pit_admin.remove_message_group('UTL_APEX');
      
-  delete from utl_text_templates
-   where uttm_type in ('APEX_COLLECTION', 'APEX_FORM', 'APEX_IG');
+  -- Try to delete templates (table may not be present anymore)
+  begin
+    execute immediate q'^delete from utl_text_templates where uttm_type in ('APEX_COLLECTION', 'APEX_FORM', 'APEX_IG')^';
+  exception
+    when others then
+      null;
+  end;
    
   commit;
 end;
