@@ -38,22 +38,31 @@ prompt &h1.Templates
 
 prompt
 prompt &section.
+prompt &h1.Types
+prompt &s1.Type UTL_APEX_DDL_COL_T
+@types/utl_apex_ddl_col_t.tps
+
+prompt &s1.Type UTL_APEX_DDL_COL_TAB
+@types/utl_apex_ddl_col_tab.tps
+
+prompt
+prompt &section.
 prompt &h1.Views
-prompt &h2.View CODE_GEN_APEX_COLLECTION
+prompt &s1.View CODE_GEN_APEX_COLLECTION
 @views/code_gen_apex_collection.vw
 
 prompt
 prompt &section.
-prompt &h1.Package UTL_APEX
+prompt &s1.Package UTL_APEX
 @packages/utl_apex.pks
 
-prompt &h1.Package UTL_APEX_DDL
+prompt &s1.Package UTL_APEX_DDL
 @packages/utl_apex_ddl.pks
 
-prompt &h1.Package Body UTL_APEX
+prompt &s1.Package Body UTL_APEX
 @packages/utl_apex.pkb
 
-prompt &h1.Package Body UTL_APEX_DDL
+prompt &s1.Package Body UTL_APEX_DDL
 @packages/utl_apex_ddl.pkb
 
 prompt

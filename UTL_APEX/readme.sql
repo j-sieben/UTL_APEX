@@ -1,1 +1,0 @@
-Call script INSTALL.SQL with name of owner of the package as parameter

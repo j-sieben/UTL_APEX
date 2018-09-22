@@ -15,9 +15,10 @@ as
     p_exclude_columns in char_table default null)
     return clob
   as
-    l_clob clob;
     C_UTTM_TYPE constant utl_apex.ora_name_type := 'TABLE_API';
     C_COLUMN constant utl_apex.ora_name_type := 'COLUMN';
+    l_clob clob;
+    l_column_list utl_apex_ddl_col_tab;
   begin
     pit.enter_mandatory(C_PKG, 'get_table_api', msg_params(
       msg_param('p_table_name', p_table_name),
@@ -29,52 +30,60 @@ as
     pit.assert_not_null(p_table_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_TABLE_NAME'));
     pit.assert_not_null(p_short_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_SHORT_NAME'));
     
+    -- buffer column list in local variable for better performance on large data dictionaries
+      with params as (
+           -- Get input params and templates
+           select upper(p_owner) owner,
+                  upper(p_table_name) table_name,
+                  coalesce(p_exclude_columns, char_table()) exclude_columns,
+                  coalesce(p_pk_columns, char_table()) pk_columns
+             from dual)
+    select cast(multiset(
+             select utl_apex_ddl_col_t(
+                      lower(col.column_name), 
+                      max(length(col.column_name)) over (),
+                      case when coalesce(con.column_name, pk.col_name) is not null then utl_apex.C_TRUE else utl_apex.C_FALSE end)
+               from all_tab_columns col
+               join params p
+                 on col.owner = p.owner
+                and col.table_name = p.table_name
+               -- get list of pk columns. In case of a table we can read them from the data dictionary, otherwise from P_PK_COLUMNS
+               left join (
+                    -- list of pk columns from data dictionary
+                    select col.owner, col.table_name, col.column_name
+                      from all_cons_columns col 
+                      join all_constraints con
+                        on col.owner = con.owner
+                       and col.table_name = con.table_name
+                       and col.constraint_name = con.constraint_name
+                     where con.constraint_type = 'P') con
+                 on col.owner = con.owner
+                and col.table_name = con.table_name
+                and col.column_name = con.column_name
+               left join (
+                    -- list of pk columns from P_PK_COLUMNS
+                    -- Don't refactor COL_NAME to COLUMN_NAME, as this leads to a strange Oracle error
+                    select upper(column_value) col_name
+                      from table(select pk_columns from params)) pk
+                 on col.column_name = pk.col_name
+               left join (
+                    select upper(column_value) column_name
+                      from table(select exclude_columns from params)) ec
+                 on col.column_name = ec.column_name
+              where ec.column_name is null
+              order by col.column_id) as utl_apex_ddl_col_tab)
+         into l_column_list
+         from dual;
+    
     -- generate method list
       with params as (
            -- Get input params and templates
-           select lower(p_owner) owner,
-                  lower(p_table_name) table_name,
+           select lower(p_table_name) table_name,
                   lower(p_short_name) short_name,
                   p_pk_insert pk_insert,
                   uttm_name, uttm_mode, uttm_text
              from utl_text_templates
-            where uttm_type = C_UTTM_TYPE
-         ),
-         column_data as(
-           -- prepare column list
-           select lower(col.table_name) table_name, lower(p.short_name) short_name,
-                  lower(col.column_name) column_name, max(length(col.column_name)) over () max_length,
-                  case when coalesce(con.column_name, pk.col_name) is not null then utl_apex.C_TRUE else utl_apex.C_FALSE end is_pk,
-                  uttm_name, uttm_mode, uttm_text
-             from all_tab_columns col
-             join params p
-               on upper(p.owner) = col.owner
-              and upper(p.table_name) = col.table_name
-             -- get list of pk columns. In case of a table we can read them from the data dictionary, otherwise from P_PK_COLUMNS
-             left join (
-                  -- list of pk columns from data dictionary
-                  select col.owner, col.table_name, col.column_name
-                    from all_cons_columns col 
-                    join all_constraints con
-                      on col.owner = con.owner
-                     and col.table_name = con.table_name
-                     and col.constraint_name = con.constraint_name
-                   where con.constraint_type = 'P') con
-               on col.owner = con.owner
-              and col.table_name = con.table_name
-              and col.column_name = con.column_name
-             left join (
-                  -- list of pk columns from P_PK_COLUMNS
-                  -- Don't refactor COL_NAME to COLUMN_NAME, as this leads to a strange Oracle error
-                  select upper(column_value) col_name
-                    from table(p_pk_columns)) pk
-               on col.column_name = pk.col_name
-             left join (
-                  select upper(column_value) column_name
-                    from table(p_exclude_columns)) ec
-               on col.column_name = ec.column_name
-            where ec.column_name is null
-            order by col.column_id)
+            where uttm_type = C_UTTM_TYPE)
     select /*+ no_merge (column_data) */
            utl_text.generate_text(cursor(
              -- generate method specs and implementation
@@ -84,21 +93,24 @@ as
                       select uttm_text template,
                              rpad(column_name, max_length, ' ') column_name_rpad,
                              column_name
-                        from column_data
+                        from table(l_column_list)
+                       cross join params
                        where uttm_name = C_COLUMN
                          and uttm_mode = 'PARAM_LIST'), ',' || C_CR, 4) param_list,
                     utl_text.generate_text(cursor(
                       -- generate code to copy parameter values to record instance
                       select uttm_text template,
                              column_name
-                        from column_data
+                        from table(l_column_list)
+                       cross join params
                        where uttm_name = C_COLUMN
                          and uttm_mode = 'RECORD_LIST'), ';' || C_CR, 4) record_list,
                     utl_text.generate_text(cursor(
                       -- generate list of PK columns for delete
                       select uttm_text template,
                              column_name
-                        from column_data
+                        from table(l_column_list)
+                       cross join params
                        where uttm_name = C_COLUMN
                          and uttm_mode = 'PK_LIST'
                          and is_pk = utl_apex.C_TRUE), C_CR || '       and ') pk_list,
@@ -111,14 +123,16 @@ as
                                -- generate using clause (parameter to columns)
                                select uttm_text template,
                                       column_name
-                                 from column_data
+                                 from table(l_column_list)
+                                cross join params
                                 where uttm_name = C_COLUMN
                                   and uttm_mode = 'USING_LIST'), ',' || C_CR, 18) using_list,
                              utl_text.generate_text(cursor(
                                -- generate list of PK columns for on clause
                                select uttm_text template,
                                       column_name
-                                 from column_data
+                                 from table(l_column_list)
+                                cross join params
                                 where uttm_name = C_COLUMN
                                   and uttm_mode = 'ON_LIST'
                                   and is_pk = utl_apex.C_TRUE), C_CR || '       and ') on_list,
@@ -126,7 +140,8 @@ as
                                -- generate list of update columns (w/o PK list)
                                select uttm_text template,
                                       column_name
-                                 from column_data
+                                 from table(l_column_list)
+                                cross join params
                                 where uttm_name = C_COLUMN
                                   and uttm_mode = 'UPDATE_LIST'
                                   and is_pk = utl_apex.C_FALSE), ',' || C_CR, 12) update_list,
@@ -134,7 +149,8 @@ as
                                -- generate column list for insert clause
                                select uttm_text template,
                                       column_name
-                                 from column_data
+                                 from table(l_column_list)
+                                cross join params
                                 where uttm_name = C_COLUMN
                                   and uttm_mode = 'COL_LIST'
                                   and is_pk in (utl_apex.C_FALSE, pk_insert)), ',', 1) col_list,
@@ -142,7 +158,8 @@ as
                                -- generate list of insert columns
                                select uttm_text template,
                                       column_name
-                                 from column_data
+                                 from table(l_column_list)
+                                cross join params
                                 where uttm_name = C_COLUMN
                                   and uttm_mode = 'INSERT_LIST'
                                   and is_pk in (utl_apex.C_FALSE, pk_insert)), ',', 1) insert_list

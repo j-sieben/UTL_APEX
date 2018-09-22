@@ -11,7 +11,7 @@ declare
           select object_name name, object_type type
             from all_objects
            where object_name in (
-                 '', -- Typen
+                 'UTL_APEX_DDL_COL_T', 'UTL_APEX_DDL_COL_TAB', -- Typen
                  'UTL_APEX', 'UTL_APEX_DDL', -- Packages
                  'CODE_GEN_APEX_COLLECTION', -- Views
                  '',  -- Tabellen
