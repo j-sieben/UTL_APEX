@@ -51,6 +51,10 @@ prompt &h1.Views
 prompt &s1.View CODE_GEN_APEX_COLLECTION
 @views/code_gen_apex_collection.vw
 
+prompt &s1.View APEX_UI_LIST_MENU
+@views/apex_ui_list_menu.vw
+
+
 prompt
 prompt &section.
 prompt &s1.Package UTL_APEX
