@@ -23,14 +23,30 @@ as
   
   
   -- INTERFACE
+  function get_true
+    return varchar2
+  as
+  begin
+    return C_TRUE;
+  end get_true;
+  
+    
+  function get_false
+    return varchar2
+  as
+  begin
+    return C_FALSE;
+  end get_false;
+    
+    
   function user_is_authorized(
     p_authorization_scheme in varchar2)
-    return integer
+    return flag_type
   as
-    l_result binary_integer;
+    l_result flag_type;
   begin
     if apex_authorization.is_authorized(p_authorization_scheme) then
-      l_result := c_true;
+      l_result := C_TRUE;
     else
       l_result := C_FALSE;
     end if;
@@ -190,7 +206,7 @@ as
     c_umlaut_regex constant varchar2(25) := '^[A-Z][_A-Z0-9#$]*$';
     l_position binary_integer;
     l_name ora_name_type;
-    c_max_length constant number := 26;
+    c_max_length constant number := pit_util.C_MAX_LENGTH - 4;
   begin
     pit.enter(C_PKG, 'validate_simple_sql_name', msg_params(
       msg_param('p_name', p_name)));
@@ -261,21 +277,6 @@ as
   end set_error;
   
   
-  procedure set_error(
-    p_test in boolean,
-    p_page_item in ora_name_type,
-    p_message in ora_name_type,
-    p_msg_args in msg_args default null)
-  as
-    l_page_item ora_name_type;
-  begin
-    if not p_test then
-      l_page_item := get_page || replace(p_page_item, get_page);
-      set_error(l_page_item, p_message, p_msg_args);
-    end if;
-  end set_error;
-  
-  
   function get_page
    return varchar2
   is
@@ -289,7 +290,7 @@ as
    return boolean
   is
   begin
-    return v('REQUEST') in ('CREATE');
+    return v('REQUEST') in ('CREATE') or v('APEX$ROW_STATUS') in ('I', 'C');
   end inserting;
   
   
@@ -297,7 +298,7 @@ as
    return boolean
   is
   begin
-    return v('REQUEST') in ('SAVE');
+    return v('REQUEST') in ('SAVE') or v('APEX$ROW_STATUS') in ('U');
   end updating;
   
   
@@ -305,7 +306,7 @@ as
    return boolean
   is
   begin
-    return v('REQUEST') in ('DELETE');
+    return v('REQUEST') in ('DELETE') or v('APEX$ROW_STATUS') in ('D');
   end deleting;
 
 
@@ -324,76 +325,6 @@ as
     pit.error(msg.UTL_INVALID_REQUEST, msg_args(v('REQUEST')));
   end unhandled_request;
   
-  
-  procedure create_modal_dialog_url(
-      p_param_items in varchar2,
-      p_value_items in varchar2,
-      p_hidden_item in varchar2,
-      p_url_template in varchar2)
-  as
-    l_url varchar2 (4000);
-    l_param_list wwv_flow_global.vc_arr2;
-    l_value_list wwv_flow_global.vc_arr2;
-    l_item_param varchar2(32767);
-    l_value_param varchar2(32767);
-  begin
-    pit.enter_optional(C_PKG, 'create_modal_dialog_url', msg_params(
-      msg_param('p_param_items', p_param_items),
-      msg_param('p_value_items', p_value_items),
-      msg_param('p_hidden_item', p_hidden_item),
-      msg_param('p_url_template', p_url_template)));
-      
-    l_param_list := apex_util.string_to_table(p_param_items, ':');
-    l_value_list := apex_util.string_to_table(p_value_items, ':');
-    for i in l_param_list.first .. l_param_list.last loop
-      l_item_param := l_item_param || case when i > 1 then ',' end || l_param_list(i);
-      l_value_param := l_value_param || case when i > 1 then ',' end || v(l_value_list(i));
-    end loop;
-    l_url := apex_util.prepare_url(
-               p_url => 'f?p=' || p_url_template || ':' ||  v('SESSION') || '::::' || l_item_param || ':' || l_value_param,
-               p_triggering_element => 'apex.jQuery("#' || p_hidden_item || '")');
-    apex_util.set_session_state(p_hidden_item, l_url);
-    
-    pit.leave_optional;
-  end create_modal_dialog_url;
-
-  
-  function clob_to_blob(
-    p_clob in clob) 
-    return blob 
-  as
-    C_CHUNK_SIZE constant integer := 4096;
-    l_blob blob;
-    l_offset number default 1;
-    l_amount number default C_CHUNK_SIZE;
-    l_offsetwrite number default 1;
-    l_amountwrite number;
-    l_buffer max_char;
-  begin
-    if p_clob is not null then
-    dbms_lob.createtemporary(l_blob, true);
-      loop
-        dbms_lob.read (lob_loc => p_clob,
-          amount => l_amount,
-          offset => l_offset,
-          buffer => l_buffer);
-  
-        l_amountwrite := utl_raw.length (utl_raw.cast_to_raw(l_buffer));
-  
-        dbms_lob.write (lob_loc => l_blob,
-          amount => l_amountwrite,
-          offset => l_offsetwrite,
-          buffer => utl_raw.cast_to_raw(l_buffer));
-  
-        l_offsetwrite := l_offsetwrite + l_amountwrite;
-  
-        l_offset := l_offset + l_amount;
-        l_amount := C_CHUNK_SIZE;
-      end loop;
-    end if;
-    return l_blob;
-  end clob_to_blob;
-  
 
   procedure download_blob(
     p_blob in out nocopy blob,
@@ -403,7 +334,9 @@ as
     pit.enter_mandatory(C_PKG, 'download_blob', msg_params(
       msg_param('p_blob.length', to_char(dbms_lob.getlength(p_blob))),
       msg_param('p_file_name', p_file_name)));
-      
+    
+    pit.assert(p_blob is not null);
+    
     htp.init;
     owa_util.mime_header('application/octet-stream', false, 'UTF-8');
     htp.p('Content-length: ' || dbms_lob.getlength(p_blob));
@@ -426,7 +359,8 @@ as
   as
     l_blob blob;
   begin
-    l_blob := clob_to_blob(p_clob);
+    pit.assert(p_clob is not null);
+    l_blob := utl_text.clob_to_blob(p_clob);
     download_blob(l_blob, p_file_name);
   end download_clob;
   
