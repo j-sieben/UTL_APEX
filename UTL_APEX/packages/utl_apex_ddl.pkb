@@ -343,7 +343,7 @@ as
    
     l_code clob;
   begin
-    pit.enter_mandatory(C_PKG, 'get_collection_methods', msg_params(
+    pit.enter_mandatory(p_params => msg_params(
       msg_param('p_application_id', to_char(p_application_id)),
       msg_param('p_page_id', to_char(p_page_id))));
       
@@ -401,6 +401,9 @@ as
        
     pit.leave_mandatory;
     return l_code;
+  exception
+    when others then 
+      pit.stop;
   end get_collection_methods;
   
 end utl_apex_ddl;

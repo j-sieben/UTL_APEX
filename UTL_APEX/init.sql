@@ -29,6 +29,7 @@ col ver_le_0500 new_val VER_LE_0500 format a5
 col ver_le_0501 new_val VER_LE_0501 format a5
 col ver_le_05 new_val VER_LE_05 format a5
 col ver_le_1801 new_val VER_LE_1801 format a5
+col ver_le_1802 new_val VER_LE_1802 format a5
 col ver_le_18 new_val VER_LE_18 format a5
 
 select case when max(username) like 'APEX_05%' then 'true'
@@ -44,6 +45,9 @@ select case when max(username) like 'APEX_05%' then 'true'
        case max(username)
        when 'APEX_180100' then 'true'
        else 'false' end ver_le_1801
+       case max(username)
+       when 'APEX_180200' then 'true'
+       else 'false' end ver_le_1802
   from all_users
  where regexp_like (username, 'APEX_[0-9]{6}');
 

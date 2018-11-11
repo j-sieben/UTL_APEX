@@ -17,6 +17,7 @@ as
   VER_LE_0501 constant boolean := &VER_LE_0501.;
   VER_LE_18 constant boolean := &VER_LE_18.;
   VER_LE_1801 constant boolean := &VER_LE_1801.;
+  VER_LE_1802 constant boolean := &VER_LE_1802.;
   
   FORMAT_JSON constant char(4 byte) := 'JSON';
   FORMAT_HTML constant char(4 byte) := 'HTML';

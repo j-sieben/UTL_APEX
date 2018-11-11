@@ -377,12 +377,12 @@ as
   exception
     when msg.ASSERT_TRUE_ERR then
       
-      pit.log_specific(
+      pit.log(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => C_PIT_APEX_MODULE);
+        p_module_list => C_PIT_APEX_MODULE);
   end assert;
     
     
@@ -396,12 +396,12 @@ as
     pit.assert_is_null(p_condition);
   exception
     when msg.ASSERT_IS_NULL_ERR then
-      pit.log_specific(
+      pit.log(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => C_PIT_APEX_MODULE);
+        p_module_list => C_PIT_APEX_MODULE);
   end assert_is_null;
     
     
@@ -415,12 +415,12 @@ as
     pit.assert_is_null(p_condition);
   exception
     when msg.ASSERT_IS_NULL_ERR then
-      pit.log_specific(
+      pit.log(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => C_PIT_APEX_MODULE);
+        p_module_list => C_PIT_APEX_MODULE);
   end assert_is_null;
     
     
@@ -434,12 +434,12 @@ as
     pit.assert_is_null(p_condition);
   exception
     when msg.ASSERT_IS_NULL_ERR then
-      pit.log_specific(
+      pit.log(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => C_PIT_APEX_MODULE);
+        p_module_list => C_PIT_APEX_MODULE);
   end assert_is_null;
   
   
@@ -453,12 +453,12 @@ as
     pit.assert_not_null(p_condition);
   exception
     when msg.ASSERT_IS_NOT_NULL_ERR then
-      pit.log_specific(
+      pit.log(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => coalesce(p_arg_list, msg_args(p_affected_id)),
         p_log_threshold => pit.level_error,
-        p_log_modules => C_PIT_APEX_MODULE);
+        p_module_list => C_PIT_APEX_MODULE);
   end assert_not_null;
     
     
@@ -472,12 +472,12 @@ as
     pit.assert_not_null(p_condition);
   exception
     when msg.ASSERT_IS_NOT_NULL_ERR then
-      pit.log_specific(
+      pit.log(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => coalesce(p_arg_list, msg_args(p_affected_id)),
         p_log_threshold => pit.level_error,
-        p_log_modules => C_PIT_APEX_MODULE);
+        p_module_list => C_PIT_APEX_MODULE);
   end assert_not_null;
     
     
@@ -491,12 +491,12 @@ as
     pit.assert_not_null(p_condition);
   exception
     when msg.ASSERT_IS_NOT_NULL_ERR then
-      pit.log_specific(
+      pit.log(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => coalesce(p_arg_list, msg_args(p_affected_id)),
         p_log_threshold => pit.level_error,
-        p_log_modules => C_PIT_APEX_MODULE);
+        p_module_list => C_PIT_APEX_MODULE);
   end assert_not_null;
     
     
@@ -511,12 +511,12 @@ as
       p_stmt => p_stmt);
   exception
     when msg.ASSERT_EXISTS_ERR then
-      pit.log_specific(
+      pit.log(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => C_PIT_APEX_MODULE);
+        p_module_list => C_PIT_APEX_MODULE);
   end assert_exists;
     
   
@@ -531,12 +531,12 @@ as
       p_stmt => p_stmt);
   exception
     when msg.ASSERT_NOT_EXISTS_ERR then
-      pit.log_specific(
+      pit.log(
         p_message_name => p_message_name,
         p_affected_id => get_page_element(p_affected_id),
         p_arg_list => p_arg_list,
         p_log_threshold => pit.level_error,
-        p_log_modules => C_PIT_APEX_MODULE);
+        p_module_list => C_PIT_APEX_MODULE);
   end assert_not_exists;
 
 end utl_apex;

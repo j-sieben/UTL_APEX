@@ -1,5 +1,5 @@
 create or replace package utl_apex_ddl
-  authid definer
+  authid current_user
 as
   /**
     APEX-bezogene Utility Sammlung, DDL-Anweisung und CodeGeneratoren
