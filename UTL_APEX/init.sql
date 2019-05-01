@@ -6,7 +6,7 @@ set lines 120
 set pages 9999
 whenever sqlerror exit
 clear screen
-set termout off
+--set termout off
 
 col sys_user new_val SYS_USER format a30
 col install_user new_val INSTALL_USER format a30
@@ -31,6 +31,8 @@ col ver_le_05 new_val VER_LE_05 format a5
 col ver_le_1801 new_val VER_LE_1801 format a5
 col ver_le_1802 new_val VER_LE_1802 format a5
 col ver_le_18 new_val VER_LE_18 format a5
+col ver_le_19 new_val VER_LE_19 format a5
+col ver_le_1901 new_val VER_LE_1901 format a5
 
 select case when max(username) like 'APEX_05%' then 'true'
        else 'false' end ver_le_05,
@@ -44,10 +46,16 @@ select case when max(username) like 'APEX_05%' then 'true'
        else 'false' end ver_le_18,
        case max(username)
        when 'APEX_180100' then 'true'
-       else 'false' end ver_le_1801
+       else 'false' end ver_le_1801,
        case max(username)
        when 'APEX_180200' then 'true'
-       else 'false' end ver_le_1802
+       else 'false' end ver_le_1802,
+       case max(username)
+       when 'APEX_190100' then 'true'
+       else 'false' end ver_le_19,
+       case max(username)
+       when 'APEX_190100' then 'true'
+       else 'false' end ver_le_1901
   from all_users
  where regexp_like (username, 'APEX_[0-9]{6}');
 

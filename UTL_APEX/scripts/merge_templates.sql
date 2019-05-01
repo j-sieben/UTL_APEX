@@ -148,7 +148,7 @@ q'°            #INSERT_LIST#);°',
     p_uttm_name => 'VIEW',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
-    p_uttm_text => q'°create or replace view force #VIEW_NAME# as\CR\°' || 
+    p_uttm_text => q'°create or replace force view #VIEW_NAME# as\CR\°' || 
 q'°select seq_id,\CR\°' || 
 q'°       #COLUMN_LIST#\CR\°' || 
 q'°  from apex_collections\CR\°' || 

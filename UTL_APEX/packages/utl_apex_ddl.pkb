@@ -239,7 +239,7 @@ as
                       from utl_text_templates
                      where uttm_name = 'COLUMN'
                        and uttm_type = 'APEX_FORM')
-          select t.ddl_template, p.page_alias page_alias_upper, lower(p.page_alias) page_aliasl, 
+          select t.ddl_template template, p.page_alias page_alias_upper, lower(p.page_alias) page_aliasl, 
                  substr(p.item_name, instr(p.item_name, '_', 1) + 1) item_name,
                  p.column_name column_name_upper, lower(p.column_name) column_name, p.format_mask
             from page_elements p
