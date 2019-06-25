@@ -8,6 +8,7 @@ as
   /* Types */
   subtype ora_name_type is &ORA_NAME_TYPE.;
   subtype max_char is varchar2(32767);
+  subtype max_sql_char is varchar2(4000 byte);
   subtype flag_type is char(1 byte);
   
   /* Package constants */
@@ -48,7 +49,7 @@ as
   /** Method to check whether actual user has got an authorization
    * %param  p_authorization_scheme  Name of the authorization scheme that is requested for a given ressource.
    *                                 This name may be taken from the APEX data dictionary
-   * %return 1 if user is authorized, 0 otherwise
+   * %return C_TRUE if user is authorized, C_FALSE otherwise
    * %usage  Is called to check whether the actual user has got an authorization
    *         for a requested ressource. Wrapper around APEX_AUTHORIZATION
    */
@@ -71,51 +72,48 @@ as
     p_page_id in apex_application_pages.page_id%type default 1);
 
 
-  /** Funktion liest alle Elementwerte der aktuellen Seite und packt sie in eine Instanz des Typs PAGE_VALUE_T.
-   * %param [p_format] Optionale Formatangabe. Erlaubte Werte: Package-Konstanten FORMAT_...
-   *                   Falls gesetzt, werden bei der Uebernahme der Seitenwerte diese durch APEX_ESCAPE geschuetzt.
-   * @return Instanz von PAGE_VALUE_T, Schluessel ist der Name des Seitenelements OHNE Seitennummer,
-   *         also anstatt P14_ENAME lediglich ENAME, um unabhängig von der Seitennummer zu sein.<br/>
-   *         Als Wert enthält der Datensatz den aktuellen Elementwert des Sessionstatus
+  /** Method to read all page item values from the session state and store them in an instance of PAGE_VALUE_T.
+   * %param [p_format] Optional formatting. Allowed values are all FORMAT_... constants of this package.
+   *                   If set, all session state values are escaped using the respective method from APEX_ESCAPE
+   * @return Instance of PAGE_VALUE_T.<br>Key of that type is the page item name WITHOUT the page prefix (Pn_), or, if present,
+   *         the name of the column the item gets its value from. This is especially true for FORM regions (Apex 19 and later).
+   *         The value is always given as a string, no conversion takes place.
    */
   function get_page_values(
     p_format in varchar2 default null)
     return page_value_t;
 
 
-  /* Methode zum Auslesen der aktuellen Zeile eines APEX interaktiven Grids
-   * %param  p_target_table    Name der Zieltabelle, in die die Daten übernommen werden sollen
-   * %param  p_static_id       Statische ID des interaktiven Grids (IG). Muss angegeben werden,
-   *                           da dieser Wert zum Benennen des Records verwendet wird.
-   * %param [p_application_id] Optionale Angabe der Anwendungs-ID. Falls NULL wird apex_application.g_flow_id verwendet.
-   * %param [p_page_id]        Optionale Angabe der Seite-ID. Falls NULL wird apex_application.g_flow_step_id verwendet.
-   * %return Anonymer PL/SQL-Block, der eine OUT-Variable eines Records typsicher
-   *         mit den Zeilenwerten fuellt
-   * %usage  Generisches Utility, um alle Werte der aktuellen Zeile des IG
-   *         in eine Datenstruktur zu uebernehmen. Von hier aus koennen die
-   *         Werte entweder direkt verwendet oder typsicher auf einen lokalen
-   *         Record verteilt werden.
-   *         Kann entweder dynamisch auf der Seite aufgerufen werden, oder statisch zur Entwicklungszeit,
-   *         um den resultierenden Code in ein Package zu uebernehmen.
-   *         Beispiel dynamisch:
-   *         <code> execute immedite utl_apex.get_ig_values('FOO', 'FOO_EDIT') using out l_row;</code>
-   *         Beispiel statisch:
-   *         <code>select utl_apex.get_ig_values('FOO', 'FOO_EDIT', 123, 1) from dual </code>
+  /** Method to read the values of an interactive Grid. Returns a PL/SQL block that reads and converts the data into a 
+   * typesave record instance that can be directly used in packages.
+   * %param  p_target_table    Name of the table the data is written to, not the table or view name of the interactive grid.
+   * %param [p_record_name]    Name of the resulting record.
+   * %param [p_application_id] APEX application id. IF NULL, apex_application.g_flow_id is used.
+   * %param [p_page_id]        APEX page id. If NULL, apex_application.g_flow_step_id is used.
+   * %return Anonymous PL/SQL block to copy and convert the page values into a record. The record structure is taken from P_TARGET_TABLE
+   * %usage  Generic utility to create code that reads the actual session state of an interactive grid row. <br>
+   *         This method can be used in two variations: static or dynamic. If called statically, you provide an application and
+   *         page id, if used dynamically, you run the query without those parameters. The difference is that when called 
+   *         dynamically, the method will create a PL/SQL block that can be executed directly using dynamic SQL:
+   *         <code> execute immediate utl_apex.get_ig_values('FOO') using out l_row;</code>
+   *         Here, <code>l_row</code> must be of <code>P_TARGET_TABLE%ROWTYPE</code>.
+   *         If used statically, the method creates PL/SQL code that can be directly copied into a package:
+   *         <code>select utl_apex.get_ig_values('MY_TABLE_NAME', 'abc', 123, 1) from dual </code>
+   *         This call will generate a global record of <code>P_TARGET_TABLE%ROWTYPE</code>, named <code>P_RECORD_NAME</code>
    */
   function get_ig_values(
     p_target_table in ora_name_type,
-    p_static_id in ora_name_type,
+    p_record_name in ora_name_type default 'row',
     p_application_id in binary_integer default null,
     p_page_id in binary_integer default null)
     return varchar2;
 
 
-  /** Funktion zum Lesen eines Seitenelementwerts aus einer Instanz von PAGE_VALUE_T.
-   * @usage  Wrapper, wird verwendet, um sprechende Fehlermeldung bei nicht vorhandenen Seitenelementen
-   *         zu generieren.
-   * @param  p_page_values   Instanz der Seitenwerte
-   * @param  p_element_name  Name des Seitenelements
-   * @return Sessionstatuswert
+  /** Method to read a session state value from PAGE_VALUE_T.
+   * @usage  Wrapper around the collection to catch exceptions if a key is requested that does not exist.
+   * @param  p_page_values   Instance of the page values read by GET_PAGE_VALUES
+   * @param  p_element_name  Name of the page item for which the value is requested
+   * @return Session state value as string
    */
   function get(
     p_page_values in page_value_t,
@@ -123,22 +121,24 @@ as
     return varchar2;
 
 
-  /** Funktion prueft, ob der uebergebene Name ein einfache SQL-Bezeichner ist.
-   * Zusaetzlich zu DBMS_ASSERT wird geprueft, dass keine Umlaute enthalten sind.
-   * @param  p_name  Name, der geprueft werden soll
-   * @return Fehlermeldung, falls Pruefung nicht erfolgreich war, NULL ansonsten
+  /** Method checks and converts a name to adhere to simple SQL naming conventions
+   * @param  p_name  Name to check
+   * @return Error message if the name does not conform to the naming conventions, NULL otherwise
+   * @usage  Wrapper around DBMS_ASSERT with an additional test to prevent umlauts to be part of the name
    */
   function validate_simple_sql_name(
     p_name in varchar2)
     return varchar2;
 
 
-  /** Prozedur zum Setzen von Validierungsfehlermeldungen.<br/>
-   * Die Prozedur wird aufgerufen, um bei einer nicht erfolgreichen Validierungspruefung
-   * eine Fehlermeldung an die Oberflaeche auszugeben. Die Meldung wird ausgegeben, wenn p_message NOT NULL ist.
+  /** Method to register validation error messages.
    * @param  p_page_item  Seitenelement, das durch die Validierung betroffen ist
    * @param  p_message    Meldungstext bzw. Referenz auf eine MSG_LOG-Meldung
    * @param [p_msg_args]  Optionale Meldungsparameter
+   * @usage  This method is called during validation checks to pass an error message to the UI. It will pass the message if
+   *         it is not null and do nothing otherwise. This way, it can be called anyway without prior check whether an error
+   *         has occurred. This is useful when <code>P_MESSAGE</code> is provided via a method that throws an error message 
+   *         if the validation fails and NULL if everything is OK.
    */
   procedure set_error(
     p_page_item in ora_name_type,
@@ -146,14 +146,13 @@ as
     p_msg_args in msg_args default null);
 
 
-  /** Prozedur zum Setzen von Validierungsfehlermeldungen.<br/>
-   * Die Prozedur wird aufgerufen, um eine Validierung durchzufuehren und, falls die Pruefung nicht TRUE war,
-   * direkt eine Fehlermeldung auszugeben.
-   * Entspricht inhaltlich msg_log.assert, erlaubt aber die Zuordnung der Meldung zu einem Seitenelement.
-   * @param  p_test       Validierung, die zu TRUE, FALSE oder NULL evaluiert
+  /** Method to register validation error messages.
    * @param  p_page_item  Seitenelement, das durch die Validierung betroffen ist
    * @param  p_message    Meldungstext bzw. Referenz auf eine MSG_LOG-Meldung
    * @param [p_msg_args]  Optionale Meldungsparameter
+   * @usage  This method is called during validation checks to pass an error message to the UI. It will pass the message if
+   *         <code>P_TEST</code> evaluates to <code>FALSE</code> and do nothing otherwise.<br>The message has to be a PIT 
+   *         message name with an optional attribute set.
    */
   procedure set_error(
     p_test in boolean,
@@ -162,55 +161,46 @@ as
     p_msg_args in msg_args default null);
 
 
-  /** Funktion zur Ermittlung eines Seitenpraefixes zur aktuellen Seite.
-   * @return Aktuelle Seitennummer der APEX-Anwendung als Praefix der Form Pnn_
-   */
-  function get_page
-    return varchar2;
-
-
-  /** Funktion zur Analyse des Requests auf Einfuegeoperation.
-   * @return TRUE, falls die entsprechende Aktion aktuell angefordert wurde
+  /** Methods to analyse the requested operation during a page submit
+   * @return TRUE, if the respective operation was requested
+   * @usage  This method is used within a method to process user entries for a given page. By calling these methods, the package
+   *         can decide on the respective action to take, analogous to the trigger constants.
    */
   function inserting
     return boolean;
 
-  /** Funktion zur Analyse des Requests auf Aktualisierungsoperation.
-   * @return TRUE, falls die entsprechende Aktion aktuell angefordert wurde
-   */
   function updating
     return boolean;
 
-  /** Funktion zur Analyse des Requests auf Loeschoperation
-   * @return TRUE, falls die entsprechende Aktion aktuell angefordert wurde
-   */
   function deleting
     return boolean;
 
-  /** Funktion zur Analyse, ob der aktuelle Request dem uebergebenen Request entspricht.<br/>
-   * Wird verwendet, um neben den <i>normalen</i> Request auch spezielle Requestwerte pruefen zu koennen.
-   * @param  p_request  Requestwert, dem der aktuell durch die Seite ausgeloeste Request entsprechen soll.
-   * @return TRUE, falls die entsprechende Aktion aktuell angefordert wurde
+  /** Method to check whether the request is equal to P_REQUEST.
+   * @param  p_request  Request value to check against the actual request value
+   * @return Outcome of the comparison
+   * @usage  This method is used to check for arbitrary request values outside the scope of CRUD. Wrapper around
+   *         <code>v('REQUEST') (apex_application.g_request)</code>.
    */
   function request_is(
     p_request in varchar2)
     return boolean;
 
 
-  /** Methode zur Ausgabe einer Fehlermeldung, falls REQUEST durch aufrufenden Code nicht verabeitet werden kann.
+  /** Method to raise an exception to the APEX UI if an unhandled request was provided
+   * @usage  Is used in <code>CASE</code> operations to handle unexpected request values.
    */
   procedure unhandled_request;
 
 
-  /** Methode zur dynamischen Berechnung eines URL fuer eine modale Seite.<br/>
-   * Wird verwendet, um zu ermoeglichen, dass eine modale Seite ueber dynamisch ermittelte Parameter aufgerufen wird,
-   * zum Beispiel in einem Bericht.
-   * @param  p_param_items         Elementname, dem der uebergebene Parameterwert uebergeben werden soll, kann auch eine :-separierte Liste von Elementnamen sein
-   * @param  p_value_items         Seitenelement, deren Wert als Parameter an die modale Seite uebergeben werden soll, kann auch eine :-separierte Liste von Elementnamen sein
-   * @param  p_hidden_item         Elementname, in das der URL geschrieben werden soll. Erforderlich, weil dieser URL durch eval() ausgefuehrt wird
-   * @param  p_url_template        Stammanteil des URL, bestehend aus APP_ALIAS:PAGE_ALIAS: Seite, die modal geöffnet werden soll
-   * @param  p_triggering_element  Element, das bei einem Modalen Dialogfenster den Event APEXAFTERCLOSEDIALOG erhalten soll
-   * @param  p_clear_cache         Angabe einer Seitennummer, fuer die der SessionStatus zurueckgesetzt werden soll
+  /** Method to dynamically create an URL for an APEX application
+   * @param  p_url_template        Base part of the URL, consisting of APP_ALIAS:PAGE_ALIAS: Reference to the page to open.
+   * @param  p_hidden_item         Name of the hidden element the URL is stored at. Only applicable for the procedure overload
+   * @param [p_param_items]        colon separated list of parameter items to set
+   * @param [p_value_items]        colon separated list of page items on the source page that will be passed to the target page
+   * @param [p_triggering_element] Page item on which the event <code>apexafterclosedialog</code> is raised.
+   * @param [p_clear_cache]        Page id for which the session state is cleared.
+   * @return URL of the requested page
+   * @usage  Is called to create an URL for an APEX page. Wrapper around the respective APEX methods (different, based on APEX version).
    */
   function get_page_url(
     p_url_template in varchar2,
@@ -220,46 +210,39 @@ as
     p_clear_cache in binary_integer default null)
     return varchar2;
     
-  -- Ueberladung als Prozedur, setzt URL im SessionState in P_HIDDEN_ITEM 
-  procedure create_modal_dialog_url(
-    p_param_items in varchar2,
-    p_value_items in varchar2,
+  /** Overload as procedure to store the calculated URL in a page item identified by P_HIDDEN_ITEM */
+  procedure set_page_url(
+    p_url_template in varchar2,
     p_hidden_item in varchar2,
-    p_url_template in varchar2);
+    p_param_items in varchar2 default null,
+    p_value_items in varchar2 default null);
 
 
-  /** Methode zur Konvertierung einer CLOB-Instanz zu BLOB-Instanz
-   * @param  p_clob  CLOB-Instanz, die konvertiert werden soll
-   * @return konvertierte BLOB-Instanz
-   */
-  function clob_to_blob(
-    p_clob in clob)
-    return blob;
-
-
-  /** Methode zum Laden einer BLOB-Instanz ueber die Download-Funktion des Browsers.
-   * @param  p_blob       Instanz, die als Datei ueber den Browser heruntergeladen werden soll.
-   * @param  p_file_name  Name der Datei, die heruntergeladen werden soll.
+  /** Methods to download a LOB over the browser
+   * @param  p_blob       BLOB instance to download
+   * @param  p_file_name  Name of the file to download.
+   * @usage  Is called to offer a file as a download over APEX
    */
   procedure download_blob(
     p_blob in out nocopy blob,
     p_file_name in varchar2);
 
 
-  /** Methode zum Laden einer CLOB-Instanz ueber die Download-Funktion des Browsers.
-   * @param  p_clob       Instanz, die als Datei ueber den Browser heruntergeladen werden soll.
-   * @param  p_file_name  Name der Datei, die heruntergeladen werden soll.
-   */
+  /** Overload for CLOB instances */
   procedure download_clob(
     p_clob in clob,
     p_file_name in varchar2);
 
 
   /* ASSERTIONS-Wrapper */
-  /* Methoden rufen PIT.ASSERT... auf, fangen eventuelle Fehler und geben sie ueber
-   * PIT.LOG_SPECIFIC nur an APEX aus. P_AFFECTED_ID stellt das Seitenelement dar, an
-   * das die Fehlermeldung gebunden wird.
-   * DOKU siehe PIT
+  /** Methods call <code>PIT.ASSERT...</code> catch them and pass them to the APEX UI by adding them to the APEX error stack
+   * @param  p_condition     Test to execute
+   * @param  p_message_name  PIT message name to throw if <code>P_CONDITION</code> evaluates to <code>FLASE</code>
+   * @param [p_affected_id]  Page item to bind the error message to. If NULL, the error message is shown without page item relation
+   * @param [p_arg_list]     Optional message arguments
+   * @usage  These methods are used as a convenience wrapper around <code>PIT.ASSERT...</code> by eliminating repetitive code
+   *         to encorporate the error message into the APEX error stack and assign it to a page item.
+   *         Further documentation @see PIT
    */
   procedure assert(
     p_condition in boolean,

@@ -3,24 +3,116 @@ as
 
   -- Private type declarations
   -- Private constant declarations
-  C_PKG constant ora_name_type := $$PLSQL_UNIT;
-  C_APEX_SCHEMA constant ora_name_type := $$PLSQL_UNIT_OWNER;
   C_PIT_APEX_MODULE constant ora_name_type := 'PIT_APEX:PIT_CONSOLE';
   C_ROW_STATUS constant ora_name_type := 'APEX$ROW_STATUS';
 
   -- HELPER
+  $IF UTL_APEX.VER_LE_0500 $THEN
+  /** Method to retrieve the workspace id for a given application
+   * @param  p_application_id  ID of the application the workspace has to be detected for
+   * @return Primary key of the workspace
+   * @usage  Is used to retrieve the workspace id if an apex session is to be created. Unnecessary with version 5.1
+   */
+  function get_workspace_id(
+    p_application_id in number)
+    return number
+  as
+    l_workspace_id apex_applications.workspace_id%type;
+  begin
+    select workspace_id
+      into l_workspace_id
+      from apex_applications
+     where application_id = p_application_id;
+    return l_workspace_id;
+  end get_workspace_id;
+  $END
+
+
+  /** Method to create the page prefix for the actual page
+   * @return Actual page number in the form <code>Pnn_</code>, usable as a page prefix.
+   */
+  function get_page
+   return varchar2
+  is
+    c_page_template constant varchar2(10) := 'P#PAGE#_';
+  begin
+    return replace(c_page_template, '#PAGE#', to_char(apex_application.g_flow_step_id));
+  end get_page;
+  
+  
+  /** Method to canonize an element name. 
+   * @param  p_affected_id  Name of the page item
+   * @usage  Used to make sure that a page item has got it's page prefix. If it is passed in without page prefix, it will be added
+   */
   function get_page_element(
     p_affected_id in ora_name_type)
     return varchar2
   as
-    l_element ora_name_type;
+    l_page_prefix ora_name_type;
   begin
-    l_element := p_affected_id;
-    if not regexp_like(l_element, '^P[0-9]+_') then
-      l_element := get_page || l_element;
-    end if;
-    return l_element;
+    l_page_prefix := get_page;
+    return l_page_prefix || ltrim(p_affected_id, l_page_prefix);
   end get_page_element;
+  
+  
+  /** Method tries to read the message text of a PIT message
+   * @param  p_message  Name of the PIT message or a message text
+   * @param  p_msg_args  Arguments for the PIT message
+   * @return Message text
+   * @usage  Is used to try to create a text based on a PIT message. If that fails, parameter <code>P_MESSAGE</oode> is returned.
+   */
+  function get_pit_message(
+    p_message in ora_name_type,
+    p_msg_args in msg_args)
+    return varchar2
+  as
+  begin
+    return pit.get_message_text(p_message, p_msg_args);
+  exception
+    when others then
+       return p_message;
+  end get_pit_message;
+
+
+  /* Method to convert a CLOB into a BLOB
+   * @param  p_clob  CLOB instance to convert
+   * @return converted BLOB instance
+   * @usage  Is used to prepare a CLOB for downloading as BLOB
+   */
+  function clob_to_blob(
+    p_clob in clob)
+    return blob
+  as
+    l_blob blob;
+    l_lang_context  integer := dbms_lob.DEFAULT_LANG_CTX;
+    l_warning       integer := dbms_lob.WARN_INCONVERTIBLE_CHAR;
+    l_dest_offset   integer := 1;
+    l_source_offset integer := 1;
+  begin
+    pit.enter_optional(
+      p_params => msg_params(
+                    msg_param('p_clob.length', to_char(dbms_lob.getlength(p_clob)))));
+                    
+    pit.assert_not_null(p_clob);
+    
+    dbms_lob.createtemporary(l_blob, true, dbms_lob.call);
+    dbms_lob.converttoblob (
+      dest_lob => l_blob,
+      src_clob => p_clob,
+      amount => dbms_lob.LOBMAXSIZE,
+      dest_offset => l_dest_offset,
+      src_offset => l_source_offset,
+      blob_csid => dbms_lob.DEFAULT_CSID,
+      lang_context => l_lang_context,
+      warning => l_warning
+    );
+
+    pit.leave_optional;
+    return l_blob;
+  exception
+    when msg.ASSERT_IS_NOT_NULL_ERR then
+      return null;
+  end clob_to_blob;
 
 
   -- INTERFACE
@@ -48,7 +140,7 @@ as
     if p_bool then
       return C_TRUE;
     else
-      return C_TRUE;
+      return C_FALSE;
     end if;
   end get_bool;
     
@@ -57,14 +149,8 @@ as
     p_authorization_scheme in varchar2)
     return flag_type
   as
-    l_result flag_type;
   begin
-    if apex_authorization.is_authorized(p_authorization_scheme) then
-      l_result := C_TRUE;
-    else
-      l_result := C_FALSE;
-    end if;
-    return l_result;
+    return get_bool(apex_authorization.is_authorized(p_authorization_scheme));
   end user_is_authorized;
 
 
@@ -73,9 +159,11 @@ as
     p_application_id in apex_applications.application_id%type,
     p_page_id in apex_application_pages.page_id%type default 1)
   as
+    $IF UTL_APEX.VER_LE_0500 $THEN
     l_workspace_id apex_applications.workspace_id%type;
     l_param_name owa.vc_arr;
     l_param_val owa.vc_arr;
+    $END
   begin
     pit.enter_mandatory(p_params => msg_params(
       msg_param('p_apex_user', p_apex_user),
@@ -92,12 +180,7 @@ as
       param_name => l_param_name,
       param_val =>l_param_val);
 
-    select workspace_id
-      into l_workspace_id
-      from apex_applications
-     where application_id = p_application_id;
-
-    wwv_flow_api.set_security_group_id(l_workspace_id);
+    wwv_flow_api.set_security_group_id(get_workspace_id(p_application_id));
 
     apex_application.g_instance := 1;
     apex_application.g_flow_id := p_application_id;
@@ -170,7 +253,7 @@ as
 
   function get_ig_values(
     p_target_table in ora_name_type,
-    p_static_id in ora_name_type,
+    p_record_name in ora_name_type default 'row',
     p_application_id in binary_integer default null,
     p_page_id in binary_integer default null)
     return varchar2
@@ -186,12 +269,12 @@ as
                select uttm_text template,
                       chr(10) cr,
                       lower(p_target_table) table_name,
-                      lower(p_static_id) static_id,
+                      lower(p_record_name) static_id,
                       utl_text.generate_text(cursor(
                           with params as(
                                select coalesce(p_application_id, apex_application.g_flow_id) app_id,
                                       coalesce(p_page_id, apex_application.g_flow_step_id) page_id,
-                                      lower(p_static_id) static_id
+                                      lower(p_record_name) static_id
                                  from dual)
                         select /*+ NO_MERGE (p) */
                                uttm_text template,
@@ -260,13 +343,13 @@ as
        p_message_name => msg.UTL_NAME_CONTAINS_UMLAUT,
        p_arg_list => msg_args(l_name));
 
-    -- Laenge gemaess Namenskonventionen
+    -- limit length according to naming conventions
     pit.assert(
        p_condition => length(l_name) <= c_max_length,
        p_message_name => msg.UTL_NAME_TOO_LONG,
        p_arg_list => msg_args(l_name, to_char(c_max_length)));
 
-    -- erlaubter Oracle-Name
+    -- check name agains Oracle naming conventions
     begin
        l_name := dbms_assert.simple_sql_name(l_name);
     exception
@@ -288,32 +371,28 @@ as
     p_message in ora_name_type,
     p_msg_args in msg_args default null)
   as
-    l_message max_char;
-    l_page_item ora_name_type;
   begin
     pit.enter_detailed(p_params => msg_params(
       msg_param('p_page_item', p_page_item),
       msg_param('p_message', p_message)));
-    if p_message is not null then
-      begin
-        l_message := pit.get_message_text(p_message, p_msg_args);
-      exception
-        when others then
-           l_message := p_message;
-      end;
-      if p_page_item is not null then
-        l_page_item := get_page || replace(p_page_item, get_page);
-        apex_error.add_error(
-          p_message => l_message,
-          p_display_location => apex_error.c_inline_with_field_and_notif,
-          p_page_item_name => l_page_item);
-      else
-        apex_error.add_error(
-          p_message => l_message,
-          p_display_location => apex_error.c_inline_in_notification);
-      end if;
+      
+    pit.assert_not_null(p_message);
+    
+    if p_page_item is not null then
+      apex_error.add_error(
+        p_message => get_pit_message(p_message, p_msg_args),
+        p_display_location => apex_error.c_inline_with_field_and_notif,
+        p_page_item_name => get_page_element(p_page_item));
+    else
+      apex_error.add_error(
+        p_message => get_pit_message(p_message, p_msg_args),
+        p_display_location => apex_error.c_inline_in_notification);
     end if;
+    
     pit.leave_detailed;
+  exception
+    when msg.ASSERT_IS_NOT_NULL_ERR then
+      null;
   end set_error;
 
 
@@ -323,29 +402,18 @@ as
     p_message in ora_name_type,
     p_msg_args in msg_args default null)
   as
-    l_page_item ora_name_type;
   begin
     if not p_test then
-      l_page_item := get_page || replace(p_page_item, get_page);
-      set_error(l_page_item, p_message, p_msg_args);
+      set_error(p_page_item, p_message, p_msg_args);
     end if;
   end set_error;
-
-
-  function get_page
-   return varchar2
-  is
-    c_page_template constant varchar2(10) := 'P#PAGE#_';
-  begin
-    return replace(c_page_template, '#PAGE#', to_char(apex_application.g_flow_step_id));
-  end get_page;
 
 
   function inserting
    return boolean
   is
-    c_insert_whitelist constant char_table := char_table('CREATE', 'CREATE_AGAIN', 'INSERT', 'CREATEAGAIN');
-    c_insert_flag constant char(1 byte) := 'C';
+    C_INSERT_WHITELIST constant char_table := char_table('CREATE', 'CREATE_AGAIN', 'INSERT', 'CREATEAGAIN');
+    C_INSERT_FLAG constant char(1 byte) := 'C';
     l_result boolean := false;
   begin
     $IF utl_apex.ver_le_0500 $THEN
@@ -363,8 +431,8 @@ as
   function updating
    return boolean
   is
-    c_update_whitelist constant char_table := char_table('SAVE', 'APPLY CHANGES', 'UPDATE', 'UPDATE ROW', 'CHANGE', 'APPLY');
-    c_update_flag constant char(1 byte) := 'U';
+    C_UPDATE_WHITELIST constant char_table := char_table('SAVE', 'APPLY CHANGES', 'UPDATE', 'UPDATE ROW', 'CHANGE', 'APPLY');
+    C_UPDATE_FLAG constant char(1 byte) := 'U';
     l_result boolean := false;
   begin
     $IF utl_apex.ver_le_0500 $THEN
@@ -382,8 +450,8 @@ as
   function deleting
    return boolean
   is
-    c_delete_whitelist constant char_table := char_table('DELETE', 'REMOVE', 'DELETE ROW', 'DROP');
-    c_delete_flag constant char(1 byte) := 'D';
+    C_DELETE_WHITELIST constant char_table := char_table('DELETE', 'REMOVE', 'DELETE ROW', 'DROP');
+    C_DELETE_FLAG constant char(1 byte) := 'D';
     l_result boolean := false;
   begin
     $IF utl_apex.ver_le_0500 $THEN
@@ -446,11 +514,11 @@ as
     $ELSE
     l_value_list := apex_util.string_to_table(p_url_template, ':');
     l_url := apex_page.get_url(
-      p_application => l_value_list(1),
-      p_page => l_value_list(2),
-      p_clear_cache => p_clear_cache,
-      p_items => l_item_param,
-      p_values => l_value_param);
+               p_application => l_value_list(1),
+               p_page => l_value_list(2),
+               p_clear_cache => p_clear_cache,
+               p_items => l_item_param,
+               p_values => l_value_param);
     $END
                
     pit.leave_optional(p_params => msg_params(msg_param('URL', l_url)));
@@ -458,11 +526,11 @@ as
   end get_page_url;
 
 
-  procedure create_modal_dialog_url(
-    p_param_items in varchar2,
-    p_value_items in varchar2,
+  procedure set_page_url(
+    p_url_template in varchar2,
     p_hidden_item in varchar2,
-    p_url_template in varchar2)
+    p_param_items in varchar2 default null,
+    p_value_items in varchar2 default null)
   as
     l_url varchar2 (4000);
     l_triggering_element varchar2(100 char) := 'apex.jQuery("#' || p_hidden_item || '")';
@@ -475,58 +543,16 @@ as
                     msg_param('p_url_template', p_url_template)));
 
     l_url := get_page_url(
-      p_param_items => p_param_items,
-      p_value_items => p_value_items,
-      p_url_template => p_url_template,
-      p_triggering_element => l_triggering_element);
+               p_param_items => p_param_items,
+               p_value_items => p_value_items,
+               p_url_template => p_url_template,
+               p_triggering_element => l_triggering_element);
     apex_util.set_session_state(p_hidden_item, l_url);
 
-    pit.leave_optional(p_params => msg_params(
-                                     msg_param('l_url', l_url)));
-  end create_modal_dialog_url;
-
-
-  function clob_to_blob(
-    p_clob in clob)
-    return blob
-  as
-    C_CHUNK_SIZE constant integer := 4096;
-    l_blob blob;
-    l_offset number default 1;
-    l_amount number default C_CHUNK_SIZE;
-    l_offsetwrite number default 1;
-    l_amountwrite number;
-    l_buffer max_char;
-  begin
-    pit.enter_optional(
+    pit.leave_optional(
       p_params => msg_params(
-                    msg_param('p_clob.length', to_char(dbms_lob.getlength(p_clob)))));
-    
-    if p_clob is not null then
-    dbms_lob.createtemporary(l_blob, true);
-      loop
-        dbms_lob.read (lob_loc => p_clob,
-          amount => l_amount,
-          offset => l_offset,
-          buffer => l_buffer);
-
-        l_amountwrite := utl_raw.length (utl_raw.cast_to_raw(l_buffer));
-
-        dbms_lob.write (lob_loc => l_blob,
-          amount => l_amountwrite,
-          offset => l_offsetwrite,
-          buffer => utl_raw.cast_to_raw(l_buffer));
-
-        l_offsetwrite := l_offsetwrite + l_amountwrite;
-
-        l_offset := l_offset + l_amount;
-        l_amount := C_CHUNK_SIZE;
-      end loop;
-    end if;
-    
-    pit.leave_optional;
-    return l_blob;
-  end clob_to_blob;
+                    msg_param('l_url', l_url)));
+  end set_page_url;
 
 
   procedure download_blob(
@@ -539,12 +565,15 @@ as
                     msg_param('p_blob.length', to_char(dbms_lob.getlength(p_blob))),
                     msg_param('p_file_name', p_file_name)));
 
+    -- Write http header
     htp.init;
     owa_util.mime_header('application/octet-stream', false, 'UTF-8');
     htp.p('Content-length: ' || dbms_lob.getlength(p_blob));
     htp.p('Content-Disposition: inline; filename="' || p_file_name || '"');
     owa_util.http_header_close;
+    
     wpg_docload.download_file(p_blob);
+    
     apex_application.stop_apex_engine;
 
     pit.leave_mandatory;
