@@ -2,6 +2,9 @@ UTL_APEX is a utility collection of methods aiming at Oracle APEX
 
 It must be installed at an owner that has been granted access by the apex workspace, otherwise the utilities won't work.
 
+Prior to installation decide upon the specification of FLAG_TYPE, the datatype used for boolean values.
+As per default, CHAR(1 BYTE) is used with Y|N as the values for true and false. If you want to change that, adjust the settings in INIT.SQL
+
 To install
 - Make sure that PIT and UTL_TEXT are installed, both are available on GitHub
 - start a command line

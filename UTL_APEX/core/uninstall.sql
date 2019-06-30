@@ -11,9 +11,9 @@ declare
           select object_name name, object_type type
             from all_objects
            where object_name in (
-                 'UTL_APEX_DDL_COL_T', 'UTL_APEX_DDL_COL_TAB', -- Typen
-                 'UTL_APEX', 'UTL_APEX_DDL', -- Packages
-                 'CODE_GEN_APEX_COLLECTION', -- Views
+                 'UTL_APEX_DDL_COL_T', 'UTL_APEX_DDL_COL_TAB', 'UTL_APEX_PAGE_ITEM', 'UTL_APEX_PAGE_ITEM_T', -- Typen
+                 'UTL_APEX', 'UTL_APEX_DDL',  -- Packages
+                 'CODE_GEN_APEX_COLLECTION', 'UTL_APEX_FETCH_ROW_COLUMNS', 'UTL_APEX_FORM_REGION_COLUMNS', 'UTL_APEX_IG_COLUMNS', 'UTL_APEX_PAGE_ITEMS', -- Views
                  '',  -- Tabellen
                  '',  -- Synonyme
                  '' -- Sequenzen

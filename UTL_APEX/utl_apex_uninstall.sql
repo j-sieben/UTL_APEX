@@ -11,7 +11,7 @@ prompt &h2.grant user rights
 alter session set current_schema=&INSTALL_USER.;
 
 prompt &h1.State UTL_APEX Deinstallation
-@clean_up_install.sql
+@core/clean_up_install.sql
 
 prompt
 prompt &section.

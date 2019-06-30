@@ -620,51 +620,51 @@ q'°end;/°',
   );
 
   utl_text.merge_template(
-    p_uttm_name => 'GRID_DATA_TYPE',
-    p_uttm_type => 'APEX_IG',
+    p_uttm_name => 'FORM_COLUMN',
+    p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'NUMBER',
-    p_uttm_text => q'°  g_#STATIC_ID#_row.#COLUMN_NAME# := to_number(v('#COLUMN_NAME_UPPER#')#FORMAT_MASK|, '|'|#);°',
+    p_uttm_text => q'°  #RECORD_NAME#.#COLUMN_NAME# := to_number(v('#SOURCE_NAME')#FORMAT_MASK|, '|'|#);°',
     p_uttm_log_text => q'°°',
     p_uttm_log_severity => 70
   );
 
   utl_text.merge_template(
-    p_uttm_name => 'GRID_DATA_TYPE',
-    p_uttm_type => 'APEX_IG',
+    p_uttm_name => 'FORM_COLUMN',
+    p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'DATE',
-    p_uttm_text => q'°  g_#STATIC_ID#_row.#COLUMN_NAME# := to_date(v('#COLUMN_NAME_UPPER#'), '#FORMAT_MASK#');°',
+    p_uttm_text => q'°  #RECORD_NAME#.#COLUMN_NAME# := to_date(v('#SOURCE_NAME#'), '#FORMAT_MASK#');°',
     p_uttm_log_text => q'°°',
     p_uttm_log_severity => 70
   );
 
   utl_text.merge_template(
-    p_uttm_name => 'GRID_DATA_TYPE',
-    p_uttm_type => 'APEX_IG',
+    p_uttm_name => 'FORM_COLUMN',
+    p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'DEFAULT',
-    p_uttm_text => q'°  g_#STATIC_ID#_row.#COLUMN_NAME# := v('#COLUMN_NAME_UPPER#');°',
+    p_uttm_text => q'°  #RECORD_NAME#.#COLUMN_NAME# := v('#SOURCE_NAME#');°',
     p_uttm_log_text => q'°°',
     p_uttm_log_severity => 70
   );
 
   utl_text.merge_template(
-    p_uttm_name => 'GRID_PROCEDURE',
-    p_uttm_type => 'APEX_IG',
+    p_uttm_name => 'FORM_FRAME',
+    p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'DYNAMIC',
     p_uttm_text => q'°declare
-  g_#STATIC_ID#_row #TABLE_NAME#%rowtype;
+  #RECORD_NAME# #TABLE_NAME#%rowtype;
 begin
 #COLUMN_LIST#
-  :x := g_row;
+  :x := #RECORD_NAME#;
 end;°',
     p_uttm_log_text => q'°°',
     p_uttm_log_severity => 70
   );
 
   utl_text.merge_template(
-    p_uttm_name => 'GRID_PROCEDURE',
-    p_uttm_type => 'APEX_IG',
+    p_uttm_name => 'FORM_FRAME',
+    p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'STATIC',
-    p_uttm_text => q'°  g_#STATIC_ID#_row #TABLE_NAME#%rowtype;
+    p_uttm_text => q'°  #RECORD_NAME# #TABLE_NAME#%rowtype;
 
 begin
 #COLUMN_LIST#

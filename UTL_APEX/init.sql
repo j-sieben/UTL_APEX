@@ -6,7 +6,7 @@ set lines 120
 set pages 9999
 whenever sqlerror exit
 clear screen
---set termout off
+set termout off
 
 col sys_user new_val SYS_USER format a30
 col install_user new_val INSTALL_USER format a30
@@ -65,6 +65,17 @@ select 'varchar2(' || data_length || ' byte)' ORA_NAME_TYPE
   from all_tab_columns
  where table_name = 'USER_TABLES'
    and column_name = 'TABLE_NAME';
+
+-- ADJUST THIS SETTING IF YOU WANT ANOTHER TYPE 
+define FLAG_TYPE="char(1 byte)";
+define C_TRUE="'Y'";
+define C_FALSE="'N'";
+
+--define FLAG_TYPE="number(1, 0)";
+--define C_TRUE=1;
+--define C_FALSE=0;
+
+define MIN_UT_VERSION="v3.1"
    
 define section="********************************************************************************"
 define h1="*** "

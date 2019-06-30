@@ -10,12 +10,8 @@ begin
   $IF dbms_db_version.ver_le_11 $THEN
   null;
   $ELSE
-  dbms_output.put_line('&s1.INHERIT PRIVILEGES from &SYS_USER. to &INSTALL_USER. granted');
-  execute immediate 'grant inherit privileges on user &SYS_USER. to &INSTALL_USER.';
-  if '&REMOTE_USER.' is not null then
-    dbms_output.put_line('&s1.INHERIT PRIVILEGES from &SYS_USER. to &REMOTE_USER. granted');
-    execute immediate 'grant inherit privileges on user &SYS_USER. to &REMOTE_USER.';
-  end if;
+  dbms_output.put_line('&s1.INHERIT PRIVILEGES from &SYS_USER. to public granted');
+  execute immediate 'grant inherit privileges on user &SYS_USER. to public';
   $END
 end;
 /

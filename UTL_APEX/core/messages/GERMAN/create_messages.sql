@@ -75,6 +75,30 @@ begin
     p_pms_pmg_name => 'UTL_APEX',
     p_pms_pml_name => 'GERMAN');
     
+  pit_admin.merge_message(
+    p_pms_name => 'INVALID_ITEM_PREFIX',
+    p_pms_text => 'Als Parameter sind nur die Konstanten CONVERT_... erlaubt. NULL setzt den Parameter auf den hinterlegten Standardwert zurück.',
+    p_pms_description => q'^Nur die erlaubten Werte dürfen für den Parameter verwendet werden.^',
+    p_pms_pse_id => 30,
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_pml_name => 'GERMAN');
+    
+  pit_admin.merge_message(
+    p_pms_name => 'PAGE_ITEM_MISSING',
+    p_pms_text => 'Element #1# existiert nicht auf der Anwendungsseite.',
+    p_pms_description => q'^Es wurde ein Seitenelement referenziert, das nicht existiert.^',
+    p_pms_pse_id => 30,
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_pml_name => 'GERMAN');
+    
+  pit_admin.merge_message(
+    p_pms_name => 'CASE_NOT_FOUND',
+    p_pms_text => '#1# bei Ausführung von CASE-Anweisung nicht gefunden.',
+    p_pms_description => q'^Eine Option wurde übergeben, für die kein Handler in einer CASE-Anweisung vorlag und die keinen ELSE-Zweig enthält.^',
+    p_pms_pse_id => 30,
+    p_pms_pmg_name => 'PIT',
+    p_pms_pml_name => 'GERMAN');
+    
   pit_admin.create_message_package;
 end;
 /

@@ -9,7 +9,7 @@ prompt
 prompt &section.
 prompt &h1.Checking whether required users exist
 @check_users_exist.sql
-prompt &h1.Checking whether required dtabase objects exist
+prompt &h1.Checking whether required database objects exist
 @check_prerequisites.sql
 
 prompt &h2.grant user rights
@@ -20,54 +20,20 @@ alter session set current_schema=&INSTALL_USER.;
 
 prompt
 prompt &section.
-prompt &h1.State UTL_APEX Installation at user &INSTALL_USER.
+prompt &h1.UTL_APEX Installation at user &INSTALL_USER.
 prompt
 prompt &section.
 prompt &h1.Remove existing installation
-@clean_up_install.sql
+@core/uninstall.sql
+
+@check_unit_test_exists.sql "unit_test/uninstall.sql" "deinstallation"
 
 prompt
 prompt &section.
-prompt &h1.Messages
-@messages/&DEFAULT_LANGUAGE./create_messages.sql
+prompt &h1.Install UTL_APEX core functionality
+@core/install.sql
 
-prompt
-prompt &section.
-prompt &h1.Templates
-@scripts/merge_templates.sql
-
-prompt
-prompt &section.
-prompt &h1.Types
-prompt &s1.Type UTL_APEX_DDL_COL_T
-@types/utl_apex_ddl_col_t.tps
-
-prompt &s1.Type UTL_APEX_DDL_COL_TAB
-@types/utl_apex_ddl_col_tab.tps
-
-prompt
-prompt &section.
-prompt &h1.Views
-prompt &s1.View CODE_GEN_APEX_COLLECTION
-@views/code_gen_apex_collection.vw
-
-prompt &s1.View APEX_UI_LIST_MENU
-@views/apex_ui_list_menu.vw
-
-
-prompt
-prompt &section.
-prompt &s1.Package UTL_APEX
-@packages/utl_apex.pks
-
-prompt &s1.Package UTL_APEX_DDL
-@packages/utl_apex_ddl.pks
-
-prompt &s1.Package Body UTL_APEX
-@packages/utl_apex.pkb
-
-prompt &s1.Package Body UTL_APEX_DDL
-@packages/utl_apex_ddl.pkb
+@check_unit_test_exists.sql "unit_test/install.sql" "installation"
 
 prompt
 prompt &section.
@@ -75,6 +41,6 @@ prompt &h1.Finalize installation
 prompt &h2.Revoke user rights
 @revoke_grants.sql
 
-prompt &h1.Finished UTL_APEX-Installation
+prompt &h1.Finished UTL_APEX Installation
 
 exit

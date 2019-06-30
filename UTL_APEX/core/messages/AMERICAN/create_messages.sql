@@ -75,6 +75,30 @@ begin
     p_pms_pmg_name => 'UTL',
     p_pms_pml_name => 'AMERICAN');
     
+  pit_admin.merge_message(
+    p_pms_name => 'INVALID_ITEM_PREFIX',
+    p_pms_text => 'Only package constants CONVERT_... are valid. If NULL the parameter is reset to the default value.',
+    p_pms_description => q'^Only allowed parameter values are valid.^',
+    p_pms_pse_id => 30,
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_pml_name => 'GERMAN');
+    
+  pit_admin.merge_message(
+    p_pms_name => 'PAGE_ITEM_MISSING',
+    p_pms_text => 'Page item #1# does not exist.',
+    p_pms_description => q'^A page item was referenced which does not exist on the actual APEX page.^',
+    p_pms_pse_id => 30,
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_pml_name => 'GERMAN');
+    
+  pit_admin.merge_message(
+    p_pms_name => 'CASE_NOT_FOUND',
+    p_pms_text => '#1# not found while executing CASE statement.',
+    p_pms_description => q'^An option was passed into a CASE statement for which no handler exists and no ELSE option is available.^',
+    p_pms_pse_id => 30,
+    p_pms_pmg_name => 'PIT',
+    p_pms_pml_name => 'GERMAN');
+    
   pit_admin.create_message_package;
 end;
 /
