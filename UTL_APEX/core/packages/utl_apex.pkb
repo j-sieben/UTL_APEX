@@ -424,71 +424,6 @@ as
       pit.leave_optional(msg_params(msg_param('Error', substr(sqlerrm, 12))));
       return C_FALSE;
   end user_is_authorized;
-
-
-  procedure create_apex_session(
-    p_apex_user in apex_workspace_activity_log.apex_user%type,
-    p_application_id in apex_applications.application_id%type,
-    p_page_id in apex_application_pages.page_id%type default 1)
-  as
-    $IF UTL_APEX.VER_LE_0500 $THEN
-    l_workspace_id apex_applications.workspace_id%type;
-    l_param_name owa.vc_arr;
-    l_param_val owa.vc_arr;
-    $END
-  begin
-    pit.enter_optional(p_params => msg_params(
-      msg_param('p_apex_user', p_apex_user),
-      msg_param('p_application_id', to_char(p_application_id)),
-      msg_param('p_page_id', to_char(p_page_id))));
-
-    $IF UTL_APEX.VER_LE_0500 $THEN
-    htp.init;
-    l_param_name(1) := 'REQUEST_PROTOCOL';
-    l_param_val(1) := 'HTTP';
-
-    owa.init_cgi_env(
-      num_params => 1,
-      param_name => l_param_name,
-      param_val =>l_param_val);
-
-    wwv_flow_api.set_security_group_id(get_workspace_id(p_application_id));
-
-    apex_application.g_instance := 1;
-    apex_application.g_flow_id := p_application_id;
-    get_page_id := p_page_id;
-
-    apex_custom_auth.post_login(
-      p_uname => p_apex_user,
-      p_session_id => apex_custom_auth.get_next_session_id,
-      p_app_page => get_application_id || ':' || p_page_id);
-
-    $ELSE
-    apex_session.create_session (
-      p_app_id => p_application_id,
-      p_page_id => p_page_id,
-      p_username => p_apex_user);
-    $END
-
-    pit.leave_optional;
-  end create_apex_session;
-  
-  
-  procedure delete_apex_session(
-    p_session_id in number default null)
-  as
-  begin
-    pit.enter_optional(p_params => msg_params(
-      msg_param('p_session_id', to_char(p_session_id))));
-      
-  $IF UTL_APEX.VER_LE_0500 $THEN
-    -- No known possibility to drop a session.
-  $ELSE
-    apex_session.delete_session(p_session_id);
-  $END
-    
-    pit.leave_optional;
-  end delete_apex_session;
   
   
   function get_page_items(
@@ -901,7 +836,7 @@ select d.page_items
     l_result := get_request member of C_INSERT_WHITELIST;
     $ELSE
     -- Starting with version 5.1, insert might be detected by using C_ROW_STATUS in interactive Grid or Form regions (>= 19.1)
-    if get_value(C_ROW_STATUS) = C_INSERT_FLAG or get_request member of C_INSERT_WHITELIST then
+    if get_request member of C_INSERT_WHITELIST or get_value(C_ROW_STATUS) = C_INSERT_FLAG then
       l_result := true;
     end if;
     $END
@@ -930,7 +865,7 @@ select d.page_items
     l_result := get_request member of C_UPDATE_WHITELIST;
     $ELSE
     -- Starting with version 5.1, insert might be detected by using C_ROW_STATUS in interactive Grid or Form regions (>= 19.1)
-    if get_value(C_ROW_STATUS) = C_UPDATE_FLAG or get_request member of C_UPDATE_WHITELIST then
+    if get_request member of C_UPDATE_WHITELIST or get_value(C_ROW_STATUS) = C_UPDATE_FLAG then
       l_result := true;
     end if;
     $END
@@ -959,7 +894,7 @@ select d.page_items
     l_result := get_request member of C_DELETE_WHITELIST;
     $ELSE
     -- Starting with version 5.1, insert might be detected by using C_ROW_STATUS in interactive Grid or Form regions (>= 19.1)
-    if get_value(C_ROW_STATUS) = C_DELETE_FLAG or get_request member of C_DELETE_WHITELIST then
+    if get_request member of C_DELETE_WHITELIST or get_value(C_ROW_STATUS) = C_DELETE_FLAG then
       l_result := true;
     end if;
     $END

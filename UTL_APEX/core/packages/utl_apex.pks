@@ -167,28 +167,6 @@ as
     return flag_type;
 
 
-  /** Method to create an APEX session outside a browser. Used for test purposes
-   * @param  p_apex_user       APEX session user
-   * @param  p_application_id  ID of the application
-   * @param [p_page_id]        ID of the application page
-   * @usage  Generates an APEX session for testing purposes. After calling this method,
-   *         item values may be set by calling APEX_UTIL.SET_SESSION_STATE.
-   *         Output is visible via OWA output window in SQL Developer
-   */
-  procedure create_apex_session(
-    p_apex_user in apex_workspace_activity_log.apex_user%type,
-    p_application_id in apex_applications.application_id%type,
-    p_page_id in apex_application_pages.page_id%type default 1);
-
-
-  /** Method to create an APEX session outside a browser. Used for test purposes
-   * @param [p_session_id] Optional session id. Defaults to the active session id
-   * @usage  Tears down an APEX session after testing.
-   */
-  procedure delete_apex_session(
-    p_session_id in number default null);
-
-
   /** Method to read all page item values from the session state and store them in an instance of PAGE_VALUE_T.
    * @param [p_static_id]  Required, if an interactive grid or a form region has to be processed.
    *                       As there are potentially more than one IG or form region per page, it is required to distinguish them 

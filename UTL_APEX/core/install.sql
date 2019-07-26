@@ -40,10 +40,10 @@ prompt &s1.View UTL_APEX_FETCH_ROW_COLUMNS
 @&VIEW_DIR.utl_apex_fetch_row_columns.vw
 
 prompt &s1.View UTL_APEX_FORM_REGION_COLUMNS
-@&VIEW_DIR.utl_apex_form_region_columns.vw
+--@&VIEW_DIR.utl_apex_form_region_columns.vw
 
 prompt &s1.View UTL_APEX_IG_COLUMNS
-@&VIEW_DIR.utl_apex_ig_columns.vw
+--@&VIEW_DIR.utl_apex_ig_columns.vw
 
 prompt
 prompt &section.

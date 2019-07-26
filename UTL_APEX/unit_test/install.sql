@@ -22,8 +22,14 @@ prompt &h2.Packages
 prompt &s1.Package UTL_APEX_TEST
 @&PKG_DIR.utl_apex_test.pks
 
+prompt &s1.Package UTL_TEST_APEX
+@&PKG_DIR.utl_test_apex.pks
+
 prompt &s1.Package Body UTL_APEX_TEST
 @&PKG_DIR.utl_apex_test.pkb
+
+prompt &s1.Package Body UTL_TEST_APEX
+@&PKG_DIR.utl_test_apex.pkb
 
 --prompt
 --prompt &section.

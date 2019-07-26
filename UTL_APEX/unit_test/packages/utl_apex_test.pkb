@@ -66,7 +66,7 @@ as
   as
   begin
     get_session;
-    utl_apex.delete_apex_session(apex_application.g_instance);
+    utl_test_apex.delete_apex_session(apex_application.g_instance);
     ut.expect(apex_application.g_instance).to_be_null;
   end delete_apex_session;
   
@@ -76,7 +76,7 @@ as
     pragma autonomous_transaction;
   begin
     drop_session;
-    utl_apex.create_apex_session(
+    utl_test_apex.create_apex_session(
       p_apex_user => c_apex_user,
       p_application_id => g_application_id,
       p_page_id => c_apex_page);      
