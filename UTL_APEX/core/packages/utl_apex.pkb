@@ -532,7 +532,7 @@ select d.page_items
     is
       select /*+ no_merge (p) */ 
              upper(column_name) item_name, 
-             v(source_name) item_value
+             source_name page_item_name
         from table(utl_apex.get_page_items(p_view_name, p_static_id, p_application_id, p_page_id));
     
     l_application_id number := get_application_id;
@@ -553,11 +553,11 @@ select d.page_items
     for itm in page_item_cur(l_view_name, p_static_id, l_application_id, l_page_id) loop
       case p_format
       when FORMAT_JSON then
-        page_values(itm.item_name) := apex_escape.json(itm.item_value);
+        page_values(itm.item_name) := apex_escape.json(v(itm.page_item_name));
       when FORMAT_HTML then
-        page_values(itm.item_name) := apex_escape.html(itm.item_value);
+        page_values(itm.item_name) := apex_escape.html(v(itm.page_item_name));
       else
-        page_values(itm.item_name) := itm.item_value;
+        page_values(itm.item_name) := v(itm.page_item_name);
       end case;
     end loop;
 
