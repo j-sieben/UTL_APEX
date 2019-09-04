@@ -1,10 +1,86 @@
-create or replace package body utl_apex_ddl
+create or replace package body utl_dev_apex
 as
 
   C_PKG constant utl_apex.ora_name_type := $$PLSQL_UNIT;
   C_APEX_TMPL_TYPE constant utl_apex.ora_name_type := 'APEX_COLLECTION';
   C_DEFAULT constant utl_apex.ora_name_type := 'DEFAULT';
   C_CR constant varchar2(2) := chr(10);
+  
+  
+  
+  /** Method to create a script to get the values of the page items.
+   * @return script that contains a PL/SQL block to be either directly executed, returning a record, or a script that may
+   *         be inserted into a package as a code generator, based on P_UTTM_MODE
+   * @usage  Is used to create a script for all page items based on the type of the input form and the usage.
+   *         It is called with different P_UTTM_MODE parameters to cater for copying data to a PL/SQL table or a record
+   *         Supported values:
+   *         - DYNAMIC: script is execeuted immediately and return a filled record instance of P_TABLE_NAME%ROWTYPE
+   *         - STATIC: script is returned as varchar2 to be included in PL/SQL packages
+   */
+  function get_script_for_page_items(
+    p_uttm_mode in utl_text_templates.uttm_mode%type,
+    p_static_id in varchar2,
+    p_table_name in varchar2,
+    p_application_id in number default utl_apex.get_application_id,
+    p_page_id in number default utl_apex.get_page_id,
+    p_record_name in varchar2 default 'l_row_rec')
+    return max_char
+  as
+    l_script clob;
+    l_view_name ora_name_type;
+  begin
+    pit.enter_detailed(
+      p_params => msg_params(
+                    msg_param('p_uttm_mode', p_uttm_mode),
+                    msg_param('p_static_id', p_static_id),
+                    msg_param('p_table_name', p_table_name),
+                    msg_param('p_application_id', to_char(p_application_id)),
+                    msg_param('p_page_id', to_char(p_page_id)),
+                    msg_param('p_record_name', p_record_name)));
+                    
+    l_view_name := get_view_name(
+                     p_static_id => p_static_id,
+                     p_application_id => p_application_id,
+                     p_page_id => p_page_id);
+
+      with params as(
+             select p_uttm_mode uttm_mode, 
+                    get_default_date_format(p_application_id) date_format,
+                    p_record_name record_name,
+                    p_table_name table_name
+               from dual
+           ),
+           templates as (
+             select uttm_text template, uttm_mode
+               from utl_text_templates
+              where uttm_name in (C_TEMPLATE_NAME_COLUMNS, C_TEMPLATE_NAME_FRAME)
+                and uttm_type = C_TEMPLATE_TYPE),
+           data as (
+             select *
+               from table(utl_apex.get_page_items(l_view_name, p_static_id, p_application_id, p_page_id, C_TRUE)) c),
+           tab_name as (
+             select max(table_name) table_name
+               from data)
+    select /*+ no_merge (p)*/
+           utl_text.generate_text(cursor(
+             select t.template, coalesce(t.table_name, p.table_name) table_name, p.record_name,
+                    utl_text.generate_text(cursor(
+                      select t.template, d.column_name, d.source_name, 
+                             coalesce(d.format_mask, case d.data_type when C_DATE then p.date_format end)  format_mask
+                        from data d
+                        join templates t
+                          on case when d.data_type in ('NUMBER', C_DATE) then d.data_type else C_DEFAULT end = t.uttm_mode
+                    )) column_list
+               from tab_name t
+              cross join params p))
+      into l_script
+      from templates t
+      join params p
+        on p.uttm_mode = t.uttm_mode;
+        
+    pit.leave_detailed;
+    return to_char(l_script);
+  end get_script_for_page_items;
 
   function get_table_api(
     p_table_name in utl_apex.ora_name_type,
@@ -18,7 +94,7 @@ as
     C_UTTM_TYPE constant utl_apex.ora_name_type := 'TABLE_API';
     C_COLUMN constant utl_apex.ora_name_type := 'COLUMN';
     l_clob clob;
-    l_column_list utl_apex_ddl_col_tab;
+    l_column_list utl_dev_apex_col_tab;
   begin
     pit.enter_mandatory(C_PKG, 'get_table_api', msg_params(
       msg_param('p_table_name', p_table_name),
@@ -39,7 +115,7 @@ as
                   coalesce(p_pk_columns, char_table()) pk_columns
              from dual)
     select cast(multiset(
-             select utl_apex_ddl_col_t(
+             select utl_dev_apex_col_t(
                       lower(col.column_name), 
                       max(length(col.column_name)) over (),
                       case when coalesce(con.column_name, pk.col_name) is not null then utl_apex.C_TRUE else utl_apex.C_FALSE end)
@@ -71,7 +147,7 @@ as
                       from table(select exclude_columns from params)) ec
                  on col.column_name = ec.column_name
               where ec.column_name is null
-              order by col.column_id) as utl_apex_ddl_col_tab)
+              order by col.column_id) as utl_dev_apex_col_tab)
          into l_column_list
          from dual;
     
@@ -406,5 +482,37 @@ as
       pit.stop;
   end get_collection_methods;
   
-end utl_apex_ddl;
+  
+  function get_page_item_script(
+    p_static_id in varchar2 default null,
+    p_table_name in varchar2 default null,
+    p_application_id in number,
+    p_page_id in number,
+    p_record_name in varchar2)
+    return varchar2
+  as
+    l_cursor sys_refcursor;
+    l_script max_char;
+  begin
+    pit.enter_optional(
+      p_params => msg_params(
+                    msg_param('p_static_id', p_static_id),
+                    msg_param('p_table_name', p_table_name),
+                    msg_param('p_application_id', to_char(p_application_id)),
+                    msg_param('p_page_id', to_char(p_page_id)),
+                    msg_param('p_record_name', p_record_name)));
+    
+    l_script := get_script_for_page_items(
+                  p_uttm_mode => C_TEMPLATE_MODE_STATIC,
+                  p_static_id => p_static_id,
+                  p_table_name => p_table_name,
+                  p_application_id => p_application_id,
+                  p_page_id => p_page_id,
+                  p_record_name => p_record_name);
+    
+    pit.leave_optional(msg_params(msg_param('Result', l_script)));
+    return l_script;
+  end get_page_item_script;
+  
+end utl_dev_apex;
 /

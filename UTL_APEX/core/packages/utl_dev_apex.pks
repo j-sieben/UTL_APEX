@@ -1,4 +1,4 @@
-create or replace package utl_apex_ddl
+create or replace package utl_dev_apex
   authid current_user
 as
   /**
@@ -99,5 +99,29 @@ as
     p_application_id in binary_integer,
     p_page_id in binary_integer)
     return clob;
-end utl_apex_ddl;
+  
+  
+  /** Method to create a script that can be imported into a package to take over all values of a page.
+   * @param [p_static_id]      Required, if an interactive grid or a form region has to be processed.
+   *                           As there are potentially more than one IG or form region per page, it is required to distinguish them 
+   *                           using the static id property of the regions. Normal form pages may have set this attribute or not.
+   * %param [p_table_name]     Name of the table the data is written to. Required if the form does not have a fetch row process
+   *                           (such as with interactive grid) or the form region is based on a SQL query instead on a table or view
+   * %param  p_application_id  APEX application id. IF NULL, apex_application.g_flow_id is used.
+   * %param  p_page_id         APEX page id. If NULL, apex_application.g_flow_step_id is used.
+   * %param  p_record_name     Name of the resulting record.
+   * %return PL/SQL block to copy and convert the page values into a record. The record structure is taken from P_TARGET_TABLE
+   * %usage  Generic utility to create code that reads the actual session state. <br>
+   *         This method creates PL/SQL code that can be directly copied into a package:
+   *         <code>select utl_apex.get_ig_values('MY_TABLE_NAME', 'abc', 123, 1) from dual </code>
+   *         This call will generate a global record of <code>P_TABLE_NAME%ROWTYPE</code>, named <code>P_RECORD_NAME</code>
+   */
+  function get_page_item_script(
+    p_static_id in varchar2 default null,
+    p_table_name in varchar2 default null,
+    p_application_id in number,
+    p_page_id in number,
+    p_record_name in varchar2)
+    return varchar2;
+end utl_dev_apex;
 /

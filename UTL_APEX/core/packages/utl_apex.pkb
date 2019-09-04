@@ -426,6 +426,15 @@ as
   end user_is_authorized;
   
   
+  function current_user_in_group(
+    p_group_name in varchar2) 
+    return flag_type
+  is
+  begin
+    return utl_apex.get_bool(apex_util.current_user_in_group(p_group_name));
+  end current_user_in_group;
+  
+  
   function get_page_items(
     p_view_name in ora_name_type,
     p_static_id in varchar2,
@@ -662,38 +671,6 @@ select d.page_items
     pit.leave_optional(msg_params(msg_param('Result', l_script)));
     return l_script;
   end get_page_record;
-  
-  
-  function get_page_item_script(
-    p_static_id in varchar2 default null,
-    p_table_name in varchar2 default null,
-    p_application_id in number,
-    p_page_id in number,
-    p_record_name in varchar2)
-    return varchar2
-  as
-    l_cursor sys_refcursor;
-    l_script max_char;
-  begin
-    pit.enter_optional(
-      p_params => msg_params(
-                    msg_param('p_static_id', p_static_id),
-                    msg_param('p_table_name', p_table_name),
-                    msg_param('p_application_id', to_char(p_application_id)),
-                    msg_param('p_page_id', to_char(p_page_id)),
-                    msg_param('p_record_name', p_record_name)));
-    
-    l_script := get_script_for_page_items(
-                  p_uttm_mode => C_TEMPLATE_MODE_STATIC,
-                  p_static_id => p_static_id,
-                  p_table_name => p_table_name,
-                  p_application_id => p_application_id,
-                  p_page_id => p_page_id,
-                  p_record_name => p_record_name);
-    
-    pit.leave_optional(msg_params(msg_param('Result', l_script)));
-    return l_script;
-  end get_page_item_script;
 
 
   function get(
