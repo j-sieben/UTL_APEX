@@ -6,7 +6,11 @@ as
   */
 
   /* Types */
-  subtype ora_name_type is &ORA_NAME_TYPE.;
+  $IF dbms_db_version.version < 12 $THEN
+  subtype ora_name_type is varchar2(30 byte);
+  $ELSE
+  subtype ora_name_type is varchar2(128 byte);
+  $END
   subtype max_char is varchar2(32767);
   subtype max_sql_char is varchar2(4000 byte);
   subtype flag_type is &FLAG_TYPE.;
@@ -115,6 +119,36 @@ as
   function get_bool(
     p_bool in boolean)
     return flag_type;
+    
+  
+  /** Method to cast a page item value to number, based on the actual format mask
+   * @param  p_item  Name of the item of which the acutal value has to be casted
+   * @return NUMBER-value or NULL
+   * @usage  Is used to cast a page item value to number
+   */
+  function get_number(
+    p_item in varchar2)
+    return number;
+    
+  
+  /** Method to cast a page item value to date, based on the actual format mask
+   * @param  p_item  Name of the item of which the acutal value has to be casted
+   * @return DATE-value or NULL
+   * @usage  Is used to cast a page item value to number
+   */
+  function get_date(
+    p_item in varchar2)
+    return date;
+    
+  
+  /** Method to cast a page item value to timestamp, based on the actual format mask
+   * @param  p_item  Name of the item of which the acutal value has to be casted
+   * @return TIMESTAMP-value or NULL
+   * @usage  Is used to cast a page item value to number
+   */
+  function get_timestamp(
+    p_item in varchar2)
+    return timestamp;
   
   
   /** Method to define a flag that indiciates whether reading values of non existing items throws an error or not

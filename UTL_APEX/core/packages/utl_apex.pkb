@@ -29,6 +29,7 @@ as
   
   g_item_value_convention boolean;
   g_item_prefix_convention binary_integer;
+  g_format_mask_cache wwv_flow_global.vc_map; 
 
   -- HELPER
   /** Method to canonize an element name. 
@@ -151,6 +152,27 @@ as
     $END    
     return l_url;
   end get_url;
+  
+
+  function get_format_mask(
+    p_name in varchar2)
+    return varchar2
+  is
+    l_item_name apex_application_page_items.item_name%type := upper(p_name);
+  begin
+    if not g_format_mask_cache.exists(l_item_name) then
+      g_format_mask_cache(l_item_name) := null;
+          
+      select /*+ result_cache */ format_mask
+        into g_format_mask_cache(l_item_name)
+        from apex_application_page_items
+       where application_id = (select utl_apex.get_application_id from dual)
+         and item_name = l_item_name;
+      g_format_mask_cache(l_item_name) := wwv_flow.do_substitutions(g_format_mask_cache(l_item_name), 'TEXT');
+    end if;
+        
+    return g_format_mask_cache(l_item_name);
+  end get_format_mask;
   
   
   /** Default initialization method */
@@ -326,6 +348,95 @@ as
   end get_bool;
   
   
+  function get_number(
+      p_item in varchar2)
+      return number
+  is
+    l_number number;
+    l_format_mask utl_apex.ora_name_type;
+  begin
+    begin
+      l_number := to_number(replace(get_value(p_item), wwv_flow.get_nls_group_separator, null));
+    exception when others then
+      l_format_mask := get_format_mask(p_name => p_item);
+      if l_format_mask is not null then
+        begin
+          l_number := to_number(get_value(p_item), l_format_mask);
+        exception when others then
+          null;
+        end;
+      end if;
+    end;
+    return l_number;
+  end get_number;
+  
+  
+  function get_date(
+    p_item in varchar2)
+    return date
+  is
+    l_timestamp timestamp;
+    l_format_mask ora_name_type;
+    l_value max_char;
+  begin
+    l_format_mask := coalesce(get_format_mask(p_name => p_item), wwv_flow.g_nls_date_format, 'dd.mm.yyyy');
+    l_value := replace(v(p_item), '%null%');
+    l_timestamp := to_timestamp(l_value, l_format_mask);
+    
+    if instr(l_format_mask, 'YYYY') > 0 then
+      if instr(l_value, to_char(l_timestamp, 'YYYY')) = 0 then
+        return null;
+      end if;
+    end if;
+    return l_timestamp;
+  exception when others then
+    return null;
+  end get_date;
+  
+  
+  function get_timestamp(
+    p_item in varchar2)
+    return timestamp
+  as
+    l_timestamp timestamp;
+    l_timestamp_tz timestamp with time zone;
+    l_format_mask ora_name_type;
+    l_value max_char;
+  begin
+    l_format_mask := coalesce(
+                       get_format_mask(p_name => p_item),
+                       wwv_flow.g_nls_timestamp_format);
+    l_value := replace(v(p_item), '%null%');
+    
+    if l_format_mask is not null then
+      begin
+        l_timestamp := to_timestamp(l_value, l_format_mask);
+      exception when others then
+        begin
+          l_timestamp_tz := to_timestamp_tz(l_value, l_format_mask);
+        exception when others then
+          l_timestamp_tz := to_timestamp_tz(l_value, wwv_flow.g_nls_timestamp_tz_format);
+        end;
+      end;
+      
+      if instr(l_format_mask, 'YYYY') > 0 then
+        if instr(l_value, to_char(l_timestamp, 'YYYY')) = 0 then 
+          return null;
+        end if;
+      end if;
+    else
+      begin
+          l_timestamp := l_value;
+      exception when others then
+          l_timestamp_tz := l_value;
+      end;
+    end if;
+    return coalesce(l_timestamp, l_timestamp_tz);
+  exception when others then
+    return null;
+  end get_timestamp;    
+  
+  
   function get_value(
     p_item in varchar2)
     return varchar2
@@ -428,10 +539,10 @@ as
   
   function current_user_in_group(
     p_group_name in varchar2) 
-    return flag_type
+    return utl_apex.flag_type
   is
   begin
-    return utl_apex.get_bool(apex_util.current_user_in_group(p_group_name));
+    return get_bool(apex_util.current_user_in_group(p_group_name));
   end current_user_in_group;
   
   
@@ -542,7 +653,7 @@ select d.page_items
       select /*+ no_merge (p) */ 
              upper(column_name) item_name, 
              source_name page_item_name
-        from table(utl_apex.get_page_items(p_view_name, p_static_id, p_application_id, p_page_id));
+        from table(get_page_items(p_view_name, p_static_id, p_application_id, p_page_id));
     
     l_application_id number := get_application_id;
     l_page_id number := get_page_id;
