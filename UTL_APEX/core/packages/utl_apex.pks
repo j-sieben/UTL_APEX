@@ -27,9 +27,10 @@ as
   VER_LE_19 constant boolean := &VER_LE_19.;
   VER_LE_1901 constant boolean := &VER_LE_1901.;
   VER_LE_1902 constant boolean := &VER_LE_1902.;
-  VER_LE_19 constant boolean := &VER_LE_20.;
-  VER_LE_1901 constant boolean := &VER_LE_2001.;
+  VER_LE_20 constant boolean := &VER_LE_20.;
+  VER_LE_2001 constant boolean := &VER_LE_2001.;
   
+  APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
 
   FORMAT_JSON constant char(4 byte) := 'JSON';
@@ -59,9 +60,12 @@ as
   /* Public variable declarations */
 
   /* Public function and procedure declarations */
-  /** Getter methods as wrapper around APEY provided functionality
+  /** Getter methods as wrapper around APEX provided functionality
    *  Allows for better testing and refactoring when new APEX versions occur
-   */  
+   */
+  function get_apex_version
+    return number;
+    
   function get_user
     return varchar2;
   

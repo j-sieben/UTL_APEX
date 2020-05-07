@@ -185,6 +185,14 @@ as
 
 
   -- INTERFACE
+  function get_apex_version
+    return number
+  as
+  begin
+    return APEX_VERSION;
+  end get_apex_version;
+  
+  
   function get_user
     return varchar2
   as

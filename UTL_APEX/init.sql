@@ -36,38 +36,46 @@ col ver_le_1901 new_val VER_LE_1901 format a5
 col ver_le_1902 new_val VER_LE_1902 format a5
 col ver_le_20 new_val VER_LE_20 format a5
 col ver_le_2001 new_val VER_LE_2001 format a5
-
-select case when max(username) like 'APEX_05%' then 'true'
-       else 'false' end ver_le_05,
-       case max(username)
-       when 'APEX_050000' then 'true'
-       else 'false' end ver_le_0500,
-       case max(username)
-       when 'APEX_050100' then 'true'
-       else 'false' end ver_le_0501,
-       case when max(username) like 'APEX_18%' then 'true'
-       else 'false' end ver_le_18,
-       case max(username)
-       when 'APEX_180100' then 'true'
-       else 'false' end ver_le_1801,
-       case max(username)
-       when 'APEX_180200' then 'true'
-       else 'false' end ver_le_1802,
-       case when max(username) like 'APEX_19%' then 'true'
-       else 'false' end ver_le_19,
-       case max(username)
-       when 'APEX_190100' then 'true'
-       else 'false' end ver_le_1901,
-       case max(username)
-       when 'APEX_190200' then 'true'
-       else 'false' end ver_le_1902,
-       case when max(username) like 'APEX_20%' then 'true'
-       else 'false' end ver_le_20,
-       case max(username)
-       when 'APEX_200100' then 'true'
-       else 'false' end ver_le_2001
-  from all_users
- where regexp_like (username, 'APEX_[0-9]{6}');
+col apex_version new_val apex_version format a30
+with apex_version as(
+       select to_number(substr(version_no, 1, instr(version_no, '.', 1) - 1)) major_version, 
+              to_number(substr(version_no, 1, instr(version_no, '.', 1, 2) - 1), '99.99') minor_version
+         from apex_release r)
+select case major_version 
+         when 5 then 'true'
+         else 'false' end ver_le_05,
+       case minor_version
+         when 5.0 then 'true'
+         else 'false' end ver_le_0500,
+       case minor_version
+         when 5.1 then 'true'
+         else 'false' end ver_le_0501,
+       case major_version 
+         when 18 then 'true'
+         else 'false' end ver_le_18,
+       case minor_version
+         when 18.1 then 'true'
+         else 'false' end ver_le_1801,
+       case minor_version
+         when 18.2 then 'true'
+         else 'false' end ver_le_1802,
+       case major_version 
+         when 19 then 'true'
+         else 'false' end ver_le_19,
+       case minor_version
+         when 19.1 then 'true'
+         else 'false' end ver_le_1901,
+       case minor_version
+         when 19.2 then 'true'
+         else 'false' end ver_le_1902,
+       case major_version 
+         when 20 then 'true'
+         else 'false' end ver_le_20,
+       case minor_version
+         when 20.1 then 'true'
+         else 'false' end ver_le_2001,
+       to_char(minor_version, 'fm99.99') apex_version
+  from apex_version;
 
 col ora_name_type new_val ORA_NAME_TYPE format a30
 
