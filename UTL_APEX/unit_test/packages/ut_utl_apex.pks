@@ -1,4 +1,4 @@
-create or replace package utl_apex_test
+create or replace package ut_utl_apex
   authid definer
 as
   c_app_alias constant varchar2(30 byte) := 'UTL_APEX_TEST';
@@ -202,5 +202,5 @@ as
   -- %afterall (Test Suite herunterfahren)
   procedure tear_down;
 
-end utl_apex_test;
+end ut_utl_apex;
 /

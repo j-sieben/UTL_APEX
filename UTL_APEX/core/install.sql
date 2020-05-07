@@ -18,11 +18,11 @@ prompt &h2.Templates
 prompt
 prompt &section.
 prompt &h2.Types
-prompt &s1.Type UTL_APEX_DDL_COL_T
-@&TYPE_DIR.utl_apex_ddl_col_t.tps
+prompt &s1.Type UTL_DEV_APEX_COL_T
+@&TYPE_DIR.utl_dev_apex_col_t.tps
 
-prompt &s1.Type UTL_APEX_DDL_COL_TAB
-@&TYPE_DIR.utl_apex_ddl_col_tab.tps
+prompt &s1.Type UTL_DEV_APEX_COL_TAB
+@&TYPE_DIR.utl_dev_apex_col_tab.tps
 
 prompt &s1.Type UTL_APEX_PAGE_ITEM
 @&TYPE_DIR.utl_apex_page_item.tps
@@ -40,10 +40,10 @@ prompt &s1.View UTL_APEX_FETCH_ROW_COLUMNS
 @&VIEW_DIR.utl_apex_fetch_row_columns.vw
 
 prompt &s1.View UTL_APEX_FORM_REGION_COLUMNS
---@&VIEW_DIR.utl_apex_form_region_columns.vw
+@&VIEW_DIR.utl_apex_form_region_columns.vw
 
 prompt &s1.View UTL_APEX_IG_COLUMNS
---@&VIEW_DIR.utl_apex_ig_columns.vw
+@&VIEW_DIR.utl_apex_ig_columns.vw
 
 prompt
 prompt &section.
@@ -51,14 +51,14 @@ prompt &h2.Views
 prompt &s1.Package UTL_APEX
 @&PKG_DIR.utl_apex.pks
 
-prompt &s1.Package UTL_APEX_DDL
-@&PKG_DIR.utl_apex_ddl.pks
+prompt &s1.Package UTL_DEV_APEX
+@&PKG_DIR.utl_dev_apex.pks
 
 prompt &s1.Package Body UTL_APEX
 @&PKG_DIR.utl_apex.pkb
 
-prompt &s1.Package Body UTL_APEX_DDL
-@&PKG_DIR.utl_apex_ddl.pkb
+prompt &s1.Package Body UTL_DEV_APEX
+@&PKG_DIR.utl_dev_apex.pkb
 
 prompt
 prompt &section.

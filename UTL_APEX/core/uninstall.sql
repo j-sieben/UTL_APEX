@@ -11,7 +11,7 @@ declare
           select object_name name, object_type type
             from all_objects
            where object_name in (
-                 'UTL_APEX_DDL_COL_T', 'UTL_APEX_DDL_COL_TAB', 'UTL_APEX_PAGE_ITEM', 'UTL_APEX_PAGE_ITEM_T', -- Typen
+                 'UTL_DEV_APEX_COL_T', 'UTL_DEV_APEX_COL_TAB', 'UTL_APEX_PAGE_ITEM', 'UTL_APEX_PAGE_ITEM_T', -- Types
                  'UTL_APEX', 'UTL_APEX_DDL',  -- Packages
                  'CODE_GEN_APEX_COLLECTION', 'UTL_APEX_FETCH_ROW_COLUMNS', 'UTL_APEX_FORM_REGION_COLUMNS', 'UTL_APEX_IG_COLUMNS', 'UTL_APEX_PAGE_ITEMS', -- Views
                  '',  -- Tabellen
@@ -21,7 +21,7 @@ declare
              and object_type not like '%BODY'
              and owner = upper('&INSTALL_USER.')
            order by object_type, object_name;
-  
+  l_has_objects boolean := false;
 begin
   for obj in delete_object_cur loop
     begin
@@ -38,9 +38,14 @@ begin
       when others then
         raise;
     end;
+    l_has_objects := true;
   end loop;
   
-  pit_admin.remove_message_group('UTL_APEX');
+  if not l_has_objects then
+    dbms_output.put_line('&s1.No installed objects found.');
+  end if;
+  
+  pit_admin.delete_message_group('UTL_APEX', true);
      
   -- Try to delete templates (table may not be present anymore)
   begin

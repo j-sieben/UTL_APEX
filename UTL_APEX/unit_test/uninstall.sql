@@ -17,7 +17,7 @@ declare
             from all_objects
            where object_name in (
                  '', -- Typen
-                 'UTL_APEX_TEST',  -- Packages
+                 'UT_UTL_APEX', 'UTL_TEST_APEX',  -- Packages
                  'UTL_APEX_UI_HOME_MAIN', -- Views
                  '',  -- Tabellen
                  '',  -- Synonyme

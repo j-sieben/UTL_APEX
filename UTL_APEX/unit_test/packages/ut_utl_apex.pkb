@@ -1,4 +1,4 @@
-create or replace package body utl_apex_test 
+create or replace package body ut_utl_apex 
 as
    C_TEST_ITEM_1 constant utl_apex.ora_name_type := 'P1_STRING_ITEM';
    C_TEST_VALUE_1 constant utl_apex.ora_name_type := '<"Hallo Welt!">';
@@ -715,5 +715,5 @@ as
 
 begin
   initialize;
-end utl_apex_test;
+end ut_utl_apex;
 /

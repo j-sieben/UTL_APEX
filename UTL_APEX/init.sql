@@ -33,6 +33,9 @@ col ver_le_1802 new_val VER_LE_1802 format a5
 col ver_le_18 new_val VER_LE_18 format a5
 col ver_le_19 new_val VER_LE_19 format a5
 col ver_le_1901 new_val VER_LE_1901 format a5
+col ver_le_1902 new_val VER_LE_1902 format a5
+col ver_le_20 new_val VER_LE_20 format a5
+col ver_le_2001 new_val VER_LE_2001 format a5
 
 select case when max(username) like 'APEX_05%' then 'true'
        else 'false' end ver_le_05,
@@ -50,12 +53,19 @@ select case when max(username) like 'APEX_05%' then 'true'
        case max(username)
        when 'APEX_180200' then 'true'
        else 'false' end ver_le_1802,
-       case max(username)
-       when 'APEX_190100' then 'true'
+       case when max(username) like 'APEX_19%' then 'true'
        else 'false' end ver_le_19,
        case max(username)
        when 'APEX_190100' then 'true'
-       else 'false' end ver_le_1901
+       else 'false' end ver_le_1901,
+       case max(username)
+       when 'APEX_190200' then 'true'
+       else 'false' end ver_le_1902,
+       case when max(username) like 'APEX_20%' then 'true'
+       else 'false' end ver_le_20,
+       case max(username)
+       when 'APEX_200100' then 'true'
+       else 'false' end ver_le_2001
   from all_users
  where regexp_like (username, 'APEX_[0-9]{6}');
 
@@ -83,4 +93,6 @@ define h2="**  "
 define h3="*   "
 define s1=".    - "
 
+prompt &s1.initialization done.
 set termout on
+set serveroutput on

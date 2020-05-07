@@ -11,7 +11,8 @@ as
   $ELSE
   subtype ora_name_type is varchar2(128 byte);
   $END
-  subtype max_char is varchar2(32767);
+  subtype small_char is varchar2(255 byte);
+  subtype max_char is varchar2(32767 byte);
   subtype max_sql_char is varchar2(4000 byte);
   subtype flag_type is &FLAG_TYPE.;
   
@@ -25,6 +26,11 @@ as
   VER_LE_1802 constant boolean := &VER_LE_1802.;
   VER_LE_19 constant boolean := &VER_LE_19.;
   VER_LE_1901 constant boolean := &VER_LE_1901.;
+  VER_LE_1902 constant boolean := &VER_LE_1902.;
+  VER_LE_19 constant boolean := &VER_LE_20.;
+  VER_LE_1901 constant boolean := &VER_LE_2001.;
+  
+  UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
 
   FORMAT_JSON constant char(4 byte) := 'JSON';
   FORMAT_HTML constant char(4 byte) := 'HTML';

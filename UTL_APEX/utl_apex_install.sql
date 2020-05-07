@@ -4,8 +4,6 @@
 
 @init.sql &1. &2.
 
-pause
-
 alter session set current_schema=sys;
 prompt
 prompt &section.
@@ -44,5 +42,3 @@ prompt &h2.Revoke user rights
 @revoke_grants.sql
 
 prompt &h1.Finished UTL_APEX Installation
-
-pause

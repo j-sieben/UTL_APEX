@@ -19,14 +19,14 @@ prompt &s1.View UTL_APEX_UI_HOME_MAIN
 prompt
 prompt &section.
 prompt &h2.Packages
-prompt &s1.Package UTL_APEX_TEST
-@&PKG_DIR.utl_apex_test.pks
+prompt &s1.Package UT_UTL_APEX
+@&PKG_DIR.ut_utl_apex.pks
 
 prompt &s1.Package UTL_TEST_APEX
 @&PKG_DIR.utl_test_apex.pks
 
-prompt &s1.Package Body UTL_APEX_TEST
-@&PKG_DIR.utl_apex_test.pkb
+prompt &s1.Package Body UT_UTL_APEX
+@&PKG_DIR.ut_utl_apex.pkb
 
 prompt &s1.Package Body UTL_TEST_APEX
 @&PKG_DIR.utl_test_apex.pkb
