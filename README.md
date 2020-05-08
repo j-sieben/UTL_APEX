@@ -30,6 +30,6 @@ If you work with these methods, you will get access to the session state using t
 This package is a work in progress, I add new functionality when I need it, so stay informed on new developments.
 
 ## Dependencies
-`UTL_APEX` is dependent on [https://github.com/j-sieben/PIT](`PIT`) as it reuses it's assertion and message providing mechanism. It is also dependent on [https://github.com/j-sieben/UTL_TEXT](`UTL_TEXT`) from which I use the `bulk_replace`methods and my code generator to generate the stubs.
+`UTL_APEX` is dependent on [`PIT`](https://github.com/j-sieben/PIT) as it reuses it's assertion and message providing mechanism. It is also dependent on [`UTL_TEXT`](https://github.com/j-sieben/UTL_TEXT) from which I use the `bulk_replace`methods and my code generator to generate the stubs.
 
 I know that it's boring if a GIT project is not self sufficient but relies on other repositories, but it is even worse to copy the respective code around. If you feel that you don't want to install the other libraries, you may still find this package useful as a seed for your own implementation.
