@@ -12,10 +12,10 @@ In regard to finding out whether an `INSERT`, `UPDATE` or `DELETE` has to be per
 - Adding explicit database action with the meta data of a button
 - Column `APEX$ROW_STATUS`
 
-If you develop code that is aimed to survive some APEX generations, it's a good idea to centralize the dependencies to APEX in order to cater for the upcoming changes from version to version. This is what UTL_APEX is used for.
+If you develop code that is aimed to survive some APEX generations, it's a good idea to centralize the dependencies to APEX in order to cater for the upcoming changes from version to version. This is what `UTL_APEX` is used for.
 
 ## What it contains
-One very useful thing is that `UTL_APEX` contains verion constants as known from `DBMS_DB_VERSION`. They allow for conditional compilation based on the actually installed APEX version.
+One very useful thing that `UTL_APEX` contains are version constants as known from `DBMS_DB_VERSION`. They allow for conditional compilation based on the actually installed APEX version. They are set upon installing the package.
 
 Then it contains trivial getter methods for commonly used APEX related informations. They are desinged as functions and they are consistently named. So you have get_application_id, get_applciation_alias, get_page_id and so on.
 
