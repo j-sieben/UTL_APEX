@@ -17,7 +17,7 @@ If you develop code that is aimed to survive some APEX generations, it's a good 
 ## What it contains
 One very useful thing that `UTL_APEX` contains are version constants as known from `DBMS_DB_VERSION`. They allow for conditional compilation based on the actually installed APEX version. They are set upon installing the package.
 
-Another area is around defining subtypes you can use throughout your APEX packages. 
+Another area defines subtypes to be used in your APEX packages. 
 
 Then it contains trivial getter methods for commonly used APEX related informations. They are desinged as functions and are consistently named. So you have `get_application_id`, `get_application_alias`, `get_page_id` and so on.
 
