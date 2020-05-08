@@ -202,20 +202,20 @@ q'°  \CR\°' ||
 q'°  g_page_values utl_apex.page_value_t;\CR\°' || 
 q'°  g_#PAGE_ALIAS#_row app_ui_emp_main%rowtype;\CR\°' || 
 q'°  \CR\°' || 
-q'°  procedure copy_emp\CR\°' || 
+q'°  procedure copy_#PAGE_ALIAS#\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
 q'°    g_page_values := utl_apex.get_page_values;\CR\°' || 
 q'°    #COPY_LIST#;\CR\°' || 
-q'°  end copy_emp;\CR\°' || 
+q'°  end copy_#PAGE_ALIAS#;\CR\°' || 
 q'°  \CR\°' || 
 q'°  \CR\°' || 
 q'°  function validate_emp\CR\°' || 
 q'°    return boolean\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
-q'°    -- copy_emp;\CR\°' || 
-q'°    -- TODO: Validierungslogik implementieren\CR\°' || 
+q'°    -- copy_#PAGE_ALIAS#;\CR\°' || 
+q'°    -- TODO: validation logic goes here. If it exists, uncomment COPY function\CR\°' || 
 q'°    return true;\CR\°' || 
 q'°  end validate_emp;\CR\°' || 
 q'°  \CR\°' || 
@@ -224,7 +224,7 @@ q'°  procedure process_emp\CR\°' ||
 q'°  as\CR\°' || 
 q'°    c_collection_name constant varchar2(30 byte) := '#COLLECTION_NAME#';\CR\°' || 
 q'°  begin\CR\°' || 
-q'°    copy_emp;  \CR\°' || 
+q'°    copy_#PAGE_ALIAS#;  \CR\°' || 
 q'°    case\CR\°' || 
 q'°    when utl_apex.INSERTING then\CR\°' || 
 q'°      apex_collection.add_member(\CR\°' || 
@@ -705,20 +705,19 @@ end;°',
     p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'DEFAULT',
     p_uttm_text => q'°-- UI_PACKAGE-Body\CR\°' || 
-q'°-- Globale Variablen\CR\°' || 
+q'°-- global variables\CR\°' || 
 q'°  g_page_values utl_apex.page_value_t;\CR\°' || 
 q'°  g_#PAGE_ALIAS#_row #VIEW_NAME#%rowtype;\CR\°' || 
 q'°  \CR\°' || 
-q'°-- COPY_ROW-Methode\CR\°' || 
+q'°-- COPY_ROW method\CR\°' || 
 q'°  \CR\°' || 
-q'°  /* Hilfsfunktion zur Uebernahme der Seitenelementwerte \CR\°' || 
-q'°   * %usage  Wird aufgerufen, um fuer die aktuell ausgefuehrte APEX-Seite den Sessionstatus\CR\°' || 
-q'°   *         zu kopieren und in einer PL/SQL-Tabelle verfuegbar zu machen\CR\°' || 
+q'°  /* Helper method to copy session state values from an APEX page \CR\°' || 
+q'°   * %usage  Is called to copy the actual session state of an APEX page into a PL/SQL table\CR\°' || 
 q'°   */\CR\°' || 
 q'°  procedure copy_#PAGE_ALIAS#\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
-q'°    g_page_values := utl_apex.get_page_values;\CR\°' || 
+q'°    g_page_values := utl_apex.get_page_values#STATIC_ID|('|')|#;\CR\°' || 
 q'°    #COLUMN_LIST#\CR\°' || 
 q'°  end copy_#PAGE_ALIAS#;\CR\°' || 
 q'°    \CR\°' || 
@@ -728,8 +727,12 @@ q'°  function validate_#PAGE_ALIAS#\CR\°' ||
 q'°    return boolean\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
+q'°    pit.enter_mandatory;\CR\°' || 
+q'°  \CR\°' || 
 q'°    -- copy_#PAGE_ALIAS#;\CR\°' || 
-q'°    -- Validierungen. Falls keine Validierung, copy-Methode auskommentiert lassen\CR\°' || 
+q'°    -- validation logic goes here. If it exists, uncomment COPY function\CR\°' || 
+q'°  \CR\°' || 
+q'°    pit.leave_mandatory;\CR\°' || 
 q'°    return true;\CR\°' || 
 q'°  end validate_#PAGE_ALIAS#;\CR\°' || 
 q'°  \CR\°' || 
@@ -737,6 +740,8 @@ q'°  \CR\°' ||
 q'°  procedure process_#PAGE_ALIAS#\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
+q'°    pit.enter_mandatory;\CR\°' || 
+q'°  \CR\°' || 
 q'°    copy_#PAGE_ALIAS#;\CR\°' || 
 q'°    case when utl_apex.inserting then\CR\°' || 
 q'°      #INSERT_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' || 
@@ -745,6 +750,8 @@ q'°      #UPDATE_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' ||
 q'°    else\CR\°' || 
 q'°      #DELETE_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' || 
 q'°    end case;\CR\°' || 
+q'°  \CR\°' || 
+q'°    pit.leave_mandatory;\CR\°' || 
 q'°  end process_#PAGE_ALIAS#;°',
     p_uttm_log_text => q'°°',
     p_uttm_log_severity => 70
@@ -755,31 +762,34 @@ q'°  end process_#PAGE_ALIAS#;°',
     p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'MERGE',
     p_uttm_text => q'°-- UI_PACKAGE-Body\CR\°' || 
-q'°-- Globale Variablen\CR\°' || 
+q'°-- Global Variables\CR\°' || 
 q'°  g_page_values utl_apex.page_value_t;\CR\°' || 
 q'°  g_#PAGE_ALIAS#_row #VIEW_NAME#%rowtype;\CR\°' || 
 q'°  \CR\°' || 
-q'°-- COPY_ROW-Methode\CR\°' || 
+q'°-- COPY_ROW method\CR\°' || 
 q'°  \CR\°' || 
-q'°  /* Hilfsfunktion zur Uebernahme der Seitenelementwerte \CR\°' || 
-q'°   * %usage  Wird aufgerufen, um fuer die aktuell ausgefuehrte APEX-Seite den Sessionstatus\CR\°' || 
-q'°   *         zu kopieren und in einer PL/SQL-Tabelle verfuegbar zu machen\CR\°' || 
+q'°  /* Helper method to copy session state values from an APEX page \CR\°' || 
+q'°   * %usage  Is called to copy the actual session state of an APEX page into a PL/SQL table\CR\°' || 
 q'°   */\CR\°' || 
 q'°  procedure copy_#PAGE_ALIAS#\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
-q'°    g_page_values := utl_apex.get_page_values;\CR\°' || 
+q'°    g_page_values := utl_apex.get_page_values#STATIC_ID|('|')|#;\CR\°' || 
 q'°    #COLUMN_LIST#\CR\°' || 
 q'°  end copy_#PAGE_ALIAS#;\CR\°' || 
 q'°    \CR\°' || 
-q'°-- METHOD IMPELEMENTATON\CR\°' || 
+q'°-- METHOD IMPLEMENTATIONS\CR\°' || 
 q'°\CR\°' || 
 q'°  function validate_#PAGE_ALIAS#\CR\°' || 
 q'°    return boolean\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
+q'°    pit.enter_mandatory;\CR\°' || 
+q'°    \CR\°' || 
 q'°    -- copy_#PAGE_ALIAS#;\CR\°' || 
-q'°    -- Validierungen. Falls keine Validierung, copy-Methode auskommentiert lassen\CR\°' || 
+q'°    -- validation logic goes here. If it exists, uncomment COPY function\CR\°' || 
+q'°    \CR\°' || 
+q'°    pit.leave_mandatory\CR\°' || 
 q'°    return true;\CR\°' || 
 q'°  end validate_#PAGE_ALIAS#;\CR\°' || 
 q'°  \CR\°' || 
@@ -787,12 +797,16 @@ q'°  \CR\°' ||
 q'°  procedure process_#PAGE_ALIAS#\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
+q'°    pit.enter_mandatory;\CR\°' || 
+q'°    \CR\°' || 
 q'°    copy_#PAGE_ALIAS#;\CR\°' || 
 q'°    case when utl_apex.inserting or utl_apex.updating then\CR\°' || 
 q'°      #UPDATE_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' || 
 q'°    else\CR\°' || 
 q'°      #DELETE_METHOD#(g_#PAGE_ALIAS#_row);\CR\°' || 
 q'°    end case;\CR\°' || 
+q'°    \CR\°' || 
+q'°    pit.leave_mandatory;\CR\°' || 
 q'°  end process_#PAGE_ALIAS#;°',
     p_uttm_log_text => q'°°',
     p_uttm_log_severity => 70

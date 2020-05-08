@@ -6,6 +6,68 @@ as
   C_DEFAULT constant utl_apex.ora_name_type := 'DEFAULT';
   C_CR constant varchar2(2) := chr(10);
   
+  -- Constants for supported APEX form types
+  C_PAGE_FORM constant utl_apex.ora_name_type := 'FORM';
+  C_FORM_REGION constant utl_apex.ora_name_type := 'NATIVE_FORM';
+  C_IG_REGION constant utl_apex.ora_name_type := 'NATIVE_IG';
+  
+  -- Templates used for GET_PAGES etc.
+  C_TEMPLATE_TYPE constant utl_apex.ora_name_type := 'APEX_FORM';
+  C_TEMPLATE_NAME_FRAME constant utl_apex.ora_name_type := 'FORM_FRAME';
+  C_TEMPLATE_NAME_COLUMNS constant utl_apex.ora_name_type := 'FORM_COLUMN';
+  
+  C_TEMPLATE_MODE_DYNAMIC constant utl_apex.ora_name_type := 'DYNAMIC';
+  C_TEMPLATE_MODE_STATIC constant utl_apex.ora_name_type := 'STATIC';
+  
+  
+  /** Method to decide upon the view name based on the form type detected on the page for this combination of parameters
+   * @return Name of the view as detected.
+   * @usage  Is used to get the correct view name based upon the type of form. Supported form types are:
+   *         - NATIVE_IG: Interactive Grid, identified by static id => UTL_APEX_IG_COLUMNS
+   *         - NATIVE_FORM: Form region, identified by static id => UTL_APEX_FORM_REGION_COLUMNS
+   *         - FORM: classic form, deprecated since 19.1, fallback solution => UTL_APEX_FETCH_ROW_COLUMNS
+   */
+  function get_view_name(
+    p_static_id in varchar2,
+    p_application_id in number,
+    p_page_id in number)
+    return varchar2
+  as
+    l_form_type utl_apex.ora_name_type;
+    l_view_name utl_apex.ora_name_type;
+    C_VIEW_FETCH_ROW constant utl_apex.ora_name_type := 'utl_apex_fetch_row_columns';
+    C_VIEW_FORM constant utl_apex.ora_name_type := 'utl_apex_form_region_columns';
+    C_VIEW_IG constant utl_apex.ora_name_type := 'utl_apex_ig_columns';
+  begin
+    pit.enter_detailed(
+      p_params => msg_params(
+                    msg_param('p_static_id', p_static_id),
+                    msg_param('p_application_id', to_char(p_application_id)),
+                    msg_param('p_page_id', to_char(p_page_id))));
+    
+    -- Try to find interactive Grid or form region, fallback to C_PAGE_FORM if not successful
+    select coalesce(max(source_type_code), C_PAGE_FORM) source_type_code
+      into l_form_type
+      from apex_application_page_regions
+     where application_id = p_application_id
+       and page_id  = p_page_id
+       and static_id = p_static_id
+       and source_type_code in (C_FORM_REGION, C_IG_REGION);
+     
+    pit.debug(msg.PIT_PASS_MESSAGE, msg_args('FormType: ' || l_form_type));
+     
+    case l_form_type
+    when C_PAGE_FORM then
+      l_view_name := C_VIEW_FETCH_ROW;
+    when C_FORM_REGION then
+      l_view_name := C_VIEW_FORM;
+    when C_IG_REGION then
+      l_view_name := C_VIEW_IG;
+    end case;
+     
+    pit.leave_optional(msg_params(msg_param('Result', l_view_name)));
+    return l_view_name;
+  end get_view_name;
   
   
   /** Method to create a script to get the values of the page items.
@@ -24,10 +86,10 @@ as
     p_application_id in number default utl_apex.get_application_id,
     p_page_id in number default utl_apex.get_page_id,
     p_record_name in varchar2 default 'l_row_rec')
-    return max_char
+    return utl_apex.max_char
   as
     l_script clob;
-    l_view_name ora_name_type;
+    l_view_name utl_apex.ora_name_type;
   begin
     pit.enter_detailed(
       p_params => msg_params(
@@ -45,7 +107,7 @@ as
 
       with params as(
              select p_uttm_mode uttm_mode, 
-                    get_default_date_format(p_application_id) date_format,
+                    utl_apex.get_default_date_format(p_application_id) date_format,
                     p_record_name record_name,
                     p_table_name table_name
                from dual
@@ -57,7 +119,7 @@ as
                 and uttm_type = C_TEMPLATE_TYPE),
            data as (
              select *
-               from table(utl_apex.get_page_items(l_view_name, p_static_id, p_application_id, p_page_id, C_TRUE)) c),
+               from table(utl_apex.get_page_items(l_view_name, p_static_id, p_application_id, p_page_id, utl_apex.C_TRUE)) c),
            tab_name as (
              select max(table_name) table_name
                from data)
@@ -66,10 +128,10 @@ as
              select t.template, coalesce(t.table_name, p.table_name) table_name, p.record_name,
                     utl_text.generate_text(cursor(
                       select t.template, d.column_name, d.source_name, 
-                             coalesce(d.format_mask, case d.data_type when C_DATE then p.date_format end)  format_mask
+                             coalesce(d.format_mask, case d.data_type when 'DATE' then p.date_format end)  format_mask
                         from data d
                         join templates t
-                          on case when d.data_type in ('NUMBER', C_DATE) then d.data_type else C_DEFAULT end = t.uttm_mode
+                          on case when d.data_type in ('NUMBER', 'DATE') then d.data_type else C_DEFAULT end = t.uttm_mode
                     )) column_list
                from tab_name t
               cross join params p))
@@ -258,19 +320,22 @@ as
     p_page_id in binary_integer,
     p_insert_method in varchar2,
     p_update_method in varchar2,
-    p_delete_method in varchar2)
+    p_delete_method in varchar2,
+    p_static_id in varchar2 default null)
     return clob
-  as
+  as 
+    l_view_name utl_apex.ora_name_type;
     l_column_list utl_apex.max_char;
     l_mode utl_text_templates.uttm_mode%type := C_DEFAULT;
     l_code clob;
   begin
-    pit.enter_mandatory(C_PKG, 'get_form_methods', msg_params(
-      msg_param('p_application_id', to_char(p_application_id)),
-      msg_param('p_page_id', to_char(p_page_id)),
-      msg_param('p_insert_method', p_insert_method),
-      msg_param('p_update_method', p_update_method),
-      msg_param('p_delete_method', p_delete_method)));
+    pit.enter_mandatory(C_PKG, 'get_form_methods', 
+      p_params => msg_params(
+                    msg_param('p_application_id', to_char(p_application_id)),
+                    msg_param('p_page_id', to_char(p_page_id)),
+                    msg_param('p_insert_method', p_insert_method),
+                    msg_param('p_update_method', p_update_method),
+                    msg_param('p_delete_method', p_delete_method)));
       
     -- check input parameters
     pit.assert_not_null(p_application_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_APPLICATION_ID'));
@@ -283,71 +348,99 @@ as
     if p_insert_method = p_update_method then
       l_mode := 'MERGE';
     end if;
+    l_view_name := get_view_name(p_static_id, p_application_id, p_page_id);
     
     -- generate column list
+    with params as(
+           select p_application_id application_id,
+                  p_page_id page_id,
+                  p_static_id static_id,
+                  l_view_name view_name
+             from dual)
     select utl_text.generate_text(cursor(
              with page_elements as(
-                  select apl.application_id, app.page_id, apo.attribute_02 view_name, app.page_alias, api.item_name, utc.column_name,
-                         case when utc.data_type in ('NUMBER', 'DATE') then utc.data_type else C_DEFAULT end data_type,
+                  select /*+ no_merge (p) */
+                         apl.application_id, app.page_id, app.page_alias,
+                         i.table_name view_name, i.source_name item_name, i.column_name column_name,
+                         case when i.data_type in ('NUMBER', 'DATE') then i.data_type else 'DEFAULT' end data_type,
                          case 
-                         when utc.data_type in ('DATE') then
-                           coalesce(upper(api.format_mask), apl.date_format, 'dd.mm.yyyy hh24:mi:ss')
-                         when utc.data_type in ('TIMESTAMP') then
-                           coalesce(upper(api.format_mask), apl.timestamp_format, 'dd.mm.yyyy hh24:mi:ss')
-                         when utc.data_type in ('NUMBER', 'INTEGER') then 
-                           coalesce(replace(upper(api.format_mask), 'G'), 'fm9999999999990d99999999') 
+                         when i.data_type in ('DATE') then
+                           coalesce(upper(i.format_mask), apl.date_format, 'dd.mm.yyyy')
+                         when i.data_type in ('TIMESTAMP') then
+                           coalesce(upper(i.format_mask), apl.timestamp_format, 'dd.mm.yyyy hh24:mi:ss')
+                         when i.data_type in ('NUMBER', 'INTEGER') then 
+                           coalesce(replace(upper(i.format_mask), 'G'), 'fm9999999999990d99999999') 
                          end format_mask
                     from apex_applications apl
+                    join params p
+                      on apl.application_id = p.application_id
                     join apex_application_pages app
                       on apl.application_id = app.application_id
-                    join apex_application_page_items api
-                      on app.application_id = api.application_id
-                     and app.page_id = api.page_id
-                    join apex_application_page_proc apo
-                      on app.application_id = apo.application_id
-                     and app.page_id = apo.page_id
-                    join user_tab_columns utc
-                      on apo.attribute_02 = utc.table_name
-                     and api.item_source = utc.column_name
-                   where apo.process_type_code = 'DML_FETCH_ROW'),
+                     and app.page_id = p.page_id
+                   cross join table(utl_apex.get_page_items(p.view_name, p.static_id, p.application_id, p.page_id)) i
+                  ),
                   template_list as(
                     select uttm_text ddl_template, uttm_mode data_type
                       from utl_text_templates
                      where uttm_name = 'COLUMN'
                        and uttm_type = 'APEX_FORM')
-          select t.ddl_template template, p.page_alias page_alias_upper, lower(p.page_alias) page_aliasl, 
+          select t.ddl_template template, 
+                 p.page_alias page_alias_upper, lower(p.page_alias) page_alias,
                  substr(p.item_name, instr(p.item_name, '_', 1) + 1) item_name,
                  p.column_name column_name_upper, lower(p.column_name) column_name, p.format_mask
             from page_elements p
             join template_list t
-              on p.data_type = t.data_type
-           where p.application_id = p_application_id
-             and p.page_id = p_page_id), C_CR || '    '
+              on p.data_type = t.data_type), chr(10) || '    '
          )
     into l_column_list
     from dual;
-    
+        
     -- generate methods
-    select utl_text.generate_text(cursor(
+    if p_static_id is not null then
+      -- static id means that a form region or interactive grid is referenced
+      select utl_text.generate_text(cursor(
              select t.uttm_text template, l_column_list column_list,
-                    lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
+                    lower(apr.table_name) view_name, upper(apr.table_name) view_name_upper,
                     lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
+                    p_static_id static_id,
                     lower(p_insert_method) insert_method,
                     lower(p_update_method) update_method,
                     lower(p_delete_method) delete_method
                from apex_application_pages app
-               join apex_application_page_proc apo
-                 on app.application_id = apo.application_id
-                and app.page_id = apo.page_id
+               join apex_application_page_regions apr
+                 on app.application_id = apr.application_id
+                and app.page_id = apr.page_id
               cross join utl_text_templates t
               where app.application_id = p_application_id
                 and app.page_id = p_page_id
-                and apo.process_type_code = 'DML_FETCH_ROW'
+                and apr.static_id = p_static_id
                 and t.uttm_name = 'METHODS'
                 and t.uttm_type = 'APEX_FORM'
                 and t.uttm_mode = l_mode))
       into l_code
       from dual;
+    else
+      select utl_text.generate_text(cursor(
+               select t.uttm_text template, l_column_list column_list,
+                      lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
+                      lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
+                      lower(p_insert_method) insert_method,
+                      lower(p_update_method) update_method,
+                      lower(p_delete_method) delete_method
+                 from apex_application_pages app
+                 join apex_application_page_proc apo
+                   on app.application_id = apo.application_id
+                  and app.page_id = apo.page_id
+                cross join utl_text_templates t
+                where app.application_id = p_application_id
+                  and app.page_id = p_page_id
+                  and apo.process_type_code = 'DML_FETCH_ROW'
+                  and t.uttm_name = 'METHODS'
+                  and t.uttm_type = 'APEX_FORM'
+                  and t.uttm_mode = l_mode))
+        into l_code
+        from dual;
+      end if;
       
     pit.leave_mandatory;
     return l_code;
@@ -480,6 +573,7 @@ as
   exception
     when others then 
       pit.stop;
+      raise; -- avoid compiler warning
   end get_collection_methods;
   
   
@@ -492,7 +586,7 @@ as
     return varchar2
   as
     l_cursor sys_refcursor;
-    l_script max_char;
+    l_script utl_apex.max_char;
   begin
     pit.enter_optional(
       p_params => msg_params(

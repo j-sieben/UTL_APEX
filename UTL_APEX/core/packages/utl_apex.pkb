@@ -41,9 +41,14 @@ as
     return varchar2
   as
     l_page_prefix ora_name_type;
+    l_affected_id ora_name_type;
   begin
     l_page_prefix := get_page_prefix;
-    return l_page_prefix || ltrim(p_affected_id, l_page_prefix);
+    l_affected_id := p_affected_id;
+    if instr(l_affected_id, l_page_prefix) = 0 then
+      l_affected_id := l_page_prefix || l_affected_id;
+    end if;
+    return l_affected_id;
   end get_page_element;
   
   
@@ -168,7 +173,7 @@ as
         from apex_application_page_items
        where application_id = (select utl_apex.get_application_id from dual)
          and item_name = l_item_name;
-      g_format_mask_cache(l_item_name) := wwv_flow.do_substitutions(g_format_mask_cache(l_item_name), 'TEXT');
+      g_format_mask_cache(l_item_name) := apex_application.do_substitutions(g_format_mask_cache(l_item_name), 'TEXT');
     end if;
         
     return g_format_mask_cache(l_item_name);
@@ -299,16 +304,18 @@ as
   as
     l_date_format apex_applications.date_format%type;
   begin
-    if p_application_id is null then
-      l_date_format := apex_application.g_date_format;
-    else
-      select date_format
-        into l_date_format
-        from apex_applications
-       where application_id = p_application_id;
-    end if;
-    return l_date_format;
+    return apex_application.g_date_format;
   end get_default_date_format;
+  
+  
+  function get_default_timestamp_format(
+    p_application_id in number default null)
+    return varchar2
+  as
+    l_timestamp_format apex_applications.timestamp_format%type;
+  begin
+    return apex_application.g_timestamp_format;
+  end get_default_timestamp_format;
   
   
   function get_true
@@ -362,20 +369,20 @@ as
   is
     l_number number;
     l_format_mask utl_apex.ora_name_type;
+    l_value max_char;
   begin
-    begin
-      l_number := to_number(replace(get_value(p_item), wwv_flow.get_nls_group_separator, null));
-    exception when others then
-      l_format_mask := get_format_mask(p_name => p_item);
-      if l_format_mask is not null then
-        begin
-          l_number := to_number(get_value(p_item), l_format_mask);
-        exception when others then
-          null;
-        end;
-      end if;
-    end;
+    -- Initialization
+    l_value := replace(v(p_item), '%null%');
+    l_format_mask := coalesce(
+                       get_format_mask(p_name => p_item),
+                       'fm9999999999999999999G999999999');
+    
+    l_number := to_number(replace(get_value(p_item), apex_application.get_nls_group_separator, null));
     return l_number;
+  exception
+    when others then
+      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_value, l_format_mask, 'NUMBER'));
+      return null;
   end get_number;
   
   
@@ -383,22 +390,25 @@ as
     p_item in varchar2)
     return date
   is
-    l_timestamp timestamp;
+    l_date date;
     l_format_mask ora_name_type;
     l_value max_char;
   begin
-    l_format_mask := coalesce(get_format_mask(p_name => p_item), wwv_flow.g_nls_date_format, 'dd.mm.yyyy');
+  -- Initialization
     l_value := replace(v(p_item), '%null%');
-    l_timestamp := to_timestamp(l_value, l_format_mask);
+    l_format_mask := coalesce(
+                       get_format_mask(p_name => p_item), 
+                       apex_application.g_date_format, 
+                       apex_application.g_nls_date_format);
+                       
+    -- Conversion
+    l_date := to_timestamp(l_value, l_format_mask);
     
-    if instr(l_format_mask, 'YYYY') > 0 then
-      if instr(l_value, to_char(l_timestamp, 'YYYY')) = 0 then
-        return null;
-      end if;
-    end if;
-    return l_timestamp;
-  exception when others then
-    return null;
+    return l_date;
+  exception 
+    when others then
+      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_value, l_format_mask, 'DATE'));
+      return null;
   end get_date;
   
   
@@ -411,37 +421,29 @@ as
     l_format_mask ora_name_type;
     l_value max_char;
   begin
+    -- Initialization
+    l_value := replace(v(p_item), '%null%');
     l_format_mask := coalesce(
                        get_format_mask(p_name => p_item),
-                       wwv_flow.g_nls_timestamp_format);
-    l_value := replace(v(p_item), '%null%');
+                       apex_application.g_timestamp_format,
+                       apex_application.g_nls_timestamp_format);
     
-    if l_format_mask is not null then
+    -- CONVERSION
+    begin
+      l_timestamp := to_timestamp(l_value, l_format_mask);
+    exception when others then
       begin
-        l_timestamp := to_timestamp(l_value, l_format_mask);
+        l_timestamp := to_timestamp_tz(l_value, l_format_mask);
       exception when others then
-        begin
-          l_timestamp_tz := to_timestamp_tz(l_value, l_format_mask);
-        exception when others then
-          l_timestamp_tz := to_timestamp_tz(l_value, wwv_flow.g_nls_timestamp_tz_format);
-        end;
+        l_timestamp_tz := to_timestamp_tz(l_value, coalesce(apex_application.g_timestamp_format, apex_application.g_nls_timestamp_tz_format));
       end;
-      
-      if instr(l_format_mask, 'YYYY') > 0 then
-        if instr(l_value, to_char(l_timestamp, 'YYYY')) = 0 then 
-          return null;
-        end if;
-      end if;
-    else
-      begin
-          l_timestamp := l_value;
-      exception when others then
-          l_timestamp_tz := l_value;
-      end;
-    end if;
+    end;
+    
     return coalesce(l_timestamp, l_timestamp_tz);
-  exception when others then
-    return null;
+  exception 
+    when others then
+      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_value, l_format_mask, 'TIMESTAMP'));
+      return null;
   end get_timestamp;    
   
   
@@ -471,7 +473,7 @@ as
     return l_value;
   exception
     when msg.PAGE_ITEM_MISSING_ERR then
-      pit.leave_optional(msg_params(msg_param('Error', substr(sqlerrm, 12))));
+      pit.sql_exception(msg.SQL_ERROR);
       raise;
   end get_value;
   
@@ -667,6 +669,7 @@ select d.page_items
     l_page_id number := get_page_id;
     l_view_name ora_name_type;
     page_values page_value_t;
+    l_key_list max_char;
   begin 
     pit.enter_optional(
       p_params => msg_params(
@@ -677,8 +680,9 @@ select d.page_items
                      p_static_id => p_static_id,
                      p_application_id => l_application_id,
                      p_page_id => l_page_id);
-                    
+
     for itm in page_item_cur(l_view_name, p_static_id, l_application_id, l_page_id) loop
+      l_key_list := l_key_list || itm.item_name || ',';
       case p_format
       when FORMAT_JSON then
         page_values(itm.item_name) := apex_escape.json(v(itm.page_item_name));
@@ -688,6 +692,9 @@ select d.page_items
         page_values(itm.item_name) := v(itm.page_item_name);
       end case;
     end loop;
+    
+    l_key_list := rtrim(l_key_list, ',');
+    apex_debug.info('... get_page_values: ' || page_values.COUNT || ' page item values read: ' || l_key_list);
 
     pit.leave_optional(msg_params(msg_param('Result', to_char(page_values.count) || ' Item values')));
     return page_values;
@@ -803,7 +810,7 @@ select d.page_items
       p_params => msg_params(
                     msg_param('p_element_name', p_element_name)));
                     
-    l_value := p_page_values(upper(ltrim(p_element_name, get_item_prefix)));
+    l_value := p_page_values(upper(p_element_name));
     
     pit.leave_optional(msg_params(msg_param('Result', l_value)));
     return l_value;
@@ -811,7 +818,7 @@ select d.page_items
     when no_data_found then
       pit.leave_optional(msg_params(msg_param('Error', p_element_name || ' not found')));
       pit.error(msg.UTL_APEX_MISSING_ITEM, msg_args(p_element_name, to_char(get_page_id)));
-      -- unreachable code, compiler can't see this and will warn if the next stmt is deleted
+      -- unreachable code to avoid compiler warning
       return null;
   end get;
 
@@ -868,6 +875,7 @@ select d.page_items
     p_message in ora_name_type,
     p_msg_args in msg_args default null)
   as
+    l_message max_char;
   begin
     pit.enter_optional(p_params => msg_params(
       msg_param('p_page_item', p_page_item),
@@ -875,7 +883,11 @@ select d.page_items
       
     pit.assert_not_null(p_message);
     
+    
     if p_page_item is not null then
+      if to_clob(p_page_item) member of p_msg_args then
+        null;
+      end if;
       apex_error.add_error(
         p_message => get_pit_message(p_message, p_msg_args),
         p_display_location => apex_error.c_inline_with_field_and_notif,

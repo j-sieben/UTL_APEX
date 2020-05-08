@@ -103,6 +103,10 @@ as
   function get_default_date_format(
     p_application_id in number default null)
     return varchar2;
+
+  function get_default_timestamp_format(
+    p_application_id in number default null)
+    return varchar2;
     
   /** Getter for boolean values
    * @usage  As it is possible to install UTL_APEX with different settings for the FLAG_TYPE, it is required to access the

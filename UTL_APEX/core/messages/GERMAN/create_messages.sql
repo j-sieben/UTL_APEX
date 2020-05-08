@@ -60,6 +60,14 @@ begin
     p_pms_pml_name => 'GERMAN');
     
   pit_admin.merge_message(
+    p_pms_name => 'UTL_ITEM_VALUE_REQUIRED',
+    p_pms_text => '»#ITEM#« darf nicht leer sein.',
+    p_pms_description => q'^Offensichtlich.^',
+    p_pms_pse_id => 30,
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_pml_name => 'GERMAN');
+    
+  pit_admin.merge_message(
     p_pms_name => 'UTL_OBJECT_DOES_NOT_EXIST',
     p_pms_text => '#1# #2# existiert nicht.',
     p_pms_description => q'^Offensichtlich.^',
@@ -95,6 +103,14 @@ begin
     p_pms_name => 'CASE_NOT_FOUND',
     p_pms_text => '#1# bei Ausführung von CASE-Anweisung nicht gefunden.',
     p_pms_description => q'^Eine Option wurde übergeben, für die kein Handler in einer CASE-Anweisung vorlag und die keinen ELSE-Zweig enthält.^',
+    p_pms_pse_id => 30,
+    p_pms_pmg_name => 'PIT',
+    p_pms_pml_name => 'GERMAN');
+    
+  pit_admin.merge_message(
+    p_pms_name => 'IMPOSSIBLE_CONVERSION',
+    p_pms_text => 'Ungültige Konvertierung von Elementwert "#1#" und Formatmaske "#2#2" zum Typ #3#.',
+    p_pms_description => q'^Bei der automatisierten Ermittlung eines Datums- oder Zahlenwertes konnte der Elementwert nicht korrekt konvertiert werden.^',
     p_pms_pse_id => 30,
     p_pms_pmg_name => 'PIT',
     p_pms_pml_name => 'GERMAN');
