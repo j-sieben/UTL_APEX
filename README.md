@@ -1,7 +1,7 @@
 # UTL_APEX
 APEX-Utilities
 
-## Wht it is
+## What it is
 When working with APEX there are repeating tasks to do, such as getting values from the session state, examine the request value, find out which action to perform within the database and others. Plus, the existing APEX-API changes quite often and has some historical flaws which are hard to correct. 
 
 Some examples? You get the application id, -alias and page-id from global variables in package apex_application, called G_FLOW_ID, G_FLOW_ALIAS, G_FLOW_STEP_ID. The page alias on the other hand is available named G_PAGE_ALIAS ... And even if they were named consistently, there's this old FLOW/FLOW_STEP thing from the early HTML_DB days. And, by the way: those values are available in PL/SQL only as they are variables, not functions. So in order to get them from SQL, you need differently named constants like v('APP_ID' and the like.
