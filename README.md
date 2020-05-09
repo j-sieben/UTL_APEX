@@ -28,3 +28,8 @@ The most complex methods grant access to the session state. The idea behind thes
 If you work with these methods, you will get access to the session state using the same API and without the danger of spell errors, as you will receive an error if you access a page item that does not exist. You may also want to look into package `UTL_DEV_APEX`. It supports you while you develop as it generates stub methods for your form pages to copy the session state, convert their values according to the format masks provided on the page and copy them to a record of the table / view you base your form on. This way, the basic PL/SQL block for working with form data within a package is generated.
 
 This package is a work in progress, I add new functionality when I need it, so stay informed on new developments.
+
+## Dependencies
+`UTL_APEX` is dependent on [`PIT`](https://github.com/j-sieben/PIT) as it reuses it's assertion and message providing mechanism. It is also dependent on [`UTL_TEXT`](https://github.com/j-sieben/UTL_TEXT) from which I use the `bulk_replace`methods and my code generator to generate the stubs.
+
+I know that it's boring if a GIT project is not self sufficient but relies on other repositories, but it is even worse to copy the respective code around. If you feel that you don't want to install the other libraries, you may still find this package useful as a seed for your own implementation.
