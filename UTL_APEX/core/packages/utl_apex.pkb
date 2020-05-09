@@ -701,48 +701,30 @@ select d.page_items
   end get_page_values;
   
   
-  /** Method to create a script to get the values of the page items.
-   * @return script that contains a PL/SQL block to be either directly executed, returning a record, or a script that may
-   *         be inserted into a package as a code generator, based on P_UTTM_MODE
-   * @usage  Is used to create a script for all page items based on the type of the input form and the usage.
-   *         It is called with different P_UTTM_MODE parameters to cater for copying data to a PL/SQL table or a record
-   *         Supported values:
-   *         - DYNAMIC: script is execeuted immediately and return a filled record instance of P_TABLE_NAME%ROWTYPE
-   *         - STATIC: script is returned as varchar2 to be included in PL/SQL packages
-   */
-  function get_script_for_page_items(
-    p_uttm_mode in utl_text_templates.uttm_mode%type,
-    p_static_id in varchar2,
-    p_table_name in varchar2,
-    p_application_id in number default get_application_id,
-    p_page_id in number default get_page_id,
-    p_record_name in varchar2 default 'l_row_rec')
-    return max_char
+  function get_page_record(
+    p_static_id in varchar2 default null,
+    p_table_name in varchar2 default null)
+    return varchar2
   as
-    l_script clob;
     l_view_name ora_name_type;
+    l_script max_char;
   begin
-    pit.enter_detailed(
+    pit.enter_optional(
       p_params => msg_params(
-                    msg_param('p_uttm_mode', p_uttm_mode),
                     msg_param('p_static_id', p_static_id),
-                    msg_param('p_table_name', p_table_name),
-                    msg_param('p_application_id', to_char(p_application_id)),
-                    msg_param('p_page_id', to_char(p_page_id)),
-                    msg_param('p_record_name', p_record_name)));
-                    
+                    msg_param('p_table_name', p_table_name)));
+      
     l_view_name := get_view_name(
                      p_static_id => p_static_id,
-                     p_application_id => p_application_id,
-                     p_page_id => p_page_id);
+                     p_application_id => get_application_id,
+                     p_page_id => get_page_id);
 
-      with params as(
-             select p_uttm_mode uttm_mode, 
-                    get_default_date_format(p_application_id) date_format,
-                    p_record_name record_name,
+    with params as(
+             select C_TEMPLATE_MODE_DYNAMIC uttm_mode, 
+                    get_default_date_format(get_application_id) date_format,
+                    'l_row_rec' record_name,
                     p_table_name table_name
-               from dual
-           ),
+               from dual),
            templates as (
              select uttm_text template, uttm_mode
                from utl_text_templates
@@ -750,7 +732,7 @@ select d.page_items
                 and uttm_type = C_TEMPLATE_TYPE),
            data as (
              select *
-               from table(utl_apex.get_page_items(l_view_name, p_static_id, p_application_id, p_page_id, C_TRUE)) c),
+               from table(utl_apex.get_page_items(l_view_name, p_static_id, get_application_id, get_page_id, C_TRUE)) c),
            tab_name as (
              select max(table_name) table_name
                from data)
@@ -770,29 +752,6 @@ select d.page_items
       from templates t
       join params p
         on p.uttm_mode = t.uttm_mode;
-        
-    pit.leave_detailed;
-    return to_char(l_script);
-  end get_script_for_page_items;
-  
-  
-  function get_page_record(
-    p_static_id in varchar2 default null,
-    p_table_name in varchar2 default null)
-    return varchar2
-  as
-    l_cursor sys_refcursor;
-    l_script max_char;
-  begin
-    pit.enter_optional(
-      p_params => msg_params(
-                    msg_param('p_static_id', p_static_id),
-                    msg_param('p_table_name', p_table_name)));
-                    
-    l_script := get_script_for_page_items(
-                  p_uttm_mode => C_TEMPLATE_MODE_DYNAMIC,
-                  p_static_id => p_static_id,
-                  p_table_name => p_table_name);
     
     pit.leave_optional(msg_params(msg_param('Result', l_script)));
     return l_script;
@@ -885,9 +844,6 @@ select d.page_items
     
     
     if p_page_item is not null then
-      if to_clob(p_page_item) member of p_msg_args then
-        null;
-      end if;
       apex_error.add_error(
         p_message => get_pit_message(p_message, p_msg_args),
         p_display_location => apex_error.c_inline_with_field_and_notif,

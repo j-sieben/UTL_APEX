@@ -71,4 +71,4 @@ prompt
 prompt &section.
 prompt &h2.Package dependent Scripts
 prompt &s1.Script set_parameter
-@&SCRIPT_DIR.set_parameters.sql
+@&SCRIPT_DIR.ParameterGroup_UTL_APEX.sql

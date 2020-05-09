@@ -294,6 +294,8 @@ as
    *         EXAMPLE: To use this method, call it with execute immediate and pass the record to a predefined output record L_ROW:
    *         <code> l_row your_table%rowtype;</code>
    *         <code> execute immediate utl_apex.get_page_record using out l_row;</code>
+   *         You may want to examine the output of this method to understand how it works. Before you do so, create an APEX
+   *         session using APEX_SESSION and point to a page with a form or IG on it. Then call this method in SQL.
    */
   function get_page_record(
     p_static_id in varchar2 default null,

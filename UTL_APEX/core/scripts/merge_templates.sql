@@ -623,7 +623,7 @@ q'°end;/°',
     p_uttm_name => 'FORM_COLUMN',
     p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'NUMBER',
-    p_uttm_text => q'°  #RECORD_NAME#.#COLUMN_NAME# := to_number(v('#SOURCE_NAME')#FORMAT_MASK|, '|'|#);°',
+    p_uttm_text => q'°  #RECORD_NAME#.#COLUMN_NAME# := to_number(v('#SOURCE_NAME#')#FORMAT_MASK|, '|'|#);°',
     p_uttm_log_text => q'°°',
     p_uttm_log_severity => 70
   );
@@ -789,7 +789,7 @@ q'°    \CR\°' ||
 q'°    -- copy_#PAGE_ALIAS#;\CR\°' || 
 q'°    -- validation logic goes here. If it exists, uncomment COPY function\CR\°' || 
 q'°    \CR\°' || 
-q'°    pit.leave_mandatory\CR\°' || 
+q'°    pit.leave_mandatory;\CR\°' || 
 q'°    return true;\CR\°' || 
 q'°  end validate_#PAGE_ALIAS#;\CR\°' || 
 q'°  \CR\°' || 
