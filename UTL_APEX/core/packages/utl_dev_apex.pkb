@@ -20,6 +20,49 @@ as
   C_TEMPLATE_MODE_STATIC constant utl_apex.ora_name_type := 'STATIC';
   
   
+  procedure create_session(
+    p_app_id in apex_applications.application_id%type,
+    p_app_page_id in apex_application_pages.page_id%type default 1,
+    p_app_user in apex_workspace_activity_log.apex_user%type)
+  as
+    $IF utl_apex.ver_le_05 $THEN
+    l_workspace_id apex_applications.workspace_id%type;
+    l_cgivar_name owa.vc_arr;
+    l_cgivar_val owa.vc_arr;
+    $END
+  begin
+    $IF utl_apex.ver_le_05 $THEN
+    htp.init;
+  
+    l_cgivar_name(1) := 'REQUEST_PROTOCOL';
+    l_cgivar_val(1) := 'HTTP';
+  
+    owa.init_cgi_env(
+      num_params => 1,
+      param_name => l_cgivar_name,
+      param_val => l_cgivar_val );
+  
+    select workspace_id
+      into l_workspace_id
+      from apex_applications
+     where application_id = p_app_id;
+  
+    wwv_flow_api.set_security_group_id(l_workspace_id);
+  
+    apex_application.g_instance := 1;
+    apex_application.g_flow_id := p_app_id;
+    apex_application.g_flow_step_id := p_app_page_id;
+  
+    apex_custom_auth.post_login(
+      p_uname => p_app_user,
+      p_session_id => null, -- could use APEX_CUSTOM_AUTH.GET_NEXT_SESSION_ID
+      p_app_page => apex_application.g_flow_id||':'||p_app_page_id);
+    $ELSE
+    apex_session.create_session(p_app_id, p_app_page_id, p_app_user);
+    $END
+  end create_session;
+  
+  
   /** Method to decide upon the view name based on the form type detected on the page for this combination of parameters
    * @return Name of the view as detected.
    * @usage  Is used to get the correct view name based upon the type of form. Supported form types are:
@@ -398,6 +441,49 @@ as
     -- generate methods
     if p_static_id is not null then
       -- static id means that a form region or interactive grid is referenced
+      $IF utl_apex.VER_LE_05 $THEN
+      select utl_text.generate_text(cursor(
+             select t.uttm_text template, l_column_list column_list,
+                    lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
+                    lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
+                    lower(p_insert_method) insert_method,
+                    lower(p_update_method) update_method,
+                    lower(p_delete_method) delete_method
+               from apex_application_pages app
+               join apex_application_page_proc apo
+                 on app.application_id = apo.application_id
+                and app.page_id = apo.page_id
+              cross join utl_text_templates t
+              where app.application_id = p_application_id
+                and app.page_id = p_page_id
+                and apo.process_type_code = 'DML_FETCH_ROW'
+                and t.uttm_name = 'METHODS'
+                and t.uttm_type = 'APEX_FORM'
+                and t.uttm_mode = l_mode))
+      into l_code
+      from dual;
+      $ELSIF utl_apex.VER_LE_18 $THEN
+      select utl_text.generate_text(cursor(
+             select t.uttm_text template, l_column_list column_list,
+                    lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
+                    lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
+                    lower(p_insert_method) insert_method,
+                    lower(p_update_method) update_method,
+                    lower(p_delete_method) delete_method
+               from apex_application_pages app
+               join apex_application_page_proc apo
+                 on app.application_id = apo.application_id
+                and app.page_id = apo.page_id
+              cross join utl_text_templates t
+              where app.application_id = p_application_id
+                and app.page_id = p_page_id
+                and apo.process_type_code = 'DML_FETCH_ROW'
+                and t.uttm_name = 'METHODS'
+                and t.uttm_type = 'APEX_FORM'
+                and t.uttm_mode = l_mode))
+      into l_code
+      from dual;
+      $ELSE
       select utl_text.generate_text(cursor(
              select t.uttm_text template, l_column_list column_list,
                     lower(apr.table_name) view_name, upper(apr.table_name) view_name_upper,
@@ -419,6 +505,7 @@ as
                 and t.uttm_mode = l_mode))
       into l_code
       from dual;
+      $END
     else
       select utl_text.generate_text(cursor(
                select t.uttm_text template, l_column_list column_list,

@@ -3,7 +3,6 @@ as
 
   -- Private type declarations
   -- Private constant declarations
-  C_PIT_APEX_MODULE constant ora_name_type := 'PIT_APEX:PIT_CONSOLE';
   C_ROW_STATUS constant ora_name_type := 'APEX$ROW_STATUS';
   
   -- Constants for supported APEX form types
@@ -17,74 +16,80 @@ as
   C_TEMPLATE_NAME_COLUMNS constant ora_name_type := 'FORM_COLUMN';
   
   C_TEMPLATE_MODE_DYNAMIC constant ora_name_type := 'DYNAMIC';
-  C_TEMPLATE_MODE_STATIC constant ora_name_type := 'STATIC';
   
   C_PARAM_GROUP constant ora_name_type := 'UTL_APEX';
   C_ITEM_PREFIX_CONVENTION constant ora_name_type := 'ITEM_PREFIX_CONVENTION';
-  C_ITEM_VALUE_CONVENTION constant ora_name_type := 'ITEM_VALUE_CONVENTION';
   
   C_DATE constant ora_name_type := 'DATE';
-  C_NUMBER constant ora_name_type := 'NUMBER';
   C_DEFAULT constant ora_name_type := 'DEFAULT';
   
   g_item_value_convention boolean;
   g_item_prefix_convention binary_integer;
-  g_format_mask_cache wwv_flow_global.vc_map; 
 
   -- HELPER
-  /** Method to canonize an element name. 
-   * @param  p_affected_id  Name of the page item
-   * @usage  Used to make sure that a page item has got it's page prefix. If it is passed in without page prefix, it will be added
+  /** Method to read a page item's name and format mask.
+   * @param  p_page_item  Item name with or without page prefix
+   * @param  p_item       Item record with information to the requested page item
+   * @usage  Is used to retrieve the page item's settings from the APEX data dictionary. 
    */
-  function get_page_element(
-    p_affected_id in ora_name_type)
-    return varchar2
+  procedure get_page_element(
+    p_page_item in ora_name_type,
+    p_item out nocopy item_rec)
   as
-    l_page_prefix ora_name_type;
-    l_affected_id ora_name_type;
+    l_application_id number;
+    l_page_id number;
+    l_default_date_format ora_name_type;
+    l_default_timestamp_format ora_name_type;
+    C_ITEM_NAME_BLACKLIST constant char_table := char_table('APEX$ROW_STATUS');
   begin
-    l_page_prefix := get_page_prefix;
-    l_affected_id := p_affected_id;
-    if instr(l_affected_id, l_page_prefix) = 0 then
-      l_affected_id := l_page_prefix || l_affected_id;
-    end if;
-    return l_affected_id;
-  end get_page_element;
-  
-  
-  function get_item_prefix
-    return varchar2
-  as
-    C_DELIMITER constant char(1 byte) := '_';
-    l_prefix ora_name_type;
-  begin
-    case g_item_prefix_convention
-    when CONVENTION_PAGE_PREFIX then l_prefix := get_page_prefix;
-    when CONVENTION_PAGE_ALIAS then l_prefix := get_page_alias || C_DELIMITER;
-    when CONVENTION_APP_ALIAS then l_prefix := get_application_alias || C_DELIMITER;
-    end case;
+    pit.enter_detailed(
+      p_params => msg_params(
+                    msg_param('p_page_item', p_page_item)));
     
-    return l_prefix;
-  end get_item_prefix;
-  
-  
-  /** Method tries to read the message text of a PIT message
-   * @param  p_message  Name of the PIT message or a message text
-   * @param  p_msg_args  Arguments for the PIT message
-   * @return Message text
-   * @usage  Is used to try to create a text based on a PIT message. If that fails, parameter <code>P_MESSAGE</oode> is returned.
-   */
-  function get_pit_message(
-    p_message in ora_name_type,
-    p_msg_args in msg_args)
-    return varchar2
-  as
-  begin
-    return pit.get_message_text(p_message, p_msg_args);
+    if upper(p_page_item) member of C_ITEM_NAME_BLACKLIST then
+      -- Blacklist items are items which cannot be seen in the APEX data dictionary
+      -- Just pass their name and value back
+      p_item.item_name := p_page_item;
+      p_item.item_value := apex_util.get_session_state(p_page_item);
+    else
+      l_application_id := get_application_id;
+      l_page_id := get_page_id;
+      l_default_date_format := get_default_date_format;
+      l_default_timestamp_format := get_default_timestamp_format;
+                      
+      select item_name, label, format_mask, apex_util.get_session_state(item_name)
+        into p_item.item_name, p_item.item_label, p_item.format_mask, p_item.item_value
+        from apex_application_page_items
+       where application_id = l_application_id
+         and page_id = l_page_id
+         and item_name like '%' || upper(p_page_item)
+      union all
+      select name, heading,
+             coalesce(
+              format_mask,
+              case 
+                when instr(data_type, 'DATE') > 0 then l_default_date_format
+                when instr(data_type, 'TIMESTAMP') > 0 then l_default_timestamp_format
+              end) format_mask,
+            apex_util.get_session_state(name)
+        from apex_appl_page_ig_columns
+       where application_id = l_application_id
+         and page_id = l_page_id
+         and name = upper(p_page_item);
+    end if;
+       
+    pit.leave_detailed(
+      p_params => msg_params(
+                    msg_param('item_name', p_item.item_name),
+                    msg_param('item_label', p_item.item_label),
+                    msg_param('format_mask', p_item.format_mask),
+                    msg_param('item_value', substr(p_item.item_value, 1, 200))));
   exception
-    when others then
-       return p_message;
-  end get_pit_message;
+    when NO_DATA_FOUND then       
+      pit.leave_detailed(
+        p_params => msg_params(
+                      msg_param('No item found', null)));
+  end get_page_element;
   
       
   /** Method to download a blob file over the browser
@@ -157,27 +162,6 @@ as
     $END    
     return l_url;
   end get_url;
-  
-
-  function get_format_mask(
-    p_name in varchar2)
-    return varchar2
-  is
-    l_item_name apex_application_page_items.item_name%type := upper(p_name);
-  begin
-    if not g_format_mask_cache.exists(l_item_name) then
-      g_format_mask_cache(l_item_name) := null;
-          
-      select /*+ result_cache */ format_mask
-        into g_format_mask_cache(l_item_name)
-        from apex_application_page_items
-       where application_id = (select utl_apex.get_application_id from dual)
-         and item_name = l_item_name;
-      g_format_mask_cache(l_item_name) := apex_application.do_substitutions(g_format_mask_cache(l_item_name), 'TEXT');
-    end if;
-        
-    return g_format_mask_cache(l_item_name);
-  end get_format_mask;
   
   
   /** Default initialization method */
@@ -354,123 +338,121 @@ as
     p_bool in boolean)
     return flag_type
   as
+    l_result flag_type;
   begin
     if p_bool then
-      return C_TRUE;
+      l_result := C_TRUE;
     else
-      return C_FALSE;
+      l_result := C_FALSE;
     end if;
+    return l_result;
+  end get_bool;
+    
+    
+  function get_bool(
+    p_bool in flag_type)
+    return boolean
+  as
+  begin
+    return p_bool = C_TRUE;
   end get_bool;
   
   
   function get_number(
-      p_item in varchar2)
+      p_page_item in varchar2)
       return number
   is
     l_number number;
-    l_format_mask utl_apex.ora_name_type;
-    l_value max_char;
+    l_item item_rec;
   begin
     -- Initialization
-    l_value := replace(v(p_item), '%null%');
-    l_format_mask := coalesce(
-                       get_format_mask(p_name => p_item),
-                       'fm9999999999999999999G999999999');
+    get_page_element(p_page_item, l_item);
     
-    l_number := to_number(replace(get_value(p_item), apex_application.get_nls_group_separator, null));
+    l_number := to_number(l_item.item_value, replace(l_item.format_mask, apex_application.get_nls_group_separator, null));
     return l_number;
   exception
     when others then
-      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_value, l_format_mask, 'NUMBER'));
+      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'NUMBER'));
       return null;
   end get_number;
   
   
   function get_date(
-    p_item in varchar2)
+    p_page_item in varchar2)
     return date
   is
     l_date date;
-    l_format_mask ora_name_type;
-    l_value max_char;
+    l_item item_rec;
   begin
-  -- Initialization
-    l_value := replace(v(p_item), '%null%');
-    l_format_mask := coalesce(
-                       get_format_mask(p_name => p_item), 
-                       apex_application.g_date_format, 
-                       apex_application.g_nls_date_format);
+    -- Initialization
+    get_page_element(p_page_item, l_item);
                        
     -- Conversion
-    l_date := to_timestamp(l_value, l_format_mask);
+    begin
+      l_date := to_date(l_item.item_value, l_item.format_mask);
+    exception when others then
+      l_date := to_timestamp_tz(l_item.item_value, apex_application.g_nls_date_format);
+    end;
     
     return l_date;
   exception 
     when others then
-      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_value, l_format_mask, 'DATE'));
+      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'DATE'));
       return null;
   end get_date;
   
   
   function get_timestamp(
-    p_item in varchar2)
+    p_page_item in varchar2)
     return timestamp
   as
     l_timestamp timestamp;
     l_timestamp_tz timestamp with time zone;
-    l_format_mask ora_name_type;
-    l_value max_char;
+    l_item item_rec;
   begin
     -- Initialization
-    l_value := replace(v(p_item), '%null%');
-    l_format_mask := coalesce(
-                       get_format_mask(p_name => p_item),
-                       apex_application.g_timestamp_format,
-                       apex_application.g_nls_timestamp_format);
+    get_page_element(p_page_item, l_item);
+                       
     
     -- CONVERSION
     begin
-      l_timestamp := to_timestamp(l_value, l_format_mask);
+      l_timestamp := to_timestamp(l_item.item_value, l_item.format_mask);
     exception when others then
       begin
-        l_timestamp := to_timestamp_tz(l_value, l_format_mask);
+        l_timestamp := to_timestamp_tz(l_item.item_value, l_item.format_mask);
       exception when others then
-        l_timestamp_tz := to_timestamp_tz(l_value, coalesce(apex_application.g_timestamp_format, apex_application.g_nls_timestamp_tz_format));
+        l_timestamp_tz := to_timestamp_tz(l_item.item_value, apex_application.g_nls_timestamp_tz_format);
       end;
     end;
     
     return coalesce(l_timestamp, l_timestamp_tz);
   exception 
     when others then
-      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_value, l_format_mask, 'TIMESTAMP'));
+      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'TIMESTAMP'));
       return null;
   end get_timestamp;    
   
   
   function get_value(
-    p_item in varchar2)
+    p_page_item in varchar2)
     return varchar2
   as
-    C_STMT constant max_char := q'^select null from apex_application_page_items where application_id = #APP_ID# and page_id = #PAGE_ID# and item_name = '#ITEM_NAME#'^';
-    l_stmt max_char;
-    l_value max_char;
+    l_item item_rec;
   begin
     pit.enter_optional(
       p_params => msg_params(
-                    msg_param('p_item', p_item)));
+                    msg_param('p_page_item', p_page_item)));
                     
-    l_value := apex_util.get_session_state(upper(p_item));
+    get_page_element(p_page_item, l_item);
     
-    if l_value is null and g_item_value_convention then
-      l_stmt := utl_text.bulk_replace(C_STMT, char_table(
-                  'APP_ID', to_char(get_application_id),
-                  'PAGE_ID', to_char(get_page_id),
-                  'ITEM_NAME', upper(p_item)));
-      pit.assert_exists(l_stmt, msg.PAGE_ITEM_MISSING, msg_args(p_item));
+    if l_item.item_value is null and g_item_value_convention then
+      pit.assert_exists(l_item.item_name, msg.PAGE_ITEM_MISSING, msg_args(p_page_item));
     end if;
     
-    pit.leave_optional;
-    return l_value;
+    pit.leave_optional(
+      p_params => msg_params(
+                    msg_param('Value', substr(l_item.item_value, 1, 200))));
+    return l_item.item_value;
   exception
     when msg.PAGE_ITEM_MISSING_ERR then
       pit.sql_exception(msg.SQL_ERROR);
@@ -479,15 +461,38 @@ as
   
     
   procedure set_value(
-    p_item in varchar2,
+    p_page_item in varchar2,
     p_value in varchar2)
   as
   begin
-    apex_util.set_session_state(p_item, p_value);
+    pit.enter_mandatory(
+      p_params => msg_params(
+                    msg_param('p_page_item', p_page_item),
+                    msg_param('p_value', substr(p_value, 1, 200))));
+                    
+    apex_util.set_session_state(p_page_item, p_value);
+    
+    pit.leave_mandatory;
   exception
     when others then
-      pit.error(msg.PAGE_ITEM_MISSING, msg_args(p_item));
+      pit.leave_mandatory;
+      pit.error(msg.PAGE_ITEM_MISSING, msg_args(p_page_item));
   end set_value;
+  
+  
+  procedure set_success_message(
+    p_message in ora_name_type,
+    p_msg_args in msg_args default null)
+  as
+  begin
+    pit.enter_mandatory(
+      p_params => msg_params(
+                    msg_param('p_message', p_message)));
+                    
+    apex_application.g_print_success_message := pit.get_message_text(p_message, p_msg_args);
+    
+    pit.leave_mandatory;
+  end set_success_message;
 
 
   procedure set_item_value_convention(
@@ -572,29 +577,39 @@ select d.page_items
   from #VIEW_NAME# d
  where application_id = #APP_ID#
    and page_id = #PAGE_ID#
-   and decode(static_id, '#STATIC_ID#', 1, 0) = 1
+   and decode(static_id, '#STATIC_ID#', 1, null, 1, 0) = 1
    and (is_column_based = '#ONLY_COLUMNS#' or '#ONLY_COLUMNS#' is null)^';
     l_stmt max_char;
     l_cur sys_refcursor;
     l_row utl_apex_page_item;
+    l_row_count number := 0;
   begin
-    pit.enter_detailed;
+    pit.enter_detailed(
+      p_params => msg_params(
+                    msg_param('p_view_name', p_view_name),
+                    msg_param('p_static_id', p_static_id),
+                    msg_param('p_application_id', p_application_id),
+                    msg_param('p_page_id', p_page_id),
+                    msg_param('p_only_columns', p_only_columns)));
     
     l_stmt := utl_text.bulk_replace(C_STMT, char_table(
-                '#VIEW_NAME#', p_view_name,
-                '#APP_ID#', p_application_id,
-                '#PAGE_ID#', p_page_id,
-                '#STATIC_ID#', p_static_id,
-                '#ONLY_COLUMNS#', case when p_only_columns is not null then C_TRUE end));
+                'VIEW_NAME', p_view_name,
+                'APP_ID', p_application_id,
+                'PAGE_ID', p_page_id,
+                'STATIC_ID', p_static_id,
+                'ONLY_COLUMNS', case when p_only_columns is not null then C_TRUE end));
                 
     open l_cur for l_stmt;
     fetch l_cur into l_row;
     while l_cur%FOUND loop
+      l_row_count := l_row_count + 1;
       pipe row (l_row);
       fetch l_cur into l_row;
     end loop;
     
-    pit.leave_detailed;
+    pit.leave_detailed(
+      p_params => msg_params(
+                    msg_param('Rows piped', l_row_count)));
     return;
   end get_page_items;
   
@@ -630,10 +645,8 @@ select d.page_items
       from apex_application_page_regions
      where application_id = p_application_id
        and page_id  = p_page_id
-       and static_id = p_static_id
+       and upper(static_id) = upper(p_static_id)
        and source_type_code in (C_FORM_REGION, C_IG_REGION);
-     
-    pit.debug(msg.PIT_PASS_MESSAGE, msg_args('FormType: ' || l_form_type));
      
     case l_form_type
     when C_PAGE_FORM then
@@ -663,7 +676,7 @@ select d.page_items
       select /*+ no_merge (p) */ 
              upper(column_name) item_name, 
              source_name page_item_name
-        from table(get_page_items(p_view_name, p_static_id, p_application_id, p_page_id));
+        from table(get_page_items(p_view_name, p_static_id, p_application_id, p_page_id, C_TRUE));
     
     l_application_id number := get_application_id;
     l_page_id number := get_page_id;
@@ -680,21 +693,25 @@ select d.page_items
                      p_static_id => p_static_id,
                      p_application_id => l_application_id,
                      p_page_id => l_page_id);
-
-    for itm in page_item_cur(l_view_name, p_static_id, l_application_id, l_page_id) loop
-      l_key_list := l_key_list || itm.item_name || ',';
-      case p_format
-      when FORMAT_JSON then
-        page_values(itm.item_name) := apex_escape.json(v(itm.page_item_name));
-      when FORMAT_HTML then
-        page_values(itm.item_name) := apex_escape.html(v(itm.page_item_name));
-      else
-        page_values(itm.item_name) := v(itm.page_item_name);
-      end case;
-    end loop;
     
-    l_key_list := rtrim(l_key_list, ',');
-    apex_debug.info('... get_page_values: ' || page_values.COUNT || ' page item values read: ' || l_key_list);
+    if l_view_name is not null then
+      for itm in page_item_cur(l_view_name, p_static_id, l_application_id, l_page_id) loop
+        l_key_list := l_key_list || itm.item_name || ',';
+        case p_format
+        when FORMAT_JSON then
+          page_values(itm.item_name) := apex_escape.json(apex_util.get_session_state(itm.page_item_name));
+        when FORMAT_HTML then
+          page_values(itm.item_name) := apex_escape.html(apex_util.get_session_state(itm.page_item_name));
+        else
+          page_values(itm.item_name) := apex_util.get_session_state(itm.page_item_name);
+        end case;
+      end loop;
+      
+      l_key_list := rtrim(l_key_list, ',');
+      pit.debug(msg.PIT_PASS_MESSAGE, msg_args('... get_page_values: ' || page_values.COUNT || ' page item values read: ' || l_key_list));
+    else
+      pit.warn(msg.PIT_PASS_MESSAGE, msg_args('No View name found'));
+    end if;
 
     pit.leave_optional(msg_params(msg_param('Result', to_char(page_values.count) || ' Item values')));
     return page_values;
@@ -774,7 +791,7 @@ select d.page_items
     pit.leave_optional(msg_params(msg_param('Result', l_value)));
     return l_value;
   exception
-    when no_data_found then
+    when NO_DATA_FOUND then
       pit.leave_optional(msg_params(msg_param('Error', p_element_name || ' not found')));
       pit.error(msg.UTL_APEX_MISSING_ITEM, msg_args(p_element_name, to_char(get_page_id)));
       -- unreachable code to avoid compiler warning
@@ -811,7 +828,7 @@ select d.page_items
        p_message_name => msg.UTL_NAME_TOO_LONG,
        p_arg_list => msg_args(l_name, to_char(C_MAX_LENGTH)));
 
-    -- check name against Oracle naming conventions. Throws errors, so catch them rather than use ASSERT
+    -- name against Oracle naming conventions. Throws errors, so catch them rather than use ASSERT
     begin
        l_name := dbms_assert.simple_sql_name(l_name);
     exception
@@ -832,27 +849,86 @@ select d.page_items
   procedure set_error(
     p_page_item in ora_name_type,
     p_message in ora_name_type,
-    p_msg_args in msg_args default null)
+    p_msg_args in msg_args default null,
+    p_region_id in ora_name_type default null)
   as
-    l_message max_char;
+    l_message message_type;
+    l_rownum number;
+    l_application_id number;
+    l_page_id number;
+    l_primary_key max_char;
+    l_region_Id number;
+    l_source_type ora_name_type;
+    l_item item_rec;
   begin
     pit.enter_optional(p_params => msg_params(
       msg_param('p_page_item', p_page_item),
       msg_param('p_message', p_message)));
       
     pit.assert_not_null(p_message);
-    
-    
     if p_page_item is not null then
-      apex_error.add_error(
-        p_message => get_pit_message(p_message, p_msg_args),
-        p_display_location => apex_error.c_inline_with_field_and_notif,
-        p_page_item_name => get_page_element(p_page_item));
-    else
-      apex_error.add_error(
-        p_message => get_pit_message(p_message, p_msg_args),
-        p_display_location => apex_error.c_inline_in_notification);
+      get_page_element(p_page_item, l_item);
+      l_message := pit.get_message(p_message, coalesce(p_msg_args, msg_args(l_item.item_label)));
     end if;
+    
+    case 
+      when p_region_id is not null then
+        -- Detect type of region to adjust the error message
+        l_application_id := get_application_id;
+        l_page_id := get_page_id;
+        
+        select r.region_id, r.source_type_code, apex_util.get_session_state(i.primary_key_item)
+          into l_region_Id, l_source_type, l_primary_key
+          from apex_application_page_regions r
+          left join (
+               select region_id, source_expression primary_key_item
+                 from apex_appl_page_ig_columns
+                where application_id = l_application_id
+                  and page_id = l_page_id
+                  and is_primary_key = 'Yes') i
+            on r.region_id = i.region_id
+         where application_id = l_application_id
+           and page_id = l_page_id
+           and static_id = p_region_id;
+        
+        case l_source_type
+          when C_IG_REGION then
+            pit.debug(msg.PIT_PASS_MESSAGE, msg_args('... handling error for Interactive Grid'));
+            wwv_flow_error.add_error(
+              p_message => l_message.message_text,
+              p_additional_info => l_message.message_description,
+              p_display_location => apex_error.c_inline_with_field_and_notif,
+              p_region_id => l_region_id,
+              p_column_name => l_item.item_name,
+              p_model_instance_id => null,
+              p_model_record_id => l_primary_key);
+        else
+          -- Fallback, works as if P_REGION_ID is NULL
+          if p_page_item is not null then
+            apex_error.add_error(
+              p_message => l_message.message_text,
+              p_additional_info => l_message.message_description,
+              p_display_location => apex_error.c_inline_with_field_and_notif,
+              p_page_item_name => l_item.item_name);
+          else
+            apex_error.add_error(
+              p_message => l_message.message_text,
+              p_additional_info => l_message.message_description,
+              p_display_location => apex_error.c_inline_in_notification);
+          end if;
+        end case;
+      when p_page_item is not null then
+        apex_error.add_error(
+          p_message => l_message.message_text,
+          p_additional_info => l_message.message_description,
+          p_display_location => apex_error.c_inline_with_field_and_notif,
+          p_page_item_name => l_item.item_name);
+      else
+        apex_error.add_error(
+          p_message => l_message.message_text,
+          p_additional_info => l_message.message_description,
+          p_display_location => apex_error.c_inline_in_notification);
+    end case;
     
     pit.leave_optional;
   exception
@@ -866,7 +942,8 @@ select d.page_items
     p_test in boolean,
     p_page_item in ora_name_type,
     p_message in ora_name_type,
-    p_msg_args in msg_args default null)
+    p_msg_args in msg_args default null,
+    p_region_id in ora_name_type default null)
   as
   begin
     pit.enter_optional(
@@ -876,7 +953,7 @@ select d.page_items
                     msg_param('p_message', p_message)));
                     
     if not p_test then
-      set_error(p_page_item, p_message, p_msg_args);
+      set_error(p_page_item, p_message, p_msg_args, p_region_id);
     end if;
     
     pit.leave_optional;
@@ -1111,8 +1188,9 @@ select d.page_items
   procedure assert(
     p_condition in boolean,
     p_message_name in ora_name_type,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null)
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
   is
   begin
     pit.enter_optional;
@@ -1121,12 +1199,11 @@ select d.page_items
     pit.leave_optional;
   exception
     when msg.ASSERT_TRUE_ERR then
-      pit.log(
-        p_message_name => p_message_name,
-        p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => p_arg_list,
-        p_log_threshold => null,
-        p_module_list => C_PIT_APEX_MODULE);
+      set_error(
+        p_page_item => p_page_item,
+        p_message => p_message_name,
+        p_msg_args => p_msg_args,
+        p_region_id => p_region_id);
       pit.leave_optional;
   end assert;
 
@@ -1134,8 +1211,9 @@ select d.page_items
   procedure assert_is_null(
     p_condition in varchar2,
     p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null)
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
   as
   begin
     pit.enter_optional;
@@ -1143,12 +1221,11 @@ select d.page_items
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NULL_ERR then
-      pit.log(
-        p_message_name => p_message_name,
-        p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => p_arg_list,
-        p_log_threshold => null,
-        p_module_list => C_PIT_APEX_MODULE);
+      set_error(
+        p_page_item => p_page_item,
+        p_message => p_message_name,
+        p_msg_args => p_msg_args,
+        p_region_id => p_region_id);
       pit.leave_optional;
   end assert_is_null;
 
@@ -1156,8 +1233,9 @@ select d.page_items
   procedure assert_is_null(
     p_condition in number,
     p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null)
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
   as
   begin
     pit.enter_optional;
@@ -1165,12 +1243,11 @@ select d.page_items
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NULL_ERR then
-      pit.log(
-        p_message_name => p_message_name,
-        p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => p_arg_list,
-        p_log_threshold => null,
-        p_module_list => C_PIT_APEX_MODULE);
+      set_error(
+        p_page_item => p_page_item,
+        p_message => p_message_name,
+        p_msg_args => p_msg_args,
+        p_region_id => p_region_id);
       pit.leave_optional;
   end assert_is_null;
 
@@ -1178,8 +1255,9 @@ select d.page_items
   procedure assert_is_null(
     p_condition in date,
     p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null)
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
   as
   begin
     pit.enter_optional;
@@ -1187,12 +1265,11 @@ select d.page_items
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NULL_ERR then
-      pit.log(
-        p_message_name => p_message_name,
-        p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => p_arg_list,
-        p_log_threshold => null,
-        p_module_list => C_PIT_APEX_MODULE);
+      set_error(
+        p_page_item => p_page_item,
+        p_message => p_message_name,
+        p_msg_args => p_msg_args,
+        p_region_id => p_region_id);
       pit.leave_optional;
   end assert_is_null;
 
@@ -1200,8 +1277,9 @@ select d.page_items
   procedure assert_not_null(
     p_condition in varchar2,
     p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null)
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
   as
   begin
     pit.enter_optional;
@@ -1209,12 +1287,11 @@ select d.page_items
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NOT_NULL_ERR then
-      pit.log(
-        p_message_name => p_message_name,
-        p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => coalesce(p_arg_list, msg_args(p_affected_id)),
-        p_log_threshold => pit.level_error,
-        p_module_list => C_PIT_APEX_MODULE);
+      set_error(
+        p_page_item => p_page_item,
+        p_message => p_message_name,
+        p_msg_args => p_msg_args,
+        p_region_id => p_region_id);
       pit.leave_optional;
   end assert_not_null;
 
@@ -1222,8 +1299,9 @@ select d.page_items
   procedure assert_not_null(
     p_condition in number,
     p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null)
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
   as
   begin
     pit.enter_optional;
@@ -1231,12 +1309,11 @@ select d.page_items
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NOT_NULL_ERR then
-      pit.log(
-        p_message_name => p_message_name,
-        p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => coalesce(p_arg_list, msg_args(p_affected_id)),
-        p_log_threshold => null,
-        p_module_list => C_PIT_APEX_MODULE);
+      set_error(
+        p_page_item => p_page_item,
+        p_message => p_message_name,
+        p_msg_args => p_msg_args,
+        p_region_id => p_region_id);
       pit.leave_optional;
   end assert_not_null;
 
@@ -1244,8 +1321,9 @@ select d.page_items
   procedure assert_not_null(
     p_condition in date,
     p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null)
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
   as
   begin
     pit.enter_optional;
@@ -1253,12 +1331,11 @@ select d.page_items
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NOT_NULL_ERR then
-      pit.log(
-        p_message_name => p_message_name,
-        p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => coalesce(p_arg_list, msg_args(p_affected_id)),
-        p_log_threshold => null,
-        p_module_list => C_PIT_APEX_MODULE);
+      set_error(
+        p_page_item => p_page_item,
+        p_message => p_message_name,
+        p_msg_args => p_msg_args,
+        p_region_id => p_region_id);
       pit.leave_optional;
   end assert_not_null;
 
@@ -1266,8 +1343,9 @@ select d.page_items
   procedure assert_exists(
     p_stmt in varchar2,
     p_message_name in ora_name_type,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null)
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
   is
   begin
     pit.enter_optional;
@@ -1275,12 +1353,11 @@ select d.page_items
     pit.leave_optional;
   exception
     when msg.ASSERT_EXISTS_ERR then
-      pit.log(
-        p_message_name => p_message_name,
-        p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => p_arg_list,
-        p_log_threshold => null,
-        p_module_list => C_PIT_APEX_MODULE);
+      set_error(
+        p_page_item => p_page_item,
+        p_message => p_message_name,
+        p_msg_args => p_msg_args,
+        p_region_id => p_region_id);
       pit.leave_optional;
   end assert_exists;
 
@@ -1288,8 +1365,9 @@ select d.page_items
   procedure assert_not_exists(
     p_stmt in varchar2,
     p_message_name in ora_name_type,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null)
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
   is
   begin
     pit.enter_optional;
@@ -1297,12 +1375,11 @@ select d.page_items
     pit.leave_optional;
   exception
     when msg.ASSERT_NOT_EXISTS_ERR then
-      pit.log(
-        p_message_name => p_message_name,
-        p_affected_id => get_page_element(p_affected_id),
-        p_arg_list => p_arg_list,
-        p_log_threshold => null,
-        p_module_list => C_PIT_APEX_MODULE);
+      set_error(
+        p_page_item => p_page_item,
+        p_message => p_message_name,
+        p_msg_args => p_msg_args,
+        p_region_id => p_region_id);
       pit.leave_optional;
   end assert_not_exists;
 

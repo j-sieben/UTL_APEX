@@ -42,3 +42,5 @@ prompt &h2.Revoke user rights
 @revoke_grants.sql
 
 prompt &h1.Finished UTL_APEX Installation
+
+exit

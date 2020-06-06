@@ -9,6 +9,7 @@ clear screen
 set termout off
 
 col sys_user new_val SYS_USER format a30
+col apex_user new_val APEX_USER format a30
 col install_user new_val INSTALL_USER format a30
 col remote_user new_val REMOTE_USER format a30
 col default_language new_val DEFAULT_LANGUAGE format a30
@@ -19,6 +20,13 @@ select user sys_user,
   from V$NLS_VALID_VALUES
  where parameter = 'LANGUAGE'
    and value = upper('&2.');
+   
+select username apex_user
+  from all_users
+ where username like 'APEX_______'
+   and oracle_maintained = 'Y'
+ order by username desc
+ fetch first row only;
    
 select owner remote_user
   from dba_tab_privs

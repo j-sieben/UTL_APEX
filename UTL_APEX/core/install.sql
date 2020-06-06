@@ -8,12 +8,17 @@ define msg_dir=&CORE_DIR.messages/&DEFAULT_LANGUAGE./
 prompt
 prompt &section.
 prompt &h2.Messages
-@&MSG_DIR.create_messages.sql
+@&MSG_DIR.MessageGroup_UTL_APEX.sql
 
 prompt
 prompt &section.
 prompt &h2.Templates
 @&SCRIPT_DIR.merge_templates.sql
+
+prompt
+prompt &section.
+prompt &h2.Synonyms
+@&SCRIPT_DIR.create_synonyms.sql
 
 prompt
 prompt &section.
@@ -37,17 +42,17 @@ prompt &s1.View CODE_GEN_APEX_COLLECTION
 @&VIEW_DIR.code_gen_apex_collection.vw
 
 prompt &s1.View UTL_APEX_FETCH_ROW_COLUMNS
-@&VIEW_DIR.utl_apex_fetch_row_columns.vw
+@check_apex_version_gt.sql 5.1 "&VIEW_DIR.utl_apex_fetch_row_columns.vw"
 
 prompt &s1.View UTL_APEX_FORM_REGION_COLUMNS
-@&VIEW_DIR.utl_apex_form_region_columns.vw
+@check_apex_version_gt.sql 19 "&VIEW_DIR.utl_apex_form_region_columns.vw"
 
 prompt &s1.View UTL_APEX_IG_COLUMNS
 @&VIEW_DIR.utl_apex_ig_columns.vw
 
 prompt
 prompt &section.
-prompt &h2.Views
+prompt &h2.Packages
 prompt &s1.Package UTL_APEX
 @&PKG_DIR.utl_apex.pks
 
@@ -72,3 +77,4 @@ prompt &section.
 prompt &h2.Package dependent Scripts
 prompt &s1.Script set_parameter
 @&SCRIPT_DIR.ParameterGroup_UTL_APEX.sql
+

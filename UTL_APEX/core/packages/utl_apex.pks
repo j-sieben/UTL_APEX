@@ -15,6 +15,17 @@ as
   subtype max_char is varchar2(32767 byte);
   subtype max_sql_char is varchar2(4000 byte);
   subtype flag_type is &FLAG_TYPE.;
+  subtype page_value_t is utl_text.clob_tab;
+  subtype string_table is wwv_flow_global.vc_arr2;
+  
+  /** Type to represent a session state item with label and converted session state values */
+  type item_rec is record(
+    item_name ora_name_type,
+    item_label ora_name_type,
+    format_mask ora_name_type,
+    item_value max_char);
+  
+  type item_tab is table of item_rec;
   
   /* Package constants */
   /* APEX Version constants according to DBMS_DB_VERSION */
@@ -50,14 +61,7 @@ as
   CONVENTION_PAGE_PREFIX constant binary_integer := 1;
   CONVENTION_PAGE_ALIAS constant binary_integer := 2;
   CONVENTION_APP_ALIAS constant binary_integer := 3;
-
-  /* Public constant declarations */
-
-  /* Public type declarations  */
-  subtype page_value_t is utl_text.clob_tab;
-  subtype string_table is wwv_flow_global.vc_arr2;
-
-  /* Public variable declarations */
+  
 
   /* Public function and procedure declarations */
   /** Getter methods as wrapper around APEX provided functionality
@@ -126,7 +130,7 @@ as
     return ora_name_type;
     
     
-  /** Method to case a boolean value to a flag type representation
+  /** Method to cast a boolean value to a flag type representation an vice versa
    * @param  p_bool  The boolean value to convert
    * @usage  Is used to cast a boolean value to the flag type you defined when installing UTL_APEX.
    */
@@ -135,33 +139,38 @@ as
     return flag_type;
     
   
+  function get_bool(
+    p_bool in flag_type)
+    return boolean;
+    
+  
   /** Method to cast a page item value to number, based on the actual format mask
-   * @param  p_item  Name of the item of which the acutal value has to be casted
+   * @param  p_page_item  Name of the item of which the acutal value has to be casted
    * @return NUMBER-value or NULL
    * @usage  Is used to cast a page item value to number
    */
   function get_number(
-    p_item in varchar2)
+    p_page_item in varchar2)
     return number;
     
   
   /** Method to cast a page item value to date, based on the actual format mask
-   * @param  p_item  Name of the item of which the acutal value has to be casted
+   * @param  p_page_item  Name of the item of which the acutal value has to be casted
    * @return DATE-value or NULL
    * @usage  Is used to cast a page item value to number
    */
   function get_date(
-    p_item in varchar2)
+    p_page_item in varchar2)
     return date;
     
   
   /** Method to cast a page item value to timestamp, based on the actual format mask
-   * @param  p_item  Name of the item of which the acutal value has to be casted
+   * @param  p_page_item  Name of the item of which the acutal value has to be casted
    * @return TIMESTAMP-value or NULL
    * @usage  Is used to cast a page item value to number
    */
   function get_timestamp(
-    p_item in varchar2)
+    p_page_item in varchar2)
     return timestamp;
   
   
@@ -190,24 +199,34 @@ as
     
     
   /* Method to get/set a sessoion state value
-   * @param  p_item  Name of the page item
+   * @param  p_page_item  Name of the page item
    * @param  p_value Value of the page item
    * @usage  Is used as a wrapper around apex_util.set/get_session_state or v()
    */
   function get_value(
-    p_item in varchar2)
+    p_page_item in varchar2)
     return varchar2;
   
   procedure set_value(
-    p_item in varchar2,
+    p_page_item in varchar2,
     p_value in varchar2);
+    
+    
+  /** Method to set a success message via a PIT message
+   * @param  p_message   Name of the message, one of the MSG.constants
+   * @param [p_msg_args] Optional arguments for the message
+   * @usage  Is used as a wrapper around apex_application.g_success_message
+   */
+  procedure set_success_message(
+    p_message in ora_name_type,
+    p_msg_args in msg_args default null);
     
   
   /** Method to check whether actual user has got an authorization
-   * %param  p_authorization_scheme  Name of the authorization scheme that is requested for a given ressource.
+   * @param  p_authorization_scheme  Name of the authorization scheme that is requested for a given ressource.
    *                                 This name may be taken from the APEX data dictionary
-   * %return C_TRUE if user is authorized, C_FALSE otherwise
-   * %usage  Is called to check whether the actual user has got an authorization
+   * @return C_TRUE if user is authorized, C_FALSE otherwise
+   * @usage  Is called to check whether the actual user has got an authorization
    *         for a requested ressource. Wrapper around APEX_AUTHORIZATION
    */
   function user_is_authorized(
@@ -217,9 +236,9 @@ as
 
   /** Method to check whether actual user has an apex user group assigned.
    * flag_type instead of boolean
-   * %param  p_group_name  Name of the apex user group to check
-   * %return C_TRUE if user has group assigned, C_FALSE otherwise
-   * %usage  Is called to check whether the actual user has got an apex user group assinged.
+   * @param  p_group_name  Name of the apex user group to check
+   * @return C_TRUE if user has group assigned, C_FALSE otherwise
+   * @usage  Is called to check whether the actual user has got an apex user group assinged.
    *         for a requested ressource. 
    *         Wrapper around APEX_UTIL.CURRENT_USER_IN_GROUP that returns FLAG_TYPE instead of Boolean
    */
@@ -232,7 +251,7 @@ as
    * @param [p_static_id]  Required, if an interactive grid or a form region has to be processed.
    *                       As there are potentially more than one IG or form region per page, it is required to distinguish them 
    *                       using the static id property of the regions. Normal form pages may have set this attribute or not.
-   * %param [p_format]     Optional formatting. Allowed values are all FORMAT_... constants of this package.
+   * @param [p_format]     Optional formatting. Allowed values are all FORMAT_... constants of this package.
    *                       If set, all session state values are escaped using the respective method from APEX_ESCAPE
    * @return Instance of PAGE_VALUE_T.<br>Key of that type is the page item name WITHOUT the page prefix (Pn_), or, if present,
    *         the name of the column the item gets its value from. This is especially true for FORM regions (Apex 19 and later).
@@ -278,7 +297,7 @@ as
    * @param [p_static_id]  Required, if an interactive grid or a form region has to be processed.
    *                       As there are potentially more than one IG or form region per page, it is required to distinguish them 
    *                       using the static id property of the regions. Normal form pages may have set this attribute or not.
-   * %param [p_table_name] Is required if a form region has an inline SQL query or a interactive grid is used, as in these
+   * @param [p_table_name] Is required if a form region has an inline SQL query or a interactive grid is used, as in these
    *                       cases no information on the table used is available. If set, it is used as a fallback information
    *                       in case no better information is available (such as from a fetch row process or a form region)
    * @return PL/SQL block that can be executed immediate to return a record instance filled with the page values in a type save
@@ -326,9 +345,10 @@ as
 
 
   /** Method to register validation error messages.
-   * @param  p_page_item  Seitenelement, das durch die Validierung betroffen ist
-   * @param  p_message    Meldungstext bzw. Referenz auf eine MSG_LOG-Meldung
-   * @param [p_msg_args]  Optionale Meldungsparameter
+   * @param  p_page_item  page item or column that is affected by the validation
+   * @param  p_message    Name of a PIT message name
+   * @param [p_msg_args]  Optional message arguments
+   * @param [p_region_id] Optional static region id, required to create validations for interactive grids
    * @usage  This method is called during validation checks to pass an error message to the UI. It will pass the message if
    *         it is not null and do nothing otherwise. This way, it can be called anyway without prior check whether an error
    *         has occurred. This is useful when <code>P_MESSAGE</code> is provided via a method that throws an error message 
@@ -337,13 +357,16 @@ as
   procedure set_error(
     p_page_item in ora_name_type,
     p_message in ora_name_type,
-    p_msg_args in msg_args default null);
+    p_msg_args in msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   /** Method to register validation error messages.
-   * @param  p_page_item  Seitenelement, das durch die Validierung betroffen ist
-   * @param  p_message    Meldungstext bzw. Referenz auf eine MSG_LOG-Meldung
-   * @param [p_msg_args]  Optionale Meldungsparameter
+   * @param  p_test       Test expression
+   * @param  p_page_item  page item or column that is affected by the validation
+   * @param  p_message    Name of a PIT message name
+   * @param [p_msg_args]  Optional message arguments
+   * @param [p_region_id] Optional static region id, required to create validations for interactive grids
    * @usage  This method is called during validation checks to pass an error message to the UI. It will pass the message if
    *         <code>P_TEST</code> evaluates to <code>FALSE</code> and do nothing otherwise.<br>The message has to be a PIT 
    *         message name with an optional attribute set.
@@ -352,7 +375,8 @@ as
     p_test in boolean,
     p_page_item in ora_name_type,
     p_message in ora_name_type,
-    p_msg_args in msg_args default null);
+    p_msg_args in msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   /** Methods to analyse the requested operation during a page submit
@@ -440,9 +464,11 @@ as
   /* ASSERTIONS-Wrapper */
   /** Methods call <code>PIT.ASSERT...</code> catch them and pass them to the APEX UI by adding them to the APEX error stack
    * @param  p_condition     Test to execute
-   * @param  p_message_name  PIT message name to throw if <code>P_CONDITION</code> evaluates to <code>FLASE</code>
-   * @param [p_affected_id]  Page item to bind the error message to. If NULL, the error message is shown without page item relation
-   * @param [p_arg_list]     Optional message arguments
+   * @param  p_message_name  PIT message name to throw if <code>P_CONDITION</code> evaluates to <code>FALSE</code>
+   * @param [p_page_item]    Page item( with or without page prefix or IG column name to bind the error message to.
+   *                         If NULL, the error message is shown without page item relation
+   * @param [p_msg_args]     Optional message arguments. If null, the item label is passed
+   * @param [p_region_id]    Optional static region id, required to create validations for interactive grids
    * @usage  These methods are used as a convenience wrapper around <code>PIT.ASSERT...</code> by eliminating repetitive code
    *         to encorporate the error message into the APEX error stack and assign it to a page item.
    *         Further documentation @see PIT
@@ -450,64 +476,73 @@ as
   procedure assert(
     p_condition in boolean,
     p_message_name in ora_name_type,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null);
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   procedure assert_is_null(
     p_condition in varchar2,
     p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null);
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   procedure assert_is_null(
     p_condition in number,
     p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null);
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   procedure assert_is_null(
     p_condition in date,
     p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null);
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   procedure assert_not_null(
     p_condition in varchar2,
     p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null);
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   procedure assert_not_null(
     p_condition in number,
     p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null);
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   procedure assert_not_null(
     p_condition in date,
     p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null);
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   procedure assert_exists(
     p_stmt in varchar2,
     p_message_name in ora_name_type,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null);
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
 
 
   procedure assert_not_exists(
     p_stmt in varchar2,
     p_message_name in ora_name_type,
-    p_affected_id in ora_name_type default null,
-    p_arg_list msg_args default null);
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
 
 end utl_apex;
 /

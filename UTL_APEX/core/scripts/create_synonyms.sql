@@ -1,0 +1,1 @@
+create synonym wwv_flow_error for &APEX_USER..wwv_flow_error;

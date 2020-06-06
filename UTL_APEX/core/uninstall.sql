@@ -15,7 +15,7 @@ declare
                  'UTL_APEX', 'UTL_APEX_DDL',  -- Packages
                  'CODE_GEN_APEX_COLLECTION', 'UTL_APEX_FETCH_ROW_COLUMNS', 'UTL_APEX_FORM_REGION_COLUMNS', 'UTL_APEX_IG_COLUMNS', 'UTL_APEX_PAGE_ITEMS', -- Views
                  '',  -- Tabellen
-                 '',  -- Synonyme
+                 'WWV_FLOW_ERROR',  -- Synonyme
                  '' -- Sequenzen
                  )
              and object_type not like '%BODY'

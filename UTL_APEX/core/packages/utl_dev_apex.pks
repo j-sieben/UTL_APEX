@@ -6,6 +6,18 @@ as
   */
   
   
+  /** Helper to create an APEX session for testing purposes
+   * @param  p_app_id       ID of the application
+   * @param  p_app_page_id  ID of the page, required to control automatic session state value takeover
+   * @param  p_app_user     ID of the user the session is attached to, controls access rights
+   * @usage  Is used to create an APEX session from PL/SQL. Useful for automated testing of UOI packages.
+   */
+  procedure create_session(
+    p_app_id in apex_applications.application_id%type,
+    p_app_page_id in apex_application_pages.page_id%type default 1,
+    p_app_user in apex_workspace_activity_log.apex_user%type);
+  
+  
   /** Helper to create a basic table api
    * @param  p_owner            Owner of the table or view the API aims at
    * @param  p_table_name       Name of the table or view the API aims at
