@@ -13,7 +13,7 @@ declare
            where object_name in (
                  'UTL_DEV_APEX_COL_T', 'UTL_DEV_APEX_COL_TAB', 'UTL_APEX_PAGE_ITEM', 'UTL_APEX_PAGE_ITEM_T', -- Types
                  'UTL_APEX', 'UTL_APEX_DDL',  -- Packages
-                 'CODE_GEN_APEX_COLLECTION', 'UTL_APEX_FETCH_ROW_COLUMNS', 'UTL_APEX_FORM_REGION_COLUMNS', 'UTL_APEX_IG_COLUMNS', 'UTL_APEX_PAGE_ITEMS', -- Views
+                 'UTL_DEV_APEX_COLLECTION', 'UTL_DEV_APEX_FORM_COLLECTION', 'UTL_APEX_FETCH_ROW_COLUMNS', 'UTL_APEX_FORM_REGION_COLUMNS', 'UTL_APEX_IG_COLUMNS', 'UTL_APEX_PAGE_ITEMS', -- Views
                  '',  -- Tabellen
                  'WWV_FLOW_ERROR',  -- Synonyme
                  '' -- Sequenzen

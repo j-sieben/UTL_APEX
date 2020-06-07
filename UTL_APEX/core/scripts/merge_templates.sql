@@ -180,7 +180,7 @@ q'°°',
     p_uttm_name => 'PACKAGE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
-    p_uttm_text => q'°create or replace package #PAGE_ALIAS#_ui_pkg\CR\°' || 
+    p_uttm_text => q'°create or replace package #PAGE_ALIAS#_ui\CR\°' || 
 q'°  authid definer\CR\°' || 
 q'°as\CR\°' || 
 q'°\CR\°' || 
@@ -189,18 +189,15 @@ q'°    return boolean;\CR\°' ||
 q'°    \CR\°' || 
 q'°  procedure process_#PAGE_ALIAS#;\CR\°' || 
 q'°\CR\°' || 
-q'°end #PAGE_ALIAS#_ui_pkg;\CR\°' || 
+q'°end #PAGE_ALIAS#_ui;\CR\°' || 
 q'°/\CR\°' || 
 q'°\CR\°' || 
-q'°create or replace package body emp_ui_pkg\CR\°' || 
+q'°create or replace package body #PAGE_ALIAS#_ui\CR\°' || 
 q'°as\CR\°' || 
 q'°\CR\°' || 
-q'°  c_pkg constant varchar2(30 byte) := $$PLSQL_UNIT;\CR\°' || 
-q'°  c_yes constant varchar2(3 byte) := 'YES';\CR\°' || 
-q'°  c_no constant varchar2(3 byte) := 'NO';\CR\°' || 
 q'°  \CR\°' || 
 q'°  g_page_values utl_apex.page_value_t;\CR\°' || 
-q'°  g_#PAGE_ALIAS#_row app_ui_emp_main%rowtype;\CR\°' || 
+q'°  g_#PAGE_ALIAS#_row #VIEW_NAME#%rowtype;\CR\°' || 
 q'°  \CR\°' || 
 q'°  procedure copy_#PAGE_ALIAS#\CR\°' || 
 q'°  as\CR\°' || 
@@ -210,20 +207,26 @@ q'°    #COPY_LIST#;\CR\°' ||
 q'°  end copy_#PAGE_ALIAS#;\CR\°' || 
 q'°  \CR\°' || 
 q'°  \CR\°' || 
-q'°  function validate_emp\CR\°' || 
+q'°  function validate_#PAGE_ALIAS#\CR\°' || 
 q'°    return boolean\CR\°' || 
 q'°  as\CR\°' || 
 q'°  begin\CR\°' || 
+q'°    pit.enter_mandatory;\CR\°' || 
+q'°\CR\°' || 
 q'°    -- copy_#PAGE_ALIAS#;\CR\°' || 
 q'°    -- TODO: validation logic goes here. If it exists, uncomment COPY function\CR\°' || 
+q'°\CR\°' || 
+q'°    pit.leave_mandatory;\CR\°' || 
 q'°    return true;\CR\°' || 
-q'°  end validate_emp;\CR\°' || 
+q'°  end validate_#PAGE_ALIAS#;\CR\°' || 
 q'°  \CR\°' || 
 q'°    \CR\°' || 
-q'°  procedure process_emp\CR\°' || 
+q'°  procedure process_#PAGE_ALIAS#\CR\°' || 
 q'°  as\CR\°' || 
 q'°    c_collection_name constant varchar2(30 byte) := '#COLLECTION_NAME#';\CR\°' || 
 q'°  begin\CR\°' || 
+q'°    pit.enter_mandatory;\CR\°' || 
+q'°\CR\°' || 
 q'°    copy_#PAGE_ALIAS#;  \CR\°' || 
 q'°    case\CR\°' || 
 q'°    when utl_apex.INSERTING then\CR\°' || 
@@ -233,19 +236,22 @@ q'°        #PARAM_LIST#,\CR\°' ||
 q'°        p_generate_md5 => c_no);\CR\°' || 
 q'°    when utl_apex.UPDATING then\CR\°' || 
 q'°      apex_collection.update_member(\CR\°' || 
-q'°        p_seq => g_emp_row.seq_id,\CR\°' || 
+q'°        p_seq => g_#PAGE_ALIAS#_row.seq_id,\CR\°' || 
 q'°        p_collection_name => c_collection_name,\CR\°' || 
 q'°        #PARAM_LIST#);\CR\°' || 
 q'°    when utl_apex.DELETING then\CR\°' || 
 q'°      apex_collection.delete_member(\CR\°' || 
-q'°        p_seq => g_emp_row.seq_id,\CR\°' || 
+q'°        p_seq => g_#PAGE_ALIAS#_row.seq_id,\CR\°' || 
 q'°        p_collection_name => c_collection_name);\CR\°' || 
 q'°    else\CR\°' || 
 q'°      null;\CR\°' || 
 q'°    end case;\CR\°' || 
-q'°  end process_emp;\CR\°' || 
 q'°\CR\°' || 
-q'°end;/°',
+q'°    pit.leave_mandatory;\CR\°' || 
+q'°  end process_#PAGE_ALIAS#;\CR\°' || 
+q'°\CR\°' || 
+q'°end #PAGE_ALIAS#_ui;\CR\°' || 
+q'°/°',
     p_uttm_log_text => q'°°',
     p_uttm_log_severity => 70
   );

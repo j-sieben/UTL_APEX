@@ -1,4 +1,4 @@
-create or replace view code_gen_apex_collection as
+create or replace view utl_dev_apex_collection as
   with columns as(
        select api.application_id, api.page_id, apa.page_alias, table_name, 
               column_id, column_name, acm.collection_data_type data_type,
@@ -63,4 +63,4 @@ select application_id, page_id, page_alias, table_name, column_id, collection_na
  where to_number(substr(collection_name, -3)) <= 50
  order by column_id;
 
-comment on table code_gen_apex_collection is 'View to prepare a list of columns for APEX collection API';
+comment on table utl_dev_apex_collection is 'View to prepare a list of columns for APEX collection API';

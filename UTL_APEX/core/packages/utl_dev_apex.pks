@@ -77,6 +77,8 @@ as
    *  taken from the base table or view
    * @param  p_source_table  Name of the table the data finally is stored at
    * @param  p_page_view     Name of the UI-View that shows data from the collection
+   * @param [p_static_id]      Required if a form region is used. If NOT NULL, only form regions work, otherwise legacy 
+   *                           forms are perceived.
    * @return DDL statement to create a view based on a collection
    * @usage  This method assumes that the following conditions are met:
    *         - it is called on an existing table or view.
@@ -89,7 +91,8 @@ as
    */
   function get_collection_view(
     p_source_table in utl_apex.ora_name_type,
-    p_page_view in utl_apex.ora_name_type)
+    p_page_view in utl_apex.ora_name_type,
+    p_static_id in varchar2 default null)
     return clob;
   
   
@@ -97,6 +100,8 @@ as
    *  an editor for a report based on a collection
    * @param  p_application_id  Anwendungs-ID
    * @param  p_page_id         Anwendungsseiten-ID
+   * @param [p_static_id]      Required if a form region is used. If NOT NULL, only form regions work, otherwise legacy 
+   *                           forms are perceived.
    * @return Code that creates a package with all necessary methods to maintain
    *         a row of the collection
    * @usage  This method assumes that the following conditions are met:
@@ -110,7 +115,8 @@ as
    */
   function get_collection_methods(
     p_application_id in binary_integer,
-    p_page_id in binary_integer)
+    p_page_id in binary_integer,
+    p_static_id in varchar2 default null)
     return clob;
   
   

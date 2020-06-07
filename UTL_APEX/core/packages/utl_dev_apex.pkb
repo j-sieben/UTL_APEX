@@ -1,7 +1,6 @@
 create or replace package body utl_dev_apex
 as
 
-  C_PKG constant utl_apex.ora_name_type := $$PLSQL_UNIT;
   C_APEX_TMPL_TYPE constant utl_apex.ora_name_type := 'APEX_COLLECTION';
   C_DEFAULT constant utl_apex.ora_name_type := 'DEFAULT';
   C_CR constant varchar2(2) := chr(10);
@@ -9,16 +8,7 @@ as
   -- Constants for supported APEX form types
   C_PAGE_FORM constant utl_apex.ora_name_type := 'FORM';
   C_FORM_REGION constant utl_apex.ora_name_type := 'NATIVE_FORM';
-  C_IG_REGION constant utl_apex.ora_name_type := 'NATIVE_IG';
-  
-  -- Templates used for GET_PAGES etc.
-  C_TEMPLATE_TYPE constant utl_apex.ora_name_type := 'APEX_FORM';
-  C_TEMPLATE_NAME_FRAME constant utl_apex.ora_name_type := 'FORM_FRAME';
-  C_TEMPLATE_NAME_COLUMNS constant utl_apex.ora_name_type := 'FORM_COLUMN';
-  
-  C_TEMPLATE_MODE_DYNAMIC constant utl_apex.ora_name_type := 'DYNAMIC';
-  C_TEMPLATE_MODE_STATIC constant utl_apex.ora_name_type := 'STATIC';
-  
+  C_IG_REGION constant utl_apex.ora_name_type := 'NATIVE_IG';  
   
   procedure create_session(
     p_app_id in apex_applications.application_id%type,
@@ -114,7 +104,13 @@ as
   
   
   /** Method to create a script to get the values of the page items.
-   * @return script that contains a PL/SQL block to be either directly executed, returning a record, or a script that may
+   * @param  p_uttm_mode      Template mode. Either DYNAMIC or STATIC
+   * @param  p_static_id      Static ID of the form or editable grid
+   * @param  p_application_id  ID of the application
+   * @param  p_page_id         Numeric ID of the page
+   * @param [p_table_name]     Name of the underlying table. Only required if legacy forms are used     
+   * @param [p_record_name]    Name of the record to return. Only
+   * @return Script that contains a PL/SQL block to be either directly executed, returning a record, or a script that may
    *         be inserted into a package as a code generator, based on P_UTTM_MODE
    * @usage  Is used to create a script for all page items based on the type of the input form and the usage.
    *         It is called with different P_UTTM_MODE parameters to cater for copying data to a PL/SQL table or a record
@@ -133,6 +129,10 @@ as
   as
     l_script clob;
     l_view_name utl_apex.ora_name_type;
+    -- Templates used for GET_PAGES etc.
+    C_TEMPLATE_TYPE constant utl_apex.ora_name_type := 'APEX_FORM';
+    C_TEMPLATE_NAME_FRAME constant utl_apex.ora_name_type := 'FORM_FRAME';
+    C_TEMPLATE_NAME_COLUMNS constant utl_apex.ora_name_type := 'FORM_COLUMN';
   begin
     pit.enter_detailed(
       p_params => msg_params(
@@ -201,11 +201,12 @@ as
     l_clob clob;
     l_column_list utl_dev_apex_col_tab;
   begin
-    pit.enter_mandatory(C_PKG, 'get_table_api', msg_params(
-      msg_param('p_table_name', p_table_name),
-      msg_param('p_short_name', p_short_name),
-      msg_param('p_owner', p_owner),
-      msg_param('p_pk_insert', p_pk_insert)));
+    pit.enter_mandatory(
+      p_params => msg_params(
+                    msg_param('p_table_name', p_table_name),
+                    msg_param('p_short_name', p_short_name),
+                    msg_param('p_owner', p_owner),
+                    msg_param('p_pk_insert', p_pk_insert)));
       
     -- check input parameters
     pit.assert_not_null(p_table_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_TABLE_NAME'));
@@ -369,10 +370,10 @@ as
   as 
     l_view_name utl_apex.ora_name_type;
     l_column_list utl_apex.max_char;
-    l_mode utl_text_templates.uttm_mode%type := C_DEFAULT;
+    l_mode utl_text_templates.uttm_mode%type;
     l_code clob;
   begin
-    pit.enter_mandatory(C_PKG, 'get_form_methods', 
+    pit.enter_mandatory(
       p_params => msg_params(
                     msg_param('p_application_id', to_char(p_application_id)),
                     msg_param('p_page_id', to_char(p_page_id)),
@@ -390,6 +391,8 @@ as
     -- Analyze whether one methode for insert and update are requested
     if p_insert_method = p_update_method then
       l_mode := 'MERGE';
+    else
+      l_mode := C_DEFAULT;
     end if;
     l_view_name := get_view_name(p_static_id, p_application_id, p_page_id);
     
@@ -430,7 +433,8 @@ as
           select t.ddl_template template, 
                  p.page_alias page_alias_upper, lower(p.page_alias) page_alias,
                  substr(p.item_name, instr(p.item_name, '_', 1) + 1) item_name,
-                 p.column_name column_name_upper, lower(p.column_name) column_name, p.format_mask
+                 p.column_name column_name_upper, lower(p.column_name) column_name, 
+                 p.format_mask
             from page_elements p
             join template_list t
               on p.data_type = t.data_type), chr(10) || '    '
@@ -443,25 +447,28 @@ as
       -- static id means that a form region or interactive grid is referenced
       $IF utl_apex.VER_LE_05 $THEN
       select utl_text.generate_text(cursor(
-             select t.uttm_text template, l_column_list column_list,
-                    lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
-                    lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
-                    lower(p_insert_method) insert_method,
-                    lower(p_update_method) update_method,
-                    lower(p_delete_method) delete_method
-               from apex_application_pages app
-               join apex_application_page_proc apo
-                 on app.application_id = apo.application_id
-                and app.page_id = apo.page_id
-              cross join utl_text_templates t
-              where app.application_id = p_application_id
-                and app.page_id = p_page_id
-                and apo.process_type_code = 'DML_FETCH_ROW'
-                and t.uttm_name = 'METHODS'
-                and t.uttm_type = 'APEX_FORM'
-                and t.uttm_mode = l_mode))
-      into l_code
-      from dual;
+               select t.uttm_text template, l_column_list column_list,
+                      lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
+                      lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
+                      lower(p_insert_method) insert_method,
+                      lower(p_update_method) update_method,
+                      lower(p_delete_method) delete_method,
+                      lower(p_static_id) static_id
+                 from apex_application_pages app
+                 join apex_application_page_proc apo
+                   on app.application_id = apo.application_id
+                  and app.page_id = apo.page_id
+                cross join utl_text_templates t
+                where app.application_id = p_application_id
+                  and app.page_id = p_page_id
+                  and apo.process_type_code = 'DML_FETCH_ROW'
+                  and t.uttm_name = 'METHODS'
+                  and t.uttm_type = 'APEX_FORM'
+                  and t.uttm_mode = l_mode
+               )
+             )
+        into l_code
+        from dual;
       $ELSIF utl_apex.VER_LE_18 $THEN
       select utl_text.generate_text(cursor(
              select t.uttm_text template, l_column_list column_list,
@@ -469,7 +476,8 @@ as
                     lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
                     lower(p_insert_method) insert_method,
                     lower(p_update_method) update_method,
-                    lower(p_delete_method) delete_method
+                    lower(p_delete_method) delete_method,
+                    lower(p_static_id) static_id
                from apex_application_pages app
                join apex_application_page_proc apo
                  on app.application_id = apo.application_id
@@ -488,10 +496,10 @@ as
              select t.uttm_text template, l_column_list column_list,
                     lower(apr.table_name) view_name, upper(apr.table_name) view_name_upper,
                     lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
-                    p_static_id static_id,
                     lower(p_insert_method) insert_method,
                     lower(p_update_method) update_method,
-                    lower(p_delete_method) delete_method
+                    lower(p_delete_method) delete_method,
+                    p_static_id static_id
                from apex_application_pages app
                join apex_application_page_regions apr
                  on app.application_id = apr.application_id
@@ -536,18 +544,40 @@ as
   
   function get_collection_view(
     p_source_table in utl_apex.ora_name_type,
-    p_page_view in utl_apex.ora_name_type)
+    p_page_view in utl_apex.ora_name_type,
+    p_static_id in varchar2 default null)
     return clob
   as
     C_OBJECT_EXISTS constant varchar2(1000) := q'^select 1
   from user_objects
  where object_name = upper('#OBJECT_NAME#')
    and object_type in ('VIEW', 'TABLE')^';
-    l_code clob;
+    C_VIEW_STMT constant utl_apex.max_char := q'^with tmpl_list as(
+       select uttm_name, uttm_text template
+         from utl_text_templates
+        where uttm_type = '#APEX_TMPL_TYPE#'
+          and uttm_mode = '#DEFAULT#')
+select utl_text.generate_text(cursor(
+         select template, '#VIEW_NAME#' view_name, 
+                utl_text.generate_text(cursor(
+                  select t.template, collection_name, lower(column_name) column_name, lower(column_from_collection) column_from_collection
+                    from #ITEM_VIEW_NAME# c
+                   cross join tmpl_list t
+                   where t.uttm_name = 'COLUMN_LIST'
+                     and c.table_name = '#VIEW_NAME#'), ',' || chr(10) || '       ') column_list
+           from tmpl_list
+          where uttm_name = 'VIEW'))
+  from dual^';
+    l_stmt utl_apex.max_char;
+    l_code clob;       
+    l_cur sys_refcursor;
+    l_item_view_name utl_apex.ora_name_type;
+    C_LEGACY_FORM_REGION boolean;
   begin
-    pit.enter_mandatory(C_PKG, 'get_collection_view', msg_params(
-      msg_param('p_source_table', p_source_table),
-      msg_param('p_page_view', p_page_view)));
+    pit.enter_mandatory(
+      p_params => msg_params(
+                    msg_param('p_source_table', p_source_table),
+                    msg_param('p_page_view', p_page_view)));
       
     -- check input parameters
     pit.assert_not_null(p_source_table, msg.UTL_PARAMETER_REQUIRED, msg_args('P_SOURCE_TABLE'));
@@ -557,24 +587,27 @@ as
       p_message_name => msg.UTL_OBJECT_DOES_NOT_EXIST,
       p_arg_list => msg_args('View/table', p_source_table));
       
+    -- initialize
+    C_LEGACY_FORM_REGION := p_static_id is null;
+    
+    if C_LEGACY_FORM_REGION then
+      l_item_view_name := 'UTL_DEV_APEX_COLLECTION';
+    else
+      l_item_view_name := 'UTL_DEV_APEX_FORM_COLLECTION';
+    end if;
+    
     -- generate DDL for view
-      with tmpl_list as(
-           select uttm_name, uttm_text
-             from utl_text_templates
-            where uttm_type = C_APEX_TMPL_TYPE
-              and uttm_mode = C_DEFAULT)
-    select utl_text.generate_text(cursor(
-             select uttm_text, p_page_view view_name, 
-                    utl_text.generate_text(cursor(
-                      select t.uttm_text, collection_name, column_name, column_from_collection
-                        from code_gen_apex_collection c
-                       cross join tmpl_list t
-                       where t.uttm_name = 'COLUMN_LIST'
-                         and c.table_name = p_source_table), ',' || C_CR || '       ') column_list
-               from tmpl_list
-              where uttm_name = 'VIEW'))
-      into l_code
-      from dual;
+    l_stmt := utl_text.bulk_replace(C_VIEW_STMT, char_table(
+                     'ITEM_VIEW_NAME', l_item_view_name,
+                     'STATIC_ID', p_static_id,
+                     'VIEW_NAME', p_page_view,
+                     'DEFAULT', C_DEFAULT,
+                     'APEX_TMPL_TYPE', C_APEX_TMPL_TYPE));
+    open l_cur for l_stmt;
+    
+    fetch l_cur into l_code;
+    
+    close l_cur;
     
     pit.leave_mandatory;
     return l_code;
@@ -583,84 +616,127 @@ as
   
   function get_collection_methods(
     p_application_id in binary_integer,
-    p_page_id in binary_integer)
+    p_page_id in binary_integer,
+    p_static_id in varchar2 default null)
     return clob
   as
-    C_HAS_ALIAS_STMT constant varchar2(1000) := q'^select 1
+    C_HAS_ALIAS_STMT constant varchar2(1000) := q'^select null
   from apex_application_pages
  where application_id = #APPLICATION_ID#
    and page_id = #PAGE_ID#
    and page_alias is not null^';
-    C_HAS_FETCH_ROW_PROCESS constant varchar2(1000) := q'^select 1
+    C_HAS_FETCH_ROW_PROCESS constant varchar2(1000) := q'^select null
   from apex_application_page_proc
  where application_id = #APPLICATION_ID#
    and page_id = #PAGE_ID#
    and process_type_code = 'DML_FETCH_ROW'^';
-   
+    l_stmt utl_apex.max_char;
     l_code clob;
+    l_view_name utl_apex.ora_name_type;
+    l_collection_name utl_apex.ora_name_type;
+    
+    C_LEGACY_FORM_REGION boolean;
+    C_PACKAGE_STMT constant utl_apex.max_char := q'^with tmpl_list as(
+       select uttm_name, uttm_text template
+         from utl_text_templates
+        where uttm_type = '#APEX_TMPL_TYPE#'
+          and uttm_mode = '#DEFAULT#'),
+       columns as(
+         select *
+           from #VIEW_NAME#
+          where application_id = #APPLICATION_ID#
+            and page_id = #PAGE_ID#)
+select /*+ no_merg(c) */ utl_text.generate_text(cursor(
+         select t.template, '#PAGE_VIEW_NAME#' view_name, '#PAGE_VIEW_NAME#' collection_name, lower(apa.page_alias) page_alias, 
+                utl_text.generate_text(cursor(
+                  select t.template, lower(c.collection_name) collection_name, c.column_to_collection, c.page_alias, lower(c.column_name) column_name
+                    from columns c
+                   cross join tmpl_list t
+                   where t.uttm_name = 'PARAMETER_LIST'), ',' || chr(10) || '        ') param_list,
+                utl_text.generate_text(cursor(
+                  select t.template, lower(c.collection_name) collection_name, c.column_to_collection, c.page_alias, 
+                         lower(column_name) column_name, convert_from_item, number_format, date_format, timestamp_format
+                    from columns c
+                   cross join tmpl_list t
+                   where t.uttm_name = 'COPY_LIST'), ';' || chr(10) || '    ') copy_list
+           from tmpl_list t
+          where uttm_name = 'PACKAGE')) trigger_stmt
+  from apex_application_pages apa
+ where apa.application_id = #APPLICATION_ID#
+   and apa.page_id = #PAGE_ID#^';
+       
+    l_cur sys_refcursor;
+    l_item_view_name utl_apex.ora_name_type;
   begin
-    pit.enter_mandatory(p_params => msg_params(
-      msg_param('p_application_id', to_char(p_application_id)),
-      msg_param('p_page_id', to_char(p_page_id))));
+    pit.enter_mandatory(
+      p_params => msg_params(
+                    msg_param('p_application_id', to_char(p_application_id)),
+                    msg_param('p_page_id', to_char(p_page_id))));
       
+    C_LEGACY_FORM_REGION := p_static_id is null;
+    
     -- check input parameters
     -- NOT NULL
     pit.assert_not_null(p_application_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_APPLICATION_ID'));
     pit.assert_not_null(p_page_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_ID'));
+    
     -- APEX page has PAGE ALIAS
+    l_stmt := utl_text.bulk_replace(C_HAS_ALIAS_STMT, char_table(
+                  'APPLICATION_ID', p_application_id,
+                  'PAGE_ID', p_page_id));
     pit.assert_exists(
-      p_stmt => utl_text.bulk_replace(C_HAS_ALIAS_STMT, char_table(
-                  '#APPLICATION_ID#', to_clob(p_application_id),
-                  '#PAGE_ID#', to_clob(p_page_id))),
+      p_stmt => l_stmt,
       p_message_name => msg.UTL_PAGE_ALIAS_REQUIRED,
       p_arg_list => msg_args(to_char(p_page_id)));
-    -- APEX page has FETCH ROW process
-    pit.assert_exists(
-      p_stmt => utl_text.bulk_replace(C_HAS_FETCH_ROW_PROCESS, char_table(
-                  '#APPLICATION_ID#', to_clob(p_application_id),
-                  '#PAGE_ID#', to_clob(p_page_id))),
-      p_message_name => msg.UTL_FETCH_ROW_REQUIRED);
+      
+    if C_LEGACY_FORM_REGION then
+      -- APEX page has FETCH ROW process
+      l_stmt := utl_text.bulk_replace(C_HAS_FETCH_ROW_PROCESS, char_table(
+                    'APPLICATION_ID', p_application_id,
+                    'PAGE_ID', p_page_id));
+      pit.assert_exists(
+        p_stmt => l_stmt,
+        p_message_name => msg.UTL_FETCH_ROW_REQUIRED);
+        
+      l_item_view_name := 'UTL_DEV_APEX_COLLECTION';
+      select attribute_02, attribute_02
+        into l_view_name, l_collection_name
+        from apex_application_page_proc
+       where application_id = p_application_id
+         and page_id = p_page_id
+         and process_type_code = 'DML_FETCH_ROW';      
+    else
+      -- Native Form region used
+      l_item_view_name := 'UTL_DEV_APEX_FORM_COLLECTION';
+      select table_name, table_name
+        into l_view_name, l_collection_name
+        from apex_application_page_regions
+       where application_id = p_application_id
+         and page_id = p_page_id
+         and source_type_code in ('NATIVE_FORM');
+    end if;
     
     -- generate package code
-      with tmpl_list as(
-           select uttm_name, uttm_text
-             from utl_text_templates
-            where uttm_type = C_APEX_TMPL_TYPE
-              and uttm_mode = C_DEFAULT)
-    select utl_text.generate_text(cursor(
-             select t.uttm_text, app.attribute_02 view_name, app.attribute_02 collection_name, apa.page_alias, 
-                    utl_text.generate_text(cursor(
-                      select t.uttm_text, c.collection_name, c.column_to_collection, c.page_alias, c.column_name
-                        from code_gen_apex_collection c
-                       cross join tmpl_list t
-                       where t.uttm_name = 'PARAMETER_LIST'
-                         and c.application_id = apa.application_id
-                         and c.page_id = apa.page_id), ',' || C_CR || '        ') param_list,
-                    utl_text.generate_text(cursor(
-                      select t.uttm_text, c.collection_name, c.column_to_collection, c.page_alias, 
-                             column_name, convert_from_item, number_format, date_format, timestamp_format
-                        from code_gen_apex_collection c
-                       cross join tmpl_list t
-                       where t.uttm_name = 'COPY_LIST'
-                         and c.application_id = apa.application_id
-                         and c.page_id = apa.page_id), ';' || C_CR || '    ') copy_list
-               from tmpl_list t
-              where uttm_name = 'PACKAGE')) trigger_stmt
-      into l_code
-      from apex_application_pages apa
-      join apex_application_page_proc app
-        on apa.application_id = app.application_id
-       and apa.page_id = app.page_id
-     where apa.application_id = p_application_id
-       and apa.page_id = p_page_id
-       and app.process_type_code = 'DML_FETCH_ROW';
-       
+    l_stmt := utl_text.bulk_replace(C_PACKAGE_STMT, char_table(
+                     'VIEW_NAME', l_item_view_name,
+                     'APPLICATION_ID', p_application_id,
+                     'PAGE_ID', p_page_id,
+                     'STATIC_ID', p_static_id,
+                     'DEFAULT', C_DEFAULT,
+                     'APEX_TMPL_TYPE', C_APEX_TMPL_TYPE,
+                     'PAGE_VIEW_NAME', lower(l_view_name)));
+    open l_cur for l_stmt;
+    
+    fetch l_cur into l_code;
+    
+    close l_cur;
     pit.leave_mandatory;
     return l_code;
   exception
-    when others then 
-      pit.stop;
-      raise; -- avoid compiler warning
+    when others then
+      dbms_output.put_line(l_stmt);
+      pit.sql_exception;
+      raise;
   end get_collection_methods;
   
   
@@ -674,6 +750,9 @@ as
   as
     l_cursor sys_refcursor;
     l_script utl_apex.max_char;
+  
+    C_TEMPLATE_MODE_DYNAMIC constant utl_apex.ora_name_type := 'DYNAMIC';
+    C_TEMPLATE_MODE_STATIC constant utl_apex.ora_name_type := 'STATIC';
   begin
     pit.enter_optional(
       p_params => msg_params(

@@ -38,8 +38,6 @@ prompt &s1.Type UTL_APEX_PAGE_ITEM_T
 prompt
 prompt &section.
 prompt &h2.Views
-prompt &s1.View CODE_GEN_APEX_COLLECTION
-@&VIEW_DIR.code_gen_apex_collection.vw
 
 prompt &s1.View UTL_APEX_FETCH_ROW_COLUMNS
 @check_apex_version_gt.sql 5.1 "&VIEW_DIR.utl_apex_fetch_row_columns.vw"
@@ -49,6 +47,12 @@ prompt &s1.View UTL_APEX_FORM_REGION_COLUMNS
 
 prompt &s1.View UTL_APEX_IG_COLUMNS
 @&VIEW_DIR.utl_apex_ig_columns.vw
+
+prompt &s1.View UTL_DEV_APEX_COLLECTION
+@check_apex_version_gt.sql 5.1 "&VIEW_DIR.utl_dev_apex_collection.vw"
+
+prompt &s1.View UTL_DEV_APEX_FORM_COLLECTION
+@check_apex_version_gt.sql 19 "&VIEW_DIR.utl_dev_apex_form_collection.vw"
 
 prompt
 prompt &section.
