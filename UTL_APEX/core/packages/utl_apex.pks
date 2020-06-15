@@ -551,6 +551,7 @@ as
    *         The method retrieves the messages and maps the error codes to page items passed in via P_MAPPING.
    *         If found, it shows the exception inline with field and notification to those items, otherwise it shows the
    *         message without item reference in the notification area only.
+   *         Supports #LABEL# replacement, page item name may be passed in with or without page prefix.
    */
   procedure handle_bulk_errors(
     p_mapping in char_table);

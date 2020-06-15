@@ -706,7 +706,11 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
          and page_id = p_page_id
          and process_type_code = 'DML_FETCH_ROW';      
     else
-      -- Native Form region used
+      $IF utl_apex.ver_le_05 $THEN
+      null;
+      $ELSIF utl_apex.ver_le_18 $THEN
+      null;
+      $ELSE
       l_item_view_name := 'UTL_DEV_APEX_FORM_COLLECTION';
       select table_name, table_name
         into l_view_name, l_collection_name
@@ -714,6 +718,7 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
        where application_id = p_application_id
          and page_id = p_page_id
          and source_type_code in ('NATIVE_FORM');
+      $END
     end if;
     
     -- generate package code
