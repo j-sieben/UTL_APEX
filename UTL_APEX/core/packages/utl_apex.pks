@@ -543,6 +543,17 @@ as
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
+    
+  
+  /** Method to encapsulate PIT collection mode error treatment
+   * @param  p_mapping  CHAR_TABLE instance with error code - page item names couples, according to DECODE function
+   * @usage  Is used to retrieve the collection of messages collected during validation of a use case in PIT collect mode.
+   *         The method retrieves the messages and maps the error codes to page items passed in via P_MAPPING.
+   *         If found, it shows the exception inline with field and notification to those items, otherwise it shows the
+   *         message without item reference in the notification area only.
+   */
+  procedure handle_bulk_errors(
+    p_mapping in char_table);
 
 end utl_apex;
 /

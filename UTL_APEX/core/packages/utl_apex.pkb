@@ -1383,6 +1383,50 @@ select d.page_items
       pit.leave_optional;
   end assert_not_exists;
 
+
+  procedure handle_bulk_errors(
+    p_mapping in char_table)
+  as
+    type error_code_map_t is table of ora_name_type index by ora_name_type;
+    l_error_code_map error_code_map_t;
+    l_message_list pit_message_table;
+    l_message message_type;
+    l_item item_rec;
+  begin
+    pit.enter_optional;
+    l_message_list := pit.get_message_collection;
+    
+    if l_message_list.count > 0 then
+      -- copy p_mapping to pl/sql table to allow for easy access using EXISTS method
+      for i in 1 .. p_mapping.count loop
+        if mod(i, 2) = 1 then
+          l_error_code_map(p_mapping(i)) := p_mapping(i+1);
+        end if;
+      end loop;
+      
+      for i in 1 .. l_message_list.count loop
+        l_message := l_message_list(i);
+        if l_message.severity in (pit.level_fatal, pit.level_error) then
+          if l_error_code_map.exists(l_message.error_code) then
+            get_page_element(l_error_code_map(l_message.error_code), l_item);
+            apex_error.add_error(
+              p_message => replace(l_message.message_text, '#LABEL#', l_item.item_label),
+              p_additional_info => l_message.message_description,
+              p_display_location => apex_error.c_inline_with_field_and_notif,
+              p_page_item_name => l_item.item_name);
+          else
+            apex_error.add_error(
+              p_message => l_message.message_text,
+              p_additional_info => l_message.message_description,
+              p_display_location => apex_error.c_inline_in_notification);
+          end if;
+        end if;
+      end loop;
+    end if;
+    
+    pit.leave_optional;
+  end handle_bulk_errors;
+
 begin
   initialize;
 end utl_apex;
