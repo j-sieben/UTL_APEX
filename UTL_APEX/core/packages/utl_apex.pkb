@@ -906,7 +906,7 @@ select d.page_items
           -- Fallback, works as if P_REGION_ID is NULL
           if p_page_item is not null then
             apex_error.add_error(
-              p_message => l_message.message_text,
+              p_message => replace(l_message.message_text, '#LABEL#', l_item.item_label),
               p_additional_info => l_message.message_description,
               p_display_location => apex_error.c_inline_with_field_and_notif,
               p_page_item_name => l_item.item_name);
@@ -919,7 +919,7 @@ select d.page_items
         end case;
       when p_page_item is not null then
         apex_error.add_error(
-          p_message => l_message.message_text,
+          p_message => replace(l_message.message_text, '#LABEL#', l_item.item_label),
           p_additional_info => l_message.message_description,
           p_display_location => apex_error.c_inline_with_field_and_notif,
           p_page_item_name => l_item.item_name);
