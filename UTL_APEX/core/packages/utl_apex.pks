@@ -89,8 +89,18 @@ as
   function get_page_alias
     return varchar2;
     
+  
+  /** Method to read a page item's name and format mask.
+   * @param  p_page_item  Item name with or without page prefix
+   * @param  p_item       Item record with information to the requested page item
+   * @usage  Is used to retrieve the page item's settings from the APEX data dictionary. 
+   */
+  procedure get_page_element(
+    p_page_item in ora_name_type,
+    p_item out nocopy item_rec);
+    
   /** Method to create the page prefix for the actual page
-   * @return Actual page number in the form <code>Pnn_</code>, usable as a page prefix.
+   * @return Actual page number in the form defined by CONVENTION_... constants, usable as a page prefix.
    */
   function get_page_prefix
    return varchar2;
@@ -546,7 +556,7 @@ as
     
   
   /** Method to encapsulate PIT collection mode error treatment
-   * @param  p_mapping  CHAR_TABLE instance with error code - page item names couples, according to DECODE function
+   * @param [p_mapping] CHAR_TABLE instance with error code - page item names couples, according to DECODE function
    * @usage  Is used to retrieve the collection of messages collected during validation of a use case in PIT collect mode.
    *         The method retrieves the messages and maps the error codes to page items passed in via P_MAPPING.
    *         If found, it shows the exception inline with field and notification to those items, otherwise it shows the
@@ -554,7 +564,7 @@ as
    *         Supports #LABEL# replacement, page item name may be passed in with or without page prefix.
    */
   procedure handle_bulk_errors(
-    p_mapping in char_table);
+    p_mapping in char_table) default null;
 
 end utl_apex;
 /

@@ -779,5 +779,16 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
     return l_script;
   end get_page_item_script;
   
+  
+  function copy_view_to_table_script(
+    p_view_name in utl_apex.ora_name_type,
+    p_table_name in utl_apex.ora_name_type,
+    p_table_shortcut in utl_apex.ora_name_type)
+    return varchar2
+  as
+  begin
+   return null;
+  end copy_view_to_table_script;
+  
 end utl_dev_apex;
 /

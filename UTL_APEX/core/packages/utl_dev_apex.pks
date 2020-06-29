@@ -124,13 +124,13 @@ as
    * @param [p_static_id]      Required, if an interactive grid or a form region has to be processed.
    *                           As there are potentially more than one IG or form region per page, it is required to distinguish them 
    *                           using the static id property of the regions. Normal form pages may have set this attribute or not.
-   * %param [p_table_name]     Name of the table the data is written to. Required if the form does not have a fetch row process
+   * @param [p_table_name]     Name of the table the data is written to. Required if the form does not have a fetch row process
    *                           (such as with interactive grid) or the form region is based on a SQL query instead on a table or view
-   * %param  p_application_id  APEX application id. IF NULL, apex_application.g_flow_id is used.
-   * %param  p_page_id         APEX page id. If NULL, apex_application.g_flow_step_id is used.
-   * %param  p_record_name     Name of the resulting record.
-   * %return PL/SQL block to copy and convert the page values into a record. The record structure is taken from P_TARGET_TABLE
-   * %usage  Generic utility to create code that reads the actual session state. <br>
+   * @param  p_application_id  APEX application id. IF NULL, apex_application.g_flow_id is used.
+   * @param  p_page_id         APEX page id. If NULL, apex_application.g_flow_step_id is used.
+   * @param  p_record_name     Name of the resulting record.
+   * @return PL/SQL block to copy and convert the page values into a record. The record structure is taken from P_TARGET_TABLE
+   * @usage  Generic utility to create code that reads the actual session state. <br>
    *         This method creates PL/SQL code that can be directly copied into a package:
    *         <code>select utl_apex.get_ig_values('MY_TABLE_NAME', 'abc', 123, 1) from dual </code>
    *         This call will generate a global record of <code>P_TABLE_NAME%ROWTYPE</code>, named <code>P_RECORD_NAME</code>
@@ -142,5 +142,22 @@ as
     p_page_id in number,
     p_record_name in varchar2)
     return varchar2;
+    
+    
+  /** Method to create a private package method to copy a view to a table record.
+   * @param  p_view_name       Name of the APEX page UI view that serves as a source of the data
+   * @param  p_table_name      Name of the target table 
+   * @param  p_table_shortcut  Abbreviated name of the table, is used in the name of the resulting method
+   * @usage  Is used to create a method that copies all columns of the view to columns of the table it refers to.
+   *         This method is required only if a form contains data of more than one table and you want to split the
+   *         columns to the respective tables. As a consequence, this method will only copy those columns which have
+   *         an identical name.
+   */
+  function copy_view_to_table_script(
+    p_view_name in utl_apex.ora_name_type,
+    p_table_name in utl_apex.ora_name_type,
+    p_table_shortcut in utl_apex.ora_name_type)
+    return varchar2;
+    
 end utl_dev_apex;
 /

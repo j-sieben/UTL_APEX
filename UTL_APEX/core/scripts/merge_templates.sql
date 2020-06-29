@@ -817,6 +817,33 @@ q'°  end process_#PAGE_ALIAS#;°',
     p_uttm_log_text => q'°°',
     p_uttm_log_severity => 70
   );
+  
+  
+  utl_text.merge_template(
+    p_uttm_name => 'VIEW_TO_TABLE',
+    p_uttm_type => 'APEX_FORM',
+    p_uttm_mode => 'DEFAULT',
+    p_uttm_text => q'°  procedure copy_row_to_#TABLE_SHORTCUT#_record(\CR\°' || 
+q'°    p_row in #VIEW_NAME#%rowtype,\CR\°' || 
+q'°    p_rec out nocopy #TABLE_NAME#%rowtype)\CR\°' || 
+q'°  as\CR\°' || 
+q'°  begin\CR\°' || 
+q'°#COLUMN_LIST#  end copy_row_to_#TABLE_SHORTCUT#_record;\CR\°' ,
+    p_uttm_log_text => q'°°',
+    p_uttm_log_severity => 70
+  );
+  
+  
+  utl_text.merge_template(
+    p_uttm_name => 'VIEW_TO_TABLE',
+    p_uttm_type => 'APEX_FORM',
+    p_uttm_mode => 'COLUMN',
+    p_uttm_text => q'°    p_rec.#COLUMN_NAME# := p_row.#COLUMN_NAME#;\CR\°' ,
+    p_uttm_log_text => q'°°',
+    p_uttm_log_severity => 70
+  );
+  
+  
   commit;
 end;
 /

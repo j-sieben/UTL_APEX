@@ -26,72 +26,7 @@ as
   g_item_value_convention boolean;
   g_item_prefix_convention binary_integer;
 
-  -- HELPER
-  /** Method to read a page item's name and format mask.
-   * @param  p_page_item  Item name with or without page prefix
-   * @param  p_item       Item record with information to the requested page item
-   * @usage  Is used to retrieve the page item's settings from the APEX data dictionary. 
-   */
-  procedure get_page_element(
-    p_page_item in ora_name_type,
-    p_item out nocopy item_rec)
-  as
-    l_application_id number;
-    l_page_id number;
-    l_default_date_format ora_name_type;
-    l_default_timestamp_format ora_name_type;
-    C_ITEM_NAME_BLACKLIST constant char_table := char_table('APEX$ROW_STATUS');
-  begin
-    pit.enter_detailed(
-      p_params => msg_params(
-                    msg_param('p_page_item', p_page_item)));
-    
-    if upper(p_page_item) member of C_ITEM_NAME_BLACKLIST then
-      -- Blacklist items are items which cannot be seen in the APEX data dictionary
-      -- Just pass their name and value back
-      p_item.item_name := p_page_item;
-      p_item.item_value := apex_util.get_session_state(p_page_item);
-    else
-      l_application_id := get_application_id;
-      l_page_id := get_page_id;
-      l_default_date_format := get_default_date_format;
-      l_default_timestamp_format := get_default_timestamp_format;
-                      
-      select item_name, label, format_mask, apex_util.get_session_state(item_name)
-        into p_item.item_name, p_item.item_label, p_item.format_mask, p_item.item_value
-        from apex_application_page_items
-       where application_id = l_application_id
-         and page_id = l_page_id
-         and item_name like '%' || upper(p_page_item)
-      union all
-      select name, heading,
-             coalesce(
-              format_mask,
-              case 
-                when instr(data_type, 'DATE') > 0 then l_default_date_format
-                when instr(data_type, 'TIMESTAMP') > 0 then l_default_timestamp_format
-              end) format_mask,
-            apex_util.get_session_state(name)
-        from apex_appl_page_ig_columns
-       where application_id = l_application_id
-         and page_id = l_page_id
-         and name = upper(p_page_item);
-    end if;
-       
-    pit.leave_detailed(
-      p_params => msg_params(
-                    msg_param('item_name', p_item.item_name),
-                    msg_param('item_label', p_item.item_label),
-                    msg_param('format_mask', p_item.format_mask),
-                    msg_param('item_value', substr(p_item.item_value, 1, 200))));
-  exception
-    when NO_DATA_FOUND then       
-      pit.leave_detailed(
-        p_params => msg_params(
-                      msg_param('No item found', null)));
-  end get_page_element;
-  
-      
+  -- HELPER      
   /** Method to download a blob file over the browser
    * @param  p_blob  The instance to download
    * @param  p_file_name  File name of the downloaded blob instance
@@ -234,6 +169,72 @@ as
   begin
     return apex_application.g_page_alias;
   end get_page_alias;
+  
+  
+  procedure get_page_element(
+    p_page_item in ora_name_type,
+    p_item out nocopy item_rec)
+  as
+    l_application_id number;
+    l_page_id number;
+    l_page_item ora_name_type;
+    l_default_date_format ora_name_type;
+    l_default_timestamp_format ora_name_type;
+    C_ITEM_NAME_BLACKLIST constant char_table := char_table('APEX$ROW_STATUS');
+  begin
+    pit.enter_detailed(
+      p_params => msg_params(
+                    msg_param('p_page_item', p_page_item)));
+                    
+    l_page_item := upper(p_page_item);
+    if l_page_item not like get_page_prefix || '%' then
+      l_page_item := get_page_prefix || l_page_item;
+    end if;
+    
+    if l_page_item member of C_ITEM_NAME_BLACKLIST then
+      -- Blacklist items are items which cannot be seen in the APEX data dictionary
+      -- Just pass their name and value back
+      p_item.item_name := p_page_item;
+      p_item.item_value := apex_util.get_session_state(p_page_item);
+    else
+      l_application_id := get_application_id;
+      l_page_id := get_page_id;
+      l_default_date_format := get_default_date_format;
+      l_default_timestamp_format := get_default_timestamp_format;
+                      
+      select item_name, label, format_mask, apex_util.get_session_state(item_name)
+        into p_item.item_name, p_item.item_label, p_item.format_mask, p_item.item_value
+        from apex_application_page_items
+       where application_id = l_application_id
+         and page_id = l_page_id
+         and item_name = l_page_item
+      union all
+      select name, heading,
+             coalesce(
+              format_mask,
+              case 
+                when instr(data_type, 'DATE') > 0 then l_default_date_format
+                when instr(data_type, 'TIMESTAMP') > 0 then l_default_timestamp_format
+              end) format_mask,
+            apex_util.get_session_state(name)
+        from apex_appl_page_ig_columns
+       where application_id = l_application_id
+         and page_id = l_page_id
+         and name = l_page_item;
+    end if;
+       
+    pit.leave_detailed(
+      p_params => msg_params(
+                    msg_param('item_name', p_item.item_name),
+                    msg_param('item_label', p_item.item_label),
+                    msg_param('format_mask', p_item.format_mask),
+                    msg_param('item_value', substr(p_item.item_value, 1, 200))));
+  exception
+    when NO_DATA_FOUND then       
+      pit.leave_detailed(
+        p_params => msg_params(
+                      msg_param('No item found', null)));
+  end get_page_element;
 
 
   function get_page_prefix
@@ -1385,7 +1386,7 @@ select d.page_items
 
 
   procedure handle_bulk_errors(
-    p_mapping in char_table)
+    p_mapping in char_table default null)
   as
     type error_code_map_t is table of ora_name_type index by ora_name_type;
     l_error_code_map error_code_map_t;
@@ -1398,11 +1399,13 @@ select d.page_items
     
     if l_message_list.count > 0 then
       -- copy p_mapping to pl/sql table to allow for easy access using EXISTS method
-      for i in 1 .. p_mapping.count loop
-        if mod(i, 2) = 1 then
-          l_error_code_map(p_mapping(i)) := p_mapping(i+1);
-        end if;
-      end loop;
+      if p_mapping is not null then
+        for i in 1 .. p_mapping.count loop
+          if mod(i, 2) = 1 then
+            l_error_code_map(p_mapping(i)) := p_mapping(i+1);
+          end if;
+        end loop;
+      end if;
       
       for i in 1 .. l_message_list.count loop
         l_message := l_message_list(i);
