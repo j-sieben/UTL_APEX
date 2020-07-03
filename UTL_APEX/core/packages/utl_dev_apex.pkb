@@ -786,8 +786,33 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
     p_table_shortcut in utl_apex.ora_name_type)
     return varchar2
   as
+    l_code clob;
   begin
-   return null;
+    with params as(
+           select uttm_text template, uttm_mode,
+                  p_view_name view_name,
+                  p_table_name table_name,
+                  p_table_shortcut table_shortcut
+             from utl_text_templates
+            where uttm_type = 'APEX_FORM'
+              and uttm_name = 'VIEW_TO_TABLE')
+    select utl_text.generate_text(cursor(
+             select p.*,
+                    utl_text.generate_text(cursor(
+                      select p.template, lower(vw.column_name) column_name
+                        from user_tab_columns vw
+                        join user_tab_columns tbl
+                          on vw.column_name = tbl.column_name
+                        join params p
+                          on vw.table_name = upper(p.table_name)
+                         and tbl.table_name = upper(p.view_name)
+                       where uttm_mode = 'COLUMN'
+                       order by vw.column_id)) column_list
+               from params p
+              where uttm_mode = 'DEFAULT')) resultat
+      into l_code
+      from dual;
+   return l_code;
   end copy_view_to_table_script;
   
 end utl_dev_apex;

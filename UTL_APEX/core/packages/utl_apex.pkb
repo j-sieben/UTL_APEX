@@ -235,7 +235,18 @@ as
         p_params => msg_params(
                       msg_param('No item found', null)));
   end get_page_element;
-
+  
+  
+  function get_page_element(
+    p_page_item in ora_name_type)
+    return item_rec
+  as
+    l_item_rec item_rec;
+  begin
+    get_page_element(p_page_item, l_item_rec);
+    return l_item_rec;
+  end get_page_element;
+  
 
   function get_page_prefix
    return varchar2
@@ -366,10 +377,18 @@ as
     l_number number;
     l_item item_rec;
   begin
+    pit.enter_optional(
+      p_params => msg_params(
+                    msg_param('p_page_item', p_page_item)));
+                    
     -- Initialization
     get_page_element(p_page_item, l_item);
     
-    l_number := to_number(l_item.item_value, replace(l_item.format_mask, apex_application.get_nls_group_separator, null));
+    l_number := to_number(l_item.item_value, replace(coalesce(l_item.format_mask, utl_apex.NUMBER_FORMAT_MASK), apex_application.get_nls_group_separator, null));
+    
+    pit.leave_optional(
+      p_params => msg_params(
+                    msg_param('Value', l_number)));
     return l_number;
   exception
     when others then
@@ -385,16 +404,23 @@ as
     l_date date;
     l_item item_rec;
   begin
+    pit.enter_optional(
+      p_params => msg_params(
+                    msg_param('p_page_item', p_page_item)));
+                    
     -- Initialization
     get_page_element(p_page_item, l_item);
                        
     -- Conversion
     begin
-      l_date := to_date(l_item.item_value, l_item.format_mask);
+      l_date := to_date(l_item.item_value, coalesce(l_item.format_mask, utl_apex.get_default_date_format));
     exception when others then
       l_date := to_timestamp_tz(l_item.item_value, apex_application.g_nls_date_format);
     end;
     
+    pit.leave_optional(
+      p_params => msg_params(
+                    msg_param('Value', to_char(l_date, utl_apex.get_default_date_format))));
     return l_date;
   exception 
     when others then
@@ -411,6 +437,10 @@ as
     l_timestamp_tz timestamp with time zone;
     l_item item_rec;
   begin
+    pit.enter_optional(
+      p_params => msg_params(
+                    msg_param('p_page_item', p_page_item)));
+                    
     -- Initialization
     get_page_element(p_page_item, l_item);
                        
@@ -426,6 +456,9 @@ as
       end;
     end;
     
+    pit.leave_optional(
+      p_params => msg_params(
+                    msg_param('Value', to_char(coalesce(l_timestamp, l_timestamp_tz), utl_apex.get_default_timestamp_format))));
     return coalesce(l_timestamp, l_timestamp_tz);
   exception 
     when others then

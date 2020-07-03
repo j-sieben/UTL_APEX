@@ -27,6 +27,8 @@ as
   
   type item_tab is table of item_rec;
   
+  NUMBER_FORMAT_MASK constant small_char := '99999999999999D99999999999999';
+  
   /* Package constants */
   /* APEX Version constants according to DBMS_DB_VERSION */
   VER_LE_05 constant boolean := &VER_LE_05.;
@@ -98,6 +100,10 @@ as
   procedure get_page_element(
     p_page_item in ora_name_type,
     p_item out nocopy item_rec);
+    
+  function get_page_element(
+    p_page_item in ora_name_type)
+    return item_rec;
     
   /** Method to create the page prefix for the actual page
    * @return Actual page number in the form defined by CONVENTION_... constants, usable as a page prefix.
