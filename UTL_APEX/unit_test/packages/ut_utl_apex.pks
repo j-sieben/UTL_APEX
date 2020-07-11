@@ -183,10 +183,10 @@ as
   
   -- %test (Benuztereingaben in interaktives Grid werden als Record uebergeben)
   procedure get_page_record_from_ig;
-  
+  /*
   -- %test (Benuztereingaben werden als Script uebergeben)
   procedure get_page_script;
-  
+  */
   -- %test (Simple SQL Name ist gueltig)
   procedure validate_simple_sql_name;
   

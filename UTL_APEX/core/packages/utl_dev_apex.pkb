@@ -10,50 +10,7 @@ as
   C_FORM_REGION constant utl_apex.ora_name_type := 'NATIVE_FORM';
   C_IG_REGION constant utl_apex.ora_name_type := 'NATIVE_IG';  
   
-  procedure create_session(
-    p_app_id in apex_applications.application_id%type,
-    p_app_page_id in apex_application_pages.page_id%type default 1,
-    p_app_user in apex_workspace_activity_log.apex_user%type)
-  as
-    $IF utl_apex.ver_le_05 $THEN
-    l_workspace_id apex_applications.workspace_id%type;
-    l_cgivar_name owa.vc_arr;
-    l_cgivar_val owa.vc_arr;
-    $END
-  begin
-    $IF utl_apex.ver_le_05 $THEN
-    htp.init;
-  
-    l_cgivar_name(1) := 'REQUEST_PROTOCOL';
-    l_cgivar_val(1) := 'HTTP';
-  
-    owa.init_cgi_env(
-      num_params => 1,
-      param_name => l_cgivar_name,
-      param_val => l_cgivar_val );
-  
-    select workspace_id
-      into l_workspace_id
-      from apex_applications
-     where application_id = p_app_id;
-  
-    wwv_flow_api.set_security_group_id(l_workspace_id);
-  
-    apex_application.g_instance := 1;
-    apex_application.g_flow_id := p_app_id;
-    apex_application.g_flow_step_id := p_app_page_id;
-  
-    apex_custom_auth.post_login(
-      p_uname => p_app_user,
-      p_session_id => null, -- could use APEX_CUSTOM_AUTH.GET_NEXT_SESSION_ID
-      p_app_page => apex_application.g_flow_id||':'||p_app_page_id);
-    $ELSE
-    apex_session.create_session(p_app_id, p_app_page_id, p_app_user);
-    $END
-  end create_session;
-  
-  
-  /** Method to decide upon the view name based on the form type detected on the page for this combination of parameters
+  /********* HELPER **********/  /** Method to decide upon the view name based on the form type detected on the page for this combination of parameters
    * @return Name of the view as detected.
    * @usage  Is used to get the correct view name based upon the type of form. Supported form types are:
    *         - NATIVE_IG: Interactive Grid, identified by static id => UTL_APEX_IG_COLUMNS
@@ -100,7 +57,7 @@ as
      
     pit.leave_optional(msg_params(msg_param('Result', l_view_name)));
     return l_view_name;
-  end get_view_name;
+  end get_view_name;  
   
   
   /** Method to create a script to get the values of the page items.
@@ -186,6 +143,82 @@ as
     pit.leave_detailed;
     return to_char(l_script);
   end get_script_for_page_items;
+  
+  
+  /************ INTERFACE **********/
+  procedure create_session(
+    p_app_id in apex_applications.application_id%type,
+    p_app_page_id in apex_application_pages.page_id%type default 1,
+    p_app_user in apex_workspace_activity_log.apex_user%type)
+  as
+    $IF utl_apex.ver_le_05 $THEN
+    l_workspace_id apex_applications.workspace_id%type;
+    l_cgivar_name owa.vc_arr;
+    l_cgivar_val owa.vc_arr;
+    $END
+  begin
+    if apex_application.g_instance is null then
+      $IF utl_apex.ver_le_05 $THEN
+      htp.init;
+    
+      l_cgivar_name(1) := 'REQUEST_PROTOCOL';
+      l_cgivar_val(1) := 'HTTP';
+    
+      owa.init_cgi_env(
+        num_params => 1,
+        param_name => l_cgivar_name,
+        param_val => l_cgivar_val );
+    
+      select workspace_id
+        into l_workspace_id
+        from apex_applications
+       where application_id = p_app_id;
+    
+      wwv_flow_api.set_security_group_id(l_workspace_id);
+    
+      apex_application.g_instance := 1;
+      apex_application.g_flow_id := p_app_id;
+      apex_application.g_flow_step_id := p_app_page_id;
+    
+      apex_custom_auth.post_login(
+        p_uname => p_app_user,
+        p_session_id => null, -- could use APEX_CUSTOM_AUTH.GET_NEXT_SESSION_ID
+        p_app_page => apex_application.g_flow_id||':'||p_app_page_id);
+      $ELSE
+      apex_session.create_session(p_app_id, p_app_page_id, p_app_user);
+      $END
+    end if;
+  end create_session;
+  
+  
+  procedure drop_session
+  as
+  begin
+    rollback;
+    $IF utl_apex.ver_le_05 $THEN
+    $ELSE
+    if apex_application.g_instance is not null then
+      apex_session.delete_session;
+    end if;
+    commit;
+    $END
+  end drop_session;
+  
+  
+  procedure init_owa
+  as
+    l_cgivar_name owa.vc_arr;
+    l_cgivar_value owa.vc_arr;
+  begin
+    htp.init;
+    l_cgivar_name(1) := 'REQUEST_PROTOCOL';
+    l_cgivar_value(1) := 'HTTP';
+    owa.init_cgi_env(
+      num_params => 1,
+      param_name => l_cgivar_name,
+      param_val => l_cgivar_value);
+  end init_owa;
+  
 
   function get_table_api(
     p_table_name in utl_apex.ora_name_type,
@@ -585,7 +618,7 @@ select utl_text.generate_text(cursor(
     pit.assert_exists(
       p_stmt => replace(C_OBJECT_EXISTS, '#OBJECT_NAME#', p_source_table),
       p_message_name => msg.UTL_OBJECT_DOES_NOT_EXIST,
-      p_arg_list => msg_args('View/table', p_source_table));
+      p_msg_args => msg_args('View/table', p_source_table));
       
     -- initialize
     C_LEGACY_FORM_REGION := p_static_id is null;
@@ -687,7 +720,7 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
     pit.assert_exists(
       p_stmt => l_stmt,
       p_message_name => msg.UTL_PAGE_ALIAS_REQUIRED,
-      p_arg_list => msg_args(to_char(p_page_id)));
+      p_msg_args => msg_args(to_char(p_page_id)));
       
     if C_LEGACY_FORM_REGION then
       -- APEX page has FETCH ROW process

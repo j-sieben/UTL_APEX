@@ -1,4 +1,4 @@
-create or replace view utl_apex_form_region_columns as
+create or replace force view utl_apex_form_region_columns as
 select r.application_id,
        r.page_id,
        r.static_id,

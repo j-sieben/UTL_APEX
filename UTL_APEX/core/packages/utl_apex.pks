@@ -27,7 +27,7 @@ as
   
   type item_tab is table of item_rec;
   
-  NUMBER_FORMAT_MASK constant small_char := '99999999999999D99999999999999';
+  NUMBER_FORMAT_MASK constant small_char := '9999999999999999999D99999999999999';
   
   /* Package constants */
   /* APEX Version constants according to DBMS_DB_VERSION */
@@ -46,8 +46,8 @@ as
   APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
 
-  FORMAT_JSON constant char(4 byte) := 'JSON';
-  FORMAT_HTML constant char(4 byte) := 'HTML';
+  FORMAT_JSON constant ora_name_type := 'JSON';
+  FORMAT_HTML constant ora_name_type := 'HTML';
 
   C_TRUE constant flag_type := &C_TRUE.;
   C_FALSE constant flag_type := &C_FALSE.;
@@ -362,7 +362,7 @@ as
 
   /** Method to register validation error messages.
    * @param  p_page_item  page item or column that is affected by the validation
-   * @param  p_message    Name of a PIT message name
+   * @param [p_message]   Name of a PIT message name, If NULL, PIT.GET_ACTIVE_MESSAGE is used.
    * @param [p_msg_args]  Optional message arguments
    * @param [p_region_id] Optional static region id, required to create validations for interactive grids
    * @usage  This method is called during validation checks to pass an error message to the UI. It will pass the message if
@@ -372,7 +372,7 @@ as
    */
   procedure set_error(
     p_page_item in ora_name_type,
-    p_message in ora_name_type,
+    p_message in ora_name_type default null,
     p_msg_args in msg_args default null,
     p_region_id in ora_name_type default null);
 
@@ -380,7 +380,7 @@ as
   /** Method to register validation error messages.
    * @param  p_test       Test expression
    * @param  p_page_item  page item or column that is affected by the validation
-   * @param  p_message    Name of a PIT message name
+   * @param [p_message]   Name of a PIT message name, If NULL, PIT.GET_ACTIVE_MESSAGE is used.
    * @param [p_msg_args]  Optional message arguments
    * @param [p_region_id] Optional static region id, required to create validations for interactive grids
    * @usage  This method is called during validation checks to pass an error message to the UI. It will pass the message if
@@ -390,7 +390,7 @@ as
   procedure set_error(
     p_test in boolean,
     p_page_item in ora_name_type,
-    p_message in ora_name_type,
+    p_message in ora_name_type default null,
     p_msg_args in msg_args default null,
     p_region_id in ora_name_type default null);
 
@@ -431,6 +431,7 @@ as
    * @param  p_hidden_item         Name of the hidden element the URL is stored at. Only applicable for the procedure overload
    * @param [p_param_items]        colon separated list of parameter items to set
    * @param [p_value_items]        colon separated list of page items on the source page that will be passed to the target page
+   * @param [p_value_list]         colon separated list of values that will be passed to the page. Is used only if P_VALUE_ITEMS is null
    * @param [p_triggering_element] Page item on which the event <code>apexafterclosedialog</code> is raised.
    * @param [p_clear_cache]        Page id for which the session state is cleared.
    * @return URL of the requested page
@@ -441,6 +442,7 @@ as
     p_page in varchar2 default null,
     p_param_items in varchar2 default null,
     p_value_items in varchar2 default null,
+    p_value_list in varchar2 default null,
     p_triggering_element in varchar2 default null,
     p_clear_cache in binary_integer default null)
     return varchar2;
@@ -480,7 +482,8 @@ as
   /* ASSERTIONS-Wrapper */
   /** Methods call <code>PIT.ASSERT...</code> catch them and pass them to the APEX UI by adding them to the APEX error stack
    * @param  p_condition     Test to execute
-   * @param  p_message_name  PIT message name to throw if <code>P_CONDITION</code> evaluates to <code>FALSE</code>
+   * @param [p_message_name] Optional PIT message name to throw if <code>P_CONDITION</code> evaluates to <code>FALSE</code>
+   *                         If NULL, PIT.GET_ACTIVE_MESSAGE is used.
    * @param [p_page_item]    Page item( with or without page prefix or IG column name to bind the error message to.
    *                         If NULL, the error message is shown without page item relation
    * @param [p_msg_args]     Optional message arguments. If null, the item label is passed
@@ -491,7 +494,7 @@ as
    */
   procedure assert(
     p_condition in boolean,
-    p_message_name in ora_name_type,
+    p_message_name in ora_name_type default msg.ASSERT_TRUE,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -547,7 +550,7 @@ as
 
   procedure assert_exists(
     p_stmt in varchar2,
-    p_message_name in ora_name_type,
+    p_message_name in ora_name_type default msg.ASSERT_EXISTS,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -555,7 +558,17 @@ as
 
   procedure assert_not_exists(
     p_stmt in varchar2,
-    p_message_name in ora_name_type,
+    p_message_name in ora_name_type default msg.ASSERT_NOT_EXISTS,
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null);
+
+
+  procedure assert_datatype(
+    p_value in varchar2,
+    p_type in varchar2,
+    p_format_mask in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_DATATYPE,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -570,7 +583,7 @@ as
    *         Supports #LABEL# replacement, page item name may be passed in with or without page prefix.
    */
   procedure handle_bulk_errors(
-    p_mapping in char_table) default null;
+    p_mapping in char_table default null);
 
 end utl_apex;
 /

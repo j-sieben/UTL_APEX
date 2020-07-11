@@ -32,10 +32,10 @@ as
   begin
     rollback;
     if apex_application.g_instance is null then
-      apex_session.create_session(
-         p_app_id => g_application_id,
-         p_page_id => p_page_id,
-         p_username => c_apex_user);
+      utl_test_apex.create_apex_session(
+         p_apex_user => c_apex_user,
+         p_application_id => g_application_id,
+         p_page_id => p_page_id);
     end if;
     apex_application.g_flow_step_id := p_page_id;
     commit;
@@ -47,7 +47,7 @@ as
   begin
     rollback;
     if apex_application.g_instance is not null then
-      apex_session.delete_session;
+      utl_test_apex.delete_apex_session;
     end if;
     commit;
   end drop_session;
@@ -640,7 +640,7 @@ as
       raise;
   end get_page_record_from_ig;
   
-
+/*
   procedure get_page_script 
   as
     l_script utl_apex.max_char;
@@ -665,7 +665,7 @@ as
     utl_apex.set_value(C_TEST_ITEM_2, NULL);
     drop_session;
   end get_page_script;
-  
+*/
   
   procedure validate_simple_sql_name
   as

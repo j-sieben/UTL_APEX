@@ -16,7 +16,16 @@ as
     p_app_id in apex_applications.application_id%type,
     p_app_page_id in apex_application_pages.page_id%type default 1,
     p_app_user in apex_workspace_activity_log.apex_user%type);
+    
+    
+  /** Helper to free an APEX session for testing purposes
+   */
+  procedure drop_session;
   
+  
+  /** Helper to allow to capture output of the web toolkit in automated tests
+   */
+  procedure init_owa;
   
   /** Helper to create a basic table api
    * @param  p_owner            Owner of the table or view the API aims at

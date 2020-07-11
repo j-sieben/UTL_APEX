@@ -854,13 +854,13 @@ select d.page_items
     pit.assert(
        p_condition => regexp_instr(l_name, C_UMLAUT_REGEX) = 0,
        p_message_name => msg.UTL_NAME_CONTAINS_UMLAUT,
-       p_arg_list => msg_args(l_name));
+       p_msg_args => msg_args(l_name));
 
     -- limit length according to naming conventions
     pit.assert(
        p_condition => length(l_name) <= C_MAX_LENGTH,
        p_message_name => msg.UTL_NAME_TOO_LONG,
-       p_arg_list => msg_args(l_name, to_char(C_MAX_LENGTH)));
+       p_msg_args => msg_args(l_name, to_char(C_MAX_LENGTH)));
 
     -- name against Oracle naming conventions. Throws errors, so catch them rather than use ASSERT
     begin
@@ -882,7 +882,7 @@ select d.page_items
 
   procedure set_error(
     p_page_item in ora_name_type,
-    p_message in ora_name_type,
+    p_message in ora_name_type default null,
     p_msg_args in msg_args default null,
     p_region_id in ora_name_type default null)
   as
@@ -899,11 +899,15 @@ select d.page_items
       msg_param('p_page_item', p_page_item),
       msg_param('p_message', p_message)));
       
-    pit.assert_not_null(p_message);
     if p_page_item is not null then
       get_page_element(p_page_item, l_item);
-      l_message := pit.get_message(p_message, coalesce(p_msg_args, msg_args(l_item.item_label)));
     end if;
+    if p_message is null then
+      l_message := pit.get_active_message;
+    else
+      l_message := pit.get_message(p_message, p_msg_args);
+    end if;
+    l_message.message_text := replace('#LABEL#', l_item.item_label);
     
     case 
       when p_region_id is not null then
@@ -975,7 +979,7 @@ select d.page_items
   procedure set_error(
     p_test in boolean,
     p_page_item in ora_name_type,
-    p_message in ora_name_type,
+    p_message in ora_name_type default null,
     p_msg_args in msg_args default null,
     p_region_id in ora_name_type default null)
   as
@@ -1110,6 +1114,7 @@ select d.page_items
     p_page in varchar2 default null,
     p_param_items in varchar2 default null,
     p_value_items in varchar2 default null,
+    p_value_list in varchar2 default null,
     p_triggering_element in varchar2 default null,
     p_clear_cache in binary_integer default null)
     return varchar2
@@ -1128,10 +1133,14 @@ select d.page_items
                     msg_param('p_triggering_element', p_triggering_element)));
     
     l_param_list := replace(p_param_items, ':', ',');
-    utl_text.string_to_table(p_value_items, l_param_values);
-    for i in 1 .. l_param_values.count loop
-      l_value_list := l_value_list || case when i > 1 then ',' end || get_value(l_param_values(i));
-    end loop;
+    if p_value_items is not null then
+      utl_text.string_to_table(p_value_items, l_param_values);
+      for i in 1 .. l_param_values.count loop
+        l_value_list := l_value_list || case when i > 1 then ',' end || get_value(l_param_values(i));
+      end loop;
+    else
+      l_value_list := p_value_list;
+    end if;
     
     l_url := get_url(
                p_application => p_application,
@@ -1221,7 +1230,7 @@ select d.page_items
 
   procedure assert(
     p_condition in boolean,
-    p_message_name in ora_name_type,
+    p_message_name in ora_name_type default msg.ASSERT_TRUE,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1229,14 +1238,14 @@ select d.page_items
   begin
     pit.enter_optional;
     pit.assert(
-      p_condition => p_condition);
+      p_condition => p_condition,
+      p_message_name => p_message_name,
+      p_msg_args => p_msg_args);
     pit.leave_optional;
   exception
     when msg.ASSERT_TRUE_ERR then
       set_error(
         p_page_item => p_page_item,
-        p_message => p_message_name,
-        p_msg_args => p_msg_args,
         p_region_id => p_region_id);
       pit.leave_optional;
   end assert;
@@ -1251,14 +1260,15 @@ select d.page_items
   as
   begin
     pit.enter_optional;
-    pit.assert_is_null(p_condition);
+    pit.assert_is_null(
+      p_condition => p_condition,
+      p_message_name => p_message_name,
+      p_msg_args => p_msg_args);
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NULL_ERR then
       set_error(
         p_page_item => p_page_item,
-        p_message => p_message_name,
-        p_msg_args => p_msg_args,
         p_region_id => p_region_id);
       pit.leave_optional;
   end assert_is_null;
@@ -1273,14 +1283,15 @@ select d.page_items
   as
   begin
     pit.enter_optional;
-    pit.assert_is_null(p_condition);
+    pit.assert_is_null(
+      p_condition => p_condition,
+      p_message_name => p_message_name,
+      p_msg_args => p_msg_args);
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NULL_ERR then
       set_error(
         p_page_item => p_page_item,
-        p_message => p_message_name,
-        p_msg_args => p_msg_args,
         p_region_id => p_region_id);
       pit.leave_optional;
   end assert_is_null;
@@ -1295,14 +1306,15 @@ select d.page_items
   as
   begin
     pit.enter_optional;
-    pit.assert_is_null(p_condition);
+    pit.assert_is_null(
+      p_condition => p_condition,
+      p_message_name => p_message_name,
+      p_msg_args => p_msg_args);
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NULL_ERR then
       set_error(
         p_page_item => p_page_item,
-        p_message => p_message_name,
-        p_msg_args => p_msg_args,
         p_region_id => p_region_id);
       pit.leave_optional;
   end assert_is_null;
@@ -1317,14 +1329,15 @@ select d.page_items
   as
   begin
     pit.enter_optional;
-    pit.assert_not_null(p_condition);
+    pit.assert_not_null(
+      p_condition => p_condition,
+      p_message_name => p_message_name,
+      p_msg_args => p_msg_args);
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NOT_NULL_ERR then
       set_error(
         p_page_item => p_page_item,
-        p_message => p_message_name,
-        p_msg_args => p_msg_args,
         p_region_id => p_region_id);
       pit.leave_optional;
   end assert_not_null;
@@ -1339,14 +1352,15 @@ select d.page_items
   as
   begin
     pit.enter_optional;
-    pit.assert_not_null(p_condition);
+    pit.assert_not_null(
+      p_condition => p_condition,
+      p_message_name => p_message_name,
+      p_msg_args => p_msg_args);
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NOT_NULL_ERR then
       set_error(
         p_page_item => p_page_item,
-        p_message => p_message_name,
-        p_msg_args => p_msg_args,
         p_region_id => p_region_id);
       pit.leave_optional;
   end assert_not_null;
@@ -1361,14 +1375,15 @@ select d.page_items
   as
   begin
     pit.enter_optional;
-    pit.assert_not_null(p_condition);
+    pit.assert_not_null(
+      p_condition => p_condition,
+      p_message_name => p_message_name,
+      p_msg_args => p_msg_args);
     pit.leave_optional;
   exception
     when msg.ASSERT_IS_NOT_NULL_ERR then
       set_error(
         p_page_item => p_page_item,
-        p_message => p_message_name,
-        p_msg_args => p_msg_args,
         p_region_id => p_region_id);
       pit.leave_optional;
   end assert_not_null;
@@ -1376,21 +1391,22 @@ select d.page_items
 
   procedure assert_exists(
     p_stmt in varchar2,
-    p_message_name in ora_name_type,
+    p_message_name in ora_name_type default msg.ASSERT_EXISTS,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
   is
   begin
     pit.enter_optional;
-    pit.assert_exists(p_stmt => p_stmt);
+    pit.assert_exists(
+      p_stmt => p_stmt,
+      p_message_name => p_message_name,
+      p_msg_args => p_msg_args);
     pit.leave_optional;
   exception
     when msg.ASSERT_EXISTS_ERR then
       set_error(
         p_page_item => p_page_item,
-        p_message => p_message_name,
-        p_msg_args => p_msg_args,
         p_region_id => p_region_id);
       pit.leave_optional;
   end assert_exists;
@@ -1398,24 +1414,52 @@ select d.page_items
 
   procedure assert_not_exists(
     p_stmt in varchar2,
-    p_message_name in ora_name_type,
+    p_message_name in ora_name_type default msg.ASSERT_NOT_EXISTS,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
   is
   begin
     pit.enter_optional;
-    pit.assert_not_exists(p_stmt => p_stmt);
+    pit.assert_not_exists(
+      p_stmt => p_stmt,
+      p_message_name => p_message_name,
+      p_msg_args => p_msg_args);
     pit.leave_optional;
   exception
     when msg.ASSERT_NOT_EXISTS_ERR then
       set_error(
         p_page_item => p_page_item,
-        p_message => p_message_name,
-        p_msg_args => p_msg_args,
         p_region_id => p_region_id);
       pit.leave_optional;
   end assert_not_exists;
+  
+  
+  procedure assert_datatype(
+    p_value in varchar2,
+    p_type in varchar2,
+    p_format_mask in varchar2 default null,
+    p_message_name in ora_name_type default msg.ASSERT_DATATYPE,
+    p_page_item in ora_name_type default null,
+    p_msg_args msg_args default null,
+    p_region_id in ora_name_type default null)
+  as
+  begin
+    pit.enter_optional;
+    pit.assert_datatype(
+      p_value => p_value,
+      p_type => p_type,
+      p_format_mask => p_format_mask,
+      p_message_name => p_message_name,
+      p_msg_args => coalesce(p_msg_args, msg_args(p_value, p_type)));
+    pit.leave_optional;
+  exception
+    when msg.ASSERT_DATATYPE_ERR then
+      set_error(
+        p_page_item => p_page_item,
+        p_region_id => p_region_id);
+      pit.leave_optional;
+  end assert_datatype;
 
 
   procedure handle_bulk_errors(

@@ -1,4 +1,4 @@
-create or replace view utl_dev_apex_form_collection as
+create or replace force view utl_dev_apex_form_collection as
 with columns as(
         select apl.application_id, app.page_id, lower(app.page_alias) page_alias, lower(apr.table_name) table_name, 
                utc.column_id, lower(utc.column_name) column_name, acm.collection_data_type data_type,

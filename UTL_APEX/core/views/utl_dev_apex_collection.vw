@@ -1,4 +1,4 @@
-create or replace view utl_dev_apex_collection as
+create or replace force view utl_dev_apex_collection as
   with columns as(
        select api.application_id, api.page_id, apa.page_alias, table_name, 
               column_id, column_name, acm.collection_data_type data_type,

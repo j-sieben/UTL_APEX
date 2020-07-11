@@ -1,11 +1,11 @@
 set termout off
 
-variable script_name varchar2(100);
+variable script_name varchar2(1000);
 variable comments varchar2(1000);
 
 declare
-  C_NULL_SCRIPT constant varchar2(10) := 'null.sql';
-  l_ut_version varchar2(10);
+  C_NULL_SCRIPT constant varchar2(100) := 'null.sql';
+  l_ut_version varchar2(100);
   x_ut_does_not_exist exception;
   pragma exception_init(x_ut_does_not_exist, -6550);
 begin

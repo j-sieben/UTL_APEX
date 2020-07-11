@@ -1,4 +1,4 @@
-create or replace view utl_apex_fetch_row_columns as
+create or replace force view utl_apex_fetch_row_columns as
 with params as(
        select length(utl_apex.get_page_prefix) + 1 prefix
          from dual)

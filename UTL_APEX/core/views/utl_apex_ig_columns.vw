@@ -1,4 +1,4 @@
-create or replace view utl_apex_ig_columns as
+create or replace force view utl_apex_ig_columns as
 select c.application_id,
        c.page_id,
        r.static_id,
