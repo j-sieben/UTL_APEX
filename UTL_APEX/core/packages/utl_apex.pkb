@@ -368,6 +368,23 @@ as
   begin
     return p_bool = C_TRUE;
   end get_bool;
+    
+    
+  function to_bool(
+    p_value in varchar2)
+    return flag_type
+  as
+    l_value varchar(10);
+    l_result flag_type;
+  begin
+    l_value := upper(p_value);
+    if l_value in ('J', 'Y', '1') then
+      l_result := C_TRUE;
+    else
+      l_result := C_FALSE;
+    end if;
+    return l_result;
+  end to_bool;
   
   
   function get_number(
@@ -514,6 +531,38 @@ as
   end set_value;
   
   
+  function get_app_value(
+    p_app_item in varchar2)
+    return varchar2
+  as
+    l_value max_char;
+  begin
+    pit.enter_optional(
+      p_params => msg_params(
+                    msg_param('p_app_item', p_app_item)));
+                    
+    l_value := apex_util.get_session_state(p_app_item);
+    
+    pit.leave_mandatory;
+    return l_value;
+  end get_app_value;
+  
+  procedure set_app_value(
+    p_app_item in varchar2,
+    p_value in varchar2)
+  as
+  begin
+    pit.enter_mandatory(
+      p_params => msg_params(
+                    msg_param('p_app_item', p_app_item),
+                    msg_param('p_value', substr(p_value, 1, 200))));
+                    
+    apex_util.set_session_state(p_app_item, p_value);
+    
+    pit.leave_mandatory;
+  end set_app_value;    
+  
+  
   procedure set_success_message(
     p_message in ora_name_type,
     p_msg_args in msg_args default null)
@@ -593,6 +642,31 @@ as
   begin
     return get_bool(apex_util.current_user_in_group(p_group_name));
   end current_user_in_group;
+  
+  
+  function get_last_login
+    return date
+  as
+    l_last_login_date date;
+  begin
+    pit.enter_detailed;
+    
+    select min(access_date) access_date
+      into l_last_login_date
+      from (select access_date, rank() over (order by access_date desc) rang
+              from wwv_flow_user_access_log
+             where authentication_result = 0
+               and login_name = (select v('APP_USER') from dual));
+     
+     pit.leave_detailed(
+        p_params => msg_params(
+                      msg_param('LastLogin', to_char(l_last_login_date, 'dd.mm.yyyy hh24:mi:ss'))));
+     return l_last_login_date;
+  exception
+    when no_data_found then
+      pit.leave_detailed;
+      return null;
+  end get_last_login;
   
   
   function get_page_items(
@@ -1219,6 +1293,34 @@ select d.page_items
   end download_clob;
   
   
+  procedure set_clob(
+    p_value in clob,
+    p_collection in varchar2 := 'CLOB_CONTENT')
+  as
+  begin
+    pit.enter_optional(
+        p_params => msg_params(
+                      msg_param('p_value', dbms_lob.substr(p_value, 200, 1)),
+                      msg_param('p_collection', p_collection)));
+                      
+    if apex_collection.collection_exists(
+         p_collection_name => p_collection) then
+      apex_collection.delete_collection(
+        p_collection_name => p_collection);
+    end if;
+    
+    if dbms_lob.getlength(p_value) > 0 then
+      apex_collection.create_or_truncate_collection(
+        p_collection_name => p_collection);
+      apex_collection.add_member(
+        p_collection_name => p_collection,
+        p_clob001 => p_value);
+    end if;
+    
+    pit.leave_optional;
+  end set_clob;
+  
+  
   procedure stop_apex
   as
   begin
@@ -1506,7 +1608,67 @@ select d.page_items
     
     pit.leave_optional;
   end handle_bulk_errors;
+  
+  
+  procedure print(
+    p_value in clob,
+    p_line_feed in boolean default false)
+  as
+    C_CHUNK_SIZE binary_integer := 8196;
+    l_locator binary_integer := 1;
+    l_amount_read binary_integer := C_CHUNK_SIZE;
+    l_chunk max_char;
+  begin
+    pit.enter_optional;
+    while not l_amount_read < C_CHUNK_SIZE and p_value is not null loop
+      dbms_lob.read(
+        lob_loc => p_value,
+        amount => l_amount_read,
+        offset => l_locator,
+        buffer => l_chunk);
+      if p_line_feed then
+        htp.print(l_chunk);
+      else
+        htp.prn(l_chunk);
+      end if;
+      l_locator := l_locator + l_amount_read;
+    end loop;
+    pit.leave_optional;
+  end print;
 
+
+  procedure escape_json(
+    p_text in out nocopy clob)
+  as
+    l_result clob;
+    l_chunk max_char;
+    -- Chunk size shouldn't exceed a quarter of max size because of UTF-8
+    l_chunk_size integer := 8191;
+    l_idx number := 1;
+    l_length number;
+  begin
+    l_length := dbms_lob.getlength(p_text);
+    dbms_lob.createtemporary(l_result, false, dbms_lob.call);
+    while l_idx <= l_length loop
+      l_chunk := dbms_lob.substr(p_text, l_chunk_size, l_idx);
+      l_chunk := trim('''' from apex_escape.js_literal(l_chunk));
+      dbms_lob.append(l_result, l_chunk);
+      l_idx := l_idx + l_chunk_size;
+    end loop;
+    p_text := l_result;
+  end escape_json;
+
+  function escape_json(
+    p_text in clob)
+    return clob
+  as
+    l_result clob;
+  begin
+    l_result := p_text;
+    escape_json(l_result);
+    return l_result;
+  end escape_json;
+  
 begin
   initialize;
 end utl_apex;

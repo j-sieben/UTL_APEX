@@ -159,6 +159,18 @@ as
     p_bool in flag_type)
     return boolean;
     
+    
+  /** Method to cast the input parameter to FLAG_TYPE.
+   * @param  p_value  Boolean value that is "falsy" or "truely"
+   * @return Recognized boolean value as FLAG_TYPE
+   * @usage  Is used to cast different TRUE or FALSE-flavours to FLAG_TYPE.
+   *         Example: 1, Y, J are recognized as GET_TRUE, 0, N, n are recognized as GET_FALSE
+   *         Caution: Use this with non boolean input values only. If a boolean value exists, use GET_BOOL instead.
+   */
+  function to_bool(
+    p_value in varchar2)
+    return flag_type;
+    
   
   /** Method to cast a page item value to number, based on the actual format mask
    * @param  p_page_item  Name of the item of which the acutal value has to be casted
@@ -214,7 +226,7 @@ as
     return binary_integer;
     
     
-  /* Method to get/set a sessoion state value
+  /* Method to get/set a session state value for a page item
    * @param  p_page_item  Name of the page item
    * @param  p_value Value of the page item
    * @usage  Is used as a wrapper around apex_util.set/get_session_state or v()
@@ -225,6 +237,20 @@ as
   
   procedure set_value(
     p_page_item in varchar2,
+    p_value in varchar2);
+    
+    
+  /* Method to get/set a session state value for an application item
+   * @param  p_page_item  Name of the application item
+   * @param  p_value Value of the page item
+   * @usage  Is used as a wrapper around apex_util.set/get_session_state or v()
+   */
+  function get_app_value(
+    p_app_item in varchar2)
+    return varchar2;
+  
+  procedure set_app_value(
+    p_app_item in varchar2,
     p_value in varchar2);
     
     
@@ -261,6 +287,15 @@ as
   function current_user_in_group(
     p_group_name in varchar2)
     return utl_apex.flag_type;
+    
+    
+  /** Method retrieves last login date for the actual user
+   * @return Date of the last login, NULL, if no entry was found
+   * @usage  Is called to get the last login date of a user to decide upon
+   *         what's new information or similar
+   */  
+  function get_last_login
+    return date;
 
 
   /** Method to read all page item values from the session state and store them in an instance of PAGE_VALUE_T.
@@ -472,6 +507,16 @@ as
     p_file_name in varchar2);
     
     
+  /** Method to pass a CLOB to an apex collection
+   * @param  p_value       CLOB instance to be put into the collection
+   * @param [p_collection] Name of the collection. Defaults to CLOB_CONTENT
+   * @usage  Is used to pass a CLOB instance to a collection in order to read it client side
+   */
+  procedure set_clob(
+    p_value in clob,
+    p_collection in varchar2 default 'CLOB_CONTENT');  
+    
+    
   /** Method to stop the rendering process of APEX.
    * @usage  Is used to prevent further rendering of the APEX machine. Call it if no further rendering is necessary (such as
    *         when downloading files) or when a fatal error has occurred.
@@ -584,6 +629,31 @@ as
    */
   procedure handle_bulk_errors(
     p_mapping in char_table default null);
+
+
+  /* Procedure for outputting text on the surface with or without output of a \n character
+   * @param  p_value      Value to print
+   * @param [p_line_feed] Flag indicating whether a \n character should be output after an output
+   * @usage  This implementation is a wrapper around htp.prn and does not care about the size.
+   *         Used when small chunks are often to be output as part of a procedure.
+   *         If there is a danger that the total size exceeds 32KByte, a local clob should be filled and apex.print selected.
+   */
+  procedure print(
+    p_value in clob,
+    p_line_feed in boolean default false);
+    
+  
+  /** Method to escape a CLOB instance for JSON
+   * @param  p_text  CLOB instance that gets converted. 
+   * @usage  Wrapper around APEX_ESCAPE.JS_LITERAL without the limitation of 32K
+   *         Overloaded version as procedure and function
+   */
+  procedure escape_json(
+    p_text in out nocopy clob);
+    
+  function escape_json(
+    p_text in clob)
+    return clob;
 
 end utl_apex;
 /
