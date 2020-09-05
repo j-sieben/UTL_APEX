@@ -13,7 +13,9 @@ prompt &h2.Messages
 prompt
 prompt &section.
 prompt &h2.Templates
-@&SCRIPT_DIR.merge_templates.sql
+@&SCRIPT_DIR.TemplateGroup_APEX_COLLECTION.sql
+@&SCRIPT_DIR.TemplateGroup_APEX_FORM.sql
+@&SCRIPT_DIR.TemplateGroup_TABLE_API.sql
 
 prompt
 prompt &section.

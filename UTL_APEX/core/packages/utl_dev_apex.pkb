@@ -330,6 +330,15 @@ as
                          and uttm_mode = 'PK_LIST'
                          and is_pk = utl_apex.C_TRUE), C_CR || '       and ') pk_list,
                     utl_text.generate_text(cursor(
+                      -- generate list of insert columns
+                      select uttm_text template,
+                             column_name
+                        from table(l_column_list)
+                       cross join params
+                       where uttm_name = C_COLUMN
+                         and uttm_mode = 'PIT_LIST'
+                         and is_pk in (utl_apex.C_FALSE, pk_insert)), ',' || C_CR, 20) pit_list,
+                    utl_text.generate_text(cursor(
                       -- generate merge statement
                       select uttm_text template,
                              table_name,
