@@ -55,7 +55,7 @@ q'{    end case;\CR\}' ||
 q'{  \CR\}' || 
 q'{    pit.leave_mandatory;\CR\}' || 
 q'{  end process_#PAGE_ALIAS#;}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -110,7 +110,7 @@ q'{    end case;\CR\}' ||
 q'{    \CR\}' || 
 q'{    pit.leave_mandatory;\CR\}' || 
 q'{  end process_#PAGE_ALIAS#;}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -125,7 +125,7 @@ q'{  as\CR\}' ||
 q'{  begin\CR\}' || 
 q'{#COLUMN_LIST#  end copy_row_to_#TABLE_SHORTCUT#_record;\CR\}' || 
 q'{}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -135,7 +135,7 @@ q'{}',
     p_uttm_mode => 'COLUMN',
     p_uttm_text => q'{    p_rec.#COLUMN_NAME# := p_row.#COLUMN_NAME#;\CR\}' || 
 q'{}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -144,7 +144,7 @@ q'{}',
     p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'NUMBER',
     p_uttm_text => q'{  #RECORD_NAME#.#COLUMN_NAME# := to_number(v('#SOURCE_NAME#')#FORMAT_MASK|, '|'|#);}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -153,7 +153,7 @@ q'{}',
     p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'DATE',
     p_uttm_text => q'{  #RECORD_NAME#.#COLUMN_NAME# := to_date(v('#SOURCE_NAME#'), '#FORMAT_MASK#');}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -162,7 +162,7 @@ q'{}',
     p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'DEFAULT',
     p_uttm_text => q'{  #RECORD_NAME#.#COLUMN_NAME# := v('#SOURCE_NAME#');}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -176,7 +176,7 @@ q'{begin\CR\}' ||
 q'{#COLUMN_LIST#\CR\}' || 
 q'{  :x := #RECORD_NAME#;\CR\}' || 
 q'{end;}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -189,7 +189,7 @@ q'{\CR\}' ||
 q'{begin\CR\}' || 
 q'{#COLUMN_LIST#\CR\}' || 
 q'{end;}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -198,7 +198,7 @@ q'{end;}',
     p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'DATE',
     p_uttm_text => q'{g_#PAGE_ALIAS#_row.#COLUMN_NAME# := to_date(utl_apex.get(g_page_values, '#COLUMN_NAME_UPPER#'), '#FORMAT_MASK#');}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -207,7 +207,7 @@ q'{end;}',
     p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'DEFAULT',
     p_uttm_text => q'{g_#PAGE_ALIAS#_row.#COLUMN_NAME# := utl_apex.get(g_page_values, '#COLUMN_NAME_UPPER#');}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -216,7 +216,7 @@ q'{end;}',
     p_uttm_type => 'APEX_FORM',
     p_uttm_mode => 'NUMBER',
     p_uttm_text => q'{g_#PAGE_ALIAS#_row.#COLUMN_NAME# := to_number(utl_apex.get(g_page_values, '#COLUMN_NAME_UPPER#'), '#FORMAT_MASK#');}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
   commit;

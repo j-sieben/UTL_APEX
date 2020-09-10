@@ -70,7 +70,7 @@ q'{    merge_#SHORT_NAME#(l_row);\CR\}' ||
 q'{\CR\}' || 
 q'{    pit.leave_mandatory;\CR\}' || 
 q'{  end merge_#SHORT_NAME#;}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -79,7 +79,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'PARAM_LIST',
     p_uttm_text => q'{p_#COLUMN_NAME_RPAD# in #TABLE_NAME#.#COLUMN_NAME#%type}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -88,7 +88,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'PK_LIST',
     p_uttm_text => q'{#COLUMN_NAME# = p_row.#COLUMN_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -97,7 +97,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'UPDATE_LIST',
     p_uttm_text => q'{t.#COLUMN_NAME# = s.#COLUMN_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -106,7 +106,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'RECORD_LIST',
     p_uttm_text => q'{l_row.#COLUMN_NAME# := p_#COLUMN_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -115,7 +115,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'USING_LIST',
     p_uttm_text => q'{p_row.#COLUMN_NAME# #COLUMN_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -124,7 +124,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'ON_LIST',
     p_uttm_text => q'{t.#COLUMN_NAME# = s.#COLUMN_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -133,7 +133,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'INSERT_LIST',
     p_uttm_text => q'{s.#COLUMN_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -142,7 +142,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'COL_LIST',
     p_uttm_text => q'{t.#COLUMN_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -160,7 +160,7 @@ q'{     when not matched then insert(\CR\}' ||
 q'{            #COL_LIST#)\CR\}' || 
 q'{          values(\CR\}' || 
 q'{            #INSERT_LIST#);}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -169,7 +169,7 @@ q'{            #INSERT_LIST#);}',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'PIT_LIST',
     p_uttm_text => q'{msg_param('p_#COLUMN_NAME#', p_#COLUMN_NAME#)}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
   commit;

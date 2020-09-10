@@ -7,7 +7,7 @@ begin
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
     p_uttm_text => q'{#COLUMN_FROM_COLLECTION# #COLUMN_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -16,7 +16,7 @@ begin
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
     p_uttm_text => q'{g_#PAGE_ALIAS#_row.#COLUMN_NAME# := #CONVERT_FROM_ITEM#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -30,7 +30,7 @@ q'{       #COLUMN_LIST#\CR\}' ||
 q'{  from apex_collections\CR\}' || 
 q'{ where collection_name = '#VIEW_NAME#'\CR\}' || 
 q'{}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -110,7 +110,7 @@ q'{  end process_#PAGE_ALIAS#;\CR\}' ||
 q'{\CR\}' || 
 q'{end #PAGE_ALIAS#_ui;\CR\}' || 
 q'{/}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -119,7 +119,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
     p_uttm_text => q'{p_#COLLECTION_NAME# => #COLUMN_TO_COLLECTION#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -128,7 +128,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#)}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -137,7 +137,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#)}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -146,7 +146,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#)}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -155,7 +155,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{to_char(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#), 'yyyy-mm-dd hh24:mi:ss')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -164,7 +164,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{to_char(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#))}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -173,7 +173,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{to_char(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#))}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -182,7 +182,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{rawtohex(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#))}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -191,7 +191,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{to_char(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#), 'yyyy-mm-dd hh24:mi:ss')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -200,7 +200,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{#COLUMN_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -209,7 +209,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
     p_uttm_text => q'{xmltype(utl_apex.get(g_#PAGE_ALIAS#_row, #COLUMN_NAME#))}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -218,7 +218,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{#COLLECTION_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -227,7 +227,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{#COLLECTION_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -236,7 +236,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{#COLLECTION_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -245,7 +245,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{to_date(#COLLECTION_NAME#, '#DATE_FORMAT#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -254,7 +254,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{to_number(#COLLECTION_NAME#, '#NUMBER_FORMAT#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -263,7 +263,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{to_number(#COLLECTION_NAME#, '#NUMBER_FORMAT#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -272,7 +272,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{hextoraw(#COLLECTION_NAME#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -281,7 +281,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{to_date(#COLLECTION_NAME#, '#TIMESTAMP_FORMAT#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -290,7 +290,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{#COLLECTION_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -299,7 +299,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
     p_uttm_text => q'{#COLLECTION_NAME#}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -308,7 +308,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{to_blob(utl_apex.get(g_page_values, '#COLUMN_NAME#'))}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -317,7 +317,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{utl_apex.get(g_page_values, '#COLUMN_NAME#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -326,7 +326,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{utl_apex.get(g_page_values, '#COLUMN_NAME#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -335,7 +335,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{to_date(utl_apex.get(g_page_values, '#COLUMN_NAME#'), '#DATE_FORMAT#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -344,7 +344,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{to_number(utl_apex.get(g_page_values, '#COLUMN_NAME#'), '#NUMBER_FORMAT#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -353,7 +353,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{to_number(utl_apex.get(g_page_values, '#COLUMN_NAME#'), '#NUMBER_FORMAT#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -362,7 +362,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{hextoraw(utl_apex.get(g_page_values, '#COLUMN_NAME#'))}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -371,7 +371,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{to_timestamp(utl_apex.get(g_page_values, '#COLUMN_NAME#'), '#TIMESTAMP_FORMAT#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -380,7 +380,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{utl_apex.get(g_page_values, '#COLUMN_NAME#')}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -389,7 +389,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
     p_uttm_text => q'{xmltype(utl_apex.get(g_page_values, '#COLUMN_NAME#'))}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -398,7 +398,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{BLOB}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -407,7 +407,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{C}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -416,7 +416,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{CLOB}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -425,7 +425,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{D}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -434,7 +434,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{N}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -443,7 +443,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{N}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -452,7 +452,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{C}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -461,7 +461,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{D}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -470,7 +470,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{C}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
 
@@ -479,7 +479,7 @@ q'{/}',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
     p_uttm_text => q'{XMLTYPE}',
-    p_uttm_log_text => ,
+    p_uttm_log_text => null,
     p_uttm_log_severity => 70
   );
   commit;
