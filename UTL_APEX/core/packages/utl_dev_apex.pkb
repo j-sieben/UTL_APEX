@@ -404,10 +404,11 @@ as
   function get_form_methods(
     p_application_id in binary_integer,
     p_page_id in binary_integer,
-    p_insert_method in varchar2,
-    p_update_method in varchar2,
-    p_delete_method in varchar2,
-    p_static_id in varchar2 default null)
+    p_static_id in varchar2 default null,
+    p_check_method in varchar2 default null,
+    p_insert_method in varchar2 default null,
+    p_update_method in varchar2 default null,
+    p_delete_method in varchar2 default null)
     return clob
   as 
     l_view_name utl_apex.ora_name_type;
@@ -419,6 +420,8 @@ as
       p_params => msg_params(
                     msg_param('p_application_id', to_char(p_application_id)),
                     msg_param('p_page_id', to_char(p_page_id)),
+                    msg_param('p_static_id', p_static_id),
+                    msg_param('p_check_method', p_check_method),
                     msg_param('p_insert_method', p_insert_method),
                     msg_param('p_update_method', p_update_method),
                     msg_param('p_delete_method', p_delete_method)));
@@ -426,12 +429,9 @@ as
     -- check input parameters
     pit.assert_not_null(p_application_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_APPLICATION_ID'));
     pit.assert_not_null(p_page_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_ID'));
-    pit.assert_not_null(p_insert_method, msg.UTL_PARAMETER_REQUIRED, msg_args('P_INSET_METHOD'));
-    pit.assert_not_null(p_update_method, msg.UTL_PARAMETER_REQUIRED, msg_args('P_UPDATE_METHOD'));
-    pit.assert_not_null(p_delete_method, msg.UTL_PARAMETER_REQUIRED, msg_args('P_DELETE_METHOD'));
     
     -- Analyze whether one methode for insert and update are requested
-    if p_insert_method = p_update_method then
+    if p_insert_method = p_update_method or p_insert_method is null then
       l_mode := 'MERGE';
     else
       l_mode := C_DEFAULT;
@@ -492,9 +492,10 @@ as
                select t.uttm_text template, l_column_list column_list,
                       lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
                       lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
-                      lower(p_insert_method) insert_method,
+                      lower(coalesce(p_check_method, 'check_' || app.page_alias)) check_method,
+                      lower(coalesce(p_insert_method, 'merge_' || app.page_alias)) insert_method,
                       lower(p_update_method) update_method,
-                      lower(p_delete_method) delete_method,
+                      lower(coalesce(p_delete_method, 'delete_' || app.page_alias)) delete_method,
                       lower(p_static_id) static_id
                  from apex_application_pages app
                  join apex_application_page_proc apo
@@ -516,9 +517,10 @@ as
              select t.uttm_text template, l_column_list column_list,
                     lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
                     lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
-                    lower(p_insert_method) insert_method,
-                    lower(p_update_method) update_method,
-                    lower(p_delete_method) delete_method,
+                      lower(coalesce(p_check_method, 'check_' || app.page_alias)) check_method,
+                      lower(coalesce(p_insert_method, 'merge_' || app.page_alias)) insert_method,
+                      lower(p_update_method) update_method,
+                      lower(coalesce(p_delete_method, 'delete_' || app.page_alias)) delete_method,
                     lower(p_static_id) static_id
                from apex_application_pages app
                join apex_application_page_proc apo
@@ -538,9 +540,10 @@ as
              select t.uttm_text template, l_column_list column_list,
                     lower(apr.table_name) view_name, upper(apr.table_name) view_name_upper,
                     lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
-                    lower(p_insert_method) insert_method,
-                    lower(p_update_method) update_method,
-                    lower(p_delete_method) delete_method,
+                      lower(coalesce(p_check_method, 'check_' || app.page_alias)) check_method,
+                      lower(coalesce(p_insert_method, 'merge_' || app.page_alias)) insert_method,
+                      lower(p_update_method) update_method,
+                      lower(coalesce(p_delete_method, 'delete_' || app.page_alias)) delete_method,
                     p_static_id static_id
                from apex_application_pages app
                join apex_application_page_regions apr
@@ -561,9 +564,10 @@ as
                select t.uttm_text template, l_column_list column_list,
                       lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
                       lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
-                      lower(p_insert_method) insert_method,
+                      lower(coalesce(p_check_method, 'check_' || app.page_alias)) check_method,
+                      lower(coalesce(p_insert_method, 'merge_' || app.page_alias)) insert_method,
                       lower(p_update_method) update_method,
-                      lower(p_delete_method) delete_method
+                      lower(coalesce(p_delete_method, 'delete_' || app.page_alias)) delete_method
                  from apex_application_pages app
                  join apex_application_page_proc apo
                    on app.application_id = apo.application_id

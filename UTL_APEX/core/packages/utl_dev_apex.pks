@@ -75,10 +75,11 @@ as
   function get_form_methods(
     p_application_id in binary_integer,
     p_page_id in binary_integer,
-    p_insert_method in varchar2,
-    p_update_method in varchar2,
-    p_delete_method in varchar2,
-    p_static_id in varchar2 default null)
+    p_static_id in varchar2 default null,
+    p_check_method in varchar2 default null,
+    p_insert_method in varchar2 default null,
+    p_update_method in varchar2 default null,
+    p_delete_method in varchar2 default null)
     return clob;
   
   
