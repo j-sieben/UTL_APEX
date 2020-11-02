@@ -786,7 +786,7 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
   exception
     when others then
       dbms_output.put_line(l_stmt);
-      pit.sql_exception;
+      pit.handle_exception;
       raise;
   end get_collection_methods;
   

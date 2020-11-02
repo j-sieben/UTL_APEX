@@ -409,7 +409,7 @@ as
     return l_number;
   exception
     when others then
-      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'NUMBER'));
+      pit.handle_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'NUMBER'));
       return null;
   end get_number;
 
@@ -441,7 +441,7 @@ as
     return l_date;
   exception
     when others then
-      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'DATE'));
+      pit.handle_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'DATE'));
       return null;
   end get_date;
 
@@ -479,7 +479,7 @@ as
     return coalesce(l_timestamp, l_timestamp_tz);
   exception
     when others then
-      pit.sql_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'TIMESTAMP'));
+      pit.handle_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'TIMESTAMP'));
       return null;
   end get_timestamp;
 
@@ -506,7 +506,7 @@ as
     return l_item.item_value;
   exception
     when msg.PAGE_ITEM_MISSING_ERR then
-      pit.sql_exception(msg.SQL_ERROR);
+      pit.handle_exception(msg.SQL_ERROR);
       raise;
   end get_value;
 
