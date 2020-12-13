@@ -3,7 +3,10 @@ as
 
   -- Private type declarations
   -- Private constant declarations
-  C_ROW_STATUS constant ora_name_type := 'APEX$ROW_STATUS';
+  C_ROW_DML_ACTION constant ora_name_type := 'APEX$ROW_STATUS';
+  C_INSERT constant char(1 byte) := 'C';
+  C_UPDATE constant char(1 byte) := 'U';
+  C_DELETE constant char(1 byte) := 'D';
 
   -- Constants for supported APEX form types
   C_PAGE_FORM constant ora_name_type := 'FORM';
@@ -96,7 +99,7 @@ as
                p_values => p_value_list);
     $END
     return l_url;
-  end get_url;
+  end get_url;  
 
 
   /** Default initialization method */
@@ -1082,14 +1085,15 @@ select d.page_items
   begin
     pit.enter_optional;
 
-    -- Switch item_value_convention off to avoid exceptions when checking C_ROW_STATUS and no IG is present
+    -- Switch item_value_convention off to avoid exceptions when checking C_ROW_DML_ACTION and no IG is present
     g_item_value_convention := false;
 
     $IF utl_apex.ver_le_0500 $THEN
     l_result := get_request member of C_INSERT_WHITELIST;
     $ELSE
-    -- Starting with version 5.1, insert might be detected by using C_ROW_STATUS in interactive Grid or Form regions (>= 19.1)
-    if get_request member of C_INSERT_WHITELIST or get_value(C_ROW_STATUS) = C_INSERT_FLAG then
+    -- Starting with version 5.1, insert might be detected by using C_ROW_DML_ACTION in interactive Grid or Form regions (>= 19.1)
+    -- CAVE: Don't refactor to GET_VALUE instead of APEX_UTIL.GET_SESSION_STATE as C_ROW_DML_ACTION is no page item
+    if get_request member of C_INSERT_WHITELIST or apex_util.get_session_state(C_ROW_DML_ACTION) = C_INSERT_FLAG then
       l_result := true;
     end if;
     $END
@@ -1111,14 +1115,15 @@ select d.page_items
   begin
     pit.enter_optional;
 
-    -- Switch item_value_convention off to avoid exceptions when checking C_ROW_STATUS and no IG is present
+    -- Switch item_value_convention off to avoid exceptions when checking C_ROW_DML_ACTION and no IG is present
     g_item_value_convention := false;
 
     $IF utl_apex.ver_le_0500 $THEN
     l_result := get_request member of C_UPDATE_WHITELIST;
     $ELSE
-    -- Starting with version 5.1, insert might be detected by using C_ROW_STATUS in interactive Grid or Form regions (>= 19.1)
-    if get_request member of C_UPDATE_WHITELIST or get_value(C_ROW_STATUS) = C_UPDATE_FLAG then
+    -- Starting with version 5.1, insert might be detected by using C_ROW_DML_ACTION in interactive Grid or Form regions (>= 19.1)
+    -- CAVE: Don't refactor to GET_VALUE instead of APEX_UTIL.GET_SESSION_STATE as C_ROW_DML_ACTION is no page item
+    if get_request member of C_UPDATE_WHITELIST or apex_util.get_session_state(C_ROW_DML_ACTION) = C_UPDATE_FLAG then
       l_result := true;
     end if;
     $END
@@ -1140,14 +1145,15 @@ select d.page_items
   begin
     pit.enter_optional;
 
-    -- Switch item_value_convention off to avoid exceptions when checking C_ROW_STATUS and no IG is present
+    -- Switch item_value_convention off to avoid exceptions when checking C_ROW_DML_ACTION and no IG is present
     g_item_value_convention := false;
 
     $IF utl_apex.ver_le_0500 $THEN
     l_result := get_request member of C_DELETE_WHITELIST;
     $ELSE
-    -- Starting with version 5.1, insert might be detected by using C_ROW_STATUS in interactive Grid or Form regions (>= 19.1)
-    if get_request member of C_DELETE_WHITELIST or get_value(C_ROW_STATUS) = C_DELETE_FLAG then
+    -- Starting with version 5.1, insert might be detected by using C_ROW_DML_ACTION in interactive Grid or Form regions (>= 19.1)
+    -- CAVE: Don't refactor to GET_VALUE instead of APEX_UTIL.GET_SESSION_STATE as C_ROW_DML_ACTION is no page item
+    if get_request member of C_DELETE_WHITELIST or apex_util.get_session_state(C_ROW_DML_ACTION) = C_DELETE_FLAG then
       l_result := true;
     end if;
     $END
@@ -1553,7 +1559,8 @@ select d.page_items
     p_message_name in ora_name_type default msg.ASSERT_DATATYPE,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
-    p_region_id in ora_name_type default null)
+    p_region_id in ora_name_type default null,
+    p_accept_null in boolean default true)
   as
   begin
     pit.enter_optional;
@@ -1562,7 +1569,8 @@ select d.page_items
       p_type => p_type,
       p_format_mask => p_format_mask,
       p_message_name => p_message_name,
-      p_msg_args => coalesce(p_msg_args, msg_args(p_value, p_type)));
+      p_msg_args => coalesce(p_msg_args, msg_args(p_value, p_type)),
+      p_accept_null => p_accept_null);
     pit.leave_optional;
   exception
     when others then

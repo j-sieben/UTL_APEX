@@ -617,7 +617,8 @@ as
     p_message_name in ora_name_type default msg.ASSERT_DATATYPE,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
-    p_region_id in ora_name_type default null);
+    p_region_id in ora_name_type default null,
+    p_accept_null in boolean default true);
     
   
   /** Method to encapsulate PIT collection mode error treatment
