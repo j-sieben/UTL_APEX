@@ -5,7 +5,7 @@ begin
   select count(*)
     into l_is_installed
 	  from dba_tab_privs
-   where grantee = '&INSTALL_USER.'
+   where '&INSTALL_USER.' in (grantee, owner)
      and type = 'PACKAGE'
 	   and table_name in ('PIT', 'UTL_TEXT');
   if l_is_installed < 2 then

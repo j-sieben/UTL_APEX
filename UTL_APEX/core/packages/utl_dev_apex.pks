@@ -28,15 +28,18 @@ as
   procedure init_owa;
   
   /** Helper to create a basic table api
-   * @param  p_owner            Owner of the table or view the API aims at
-   * @param  p_table_name       Name of the table or view the API aims at
-   * @param  p_short_name       Abbreviated table name. Is used for method names
-   * @param  p_pk_insert        Flag to indicate whether PK columns are part of the insert 1 or not 0
-   *                            Useful if the PK is created using a trigger (e.g. SYS_GUID())
-   *                            Default 1: PK columns are part of insert.
-   * @param  p_pk_columns       Optional list of pk column names if P_TABLE_NAME is a view
-   * @param  p_exclude_columns  Optional list of column names the API shall ignore
-   *                            Useful to suppress housekeeping columns like VALID_FROM/TO etc.
+   * @param  p_table_name          Name of the table or view the API aims at
+   * @param  p_short_name          Abbreviated table name. Is used for method names
+   * @param [p_owner]              Owner of the table or view the API aims at
+   * @param [p_pk_insert]          Flag to indicate whether PK columns are part of the insert 1 or not 0
+   *                               Useful if the PK is created using a trigger (e.g. SYS_GUID())
+   *                               Default 1: PK columns are part of insert.
+   * @param [p_pk_columns]         Optional list of pk column names if P_TABLE_NAME is a view without constraints
+   * @param [p_exclude_columns]    Optional list of column names to be ignored by the API
+   *                               Useful to suppress housekeeping columns like VALID_FROM/TO etc.
+   * @param [p_include_table_view] Flag to indicate whether a table view has to be generated when creating a
+   *                               TAPI on a table. If set to UTL_APEX.C_TRUE (default) the access methods
+   *                               reference the view instead of the table.
    * @return CLOB containing code snippets to be included into a package
    * @usage  This method assumes that the objects (table and or view) ar accessible by
    *         the actual schema.
@@ -44,14 +47,16 @@ as
    *         - DELETE method, expecting a record of table/view%rowtype
    *         - MERGE  method, expecting a record of table/view%rowtype
    *         - MERGE  method, overloaded version with parameter list
+   *         If the referenced object is a table, an access view is also provided
    */
   function get_table_api(
     p_table_name in utl_apex.ora_name_type,
     p_short_name in utl_apex.ora_name_type,
     p_owner in utl_apex.ora_name_type default user,
-    p_pk_insert in utl_apex.flag_type default utl_apex.C_TRUE,
+    p_pk_insert in utl_apex.flag_type default utl_apex.c_true,
     p_pk_columns in char_table default null,
-    p_exclude_columns in char_table default null)
+    p_exclude_columns in char_table default null,
+    p_include_table_view in utl_apex.flag_type default utl_apex.c_true)
     return clob;
   
   

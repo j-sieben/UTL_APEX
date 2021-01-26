@@ -142,11 +142,18 @@ as
   end get_workspace_id;
 
 
-  function get_application_id
+  function get_application_id(
+    p_ignore_translation in flag_type default C_TRUE)
     return number
   as
+    l_application_id apex_applications.application_id%type;
   begin
-    return apex_application.g_flow_id;
+    if p_ignore_translation = C_TRUE then
+      l_application_id := apex_application.g_flow_id;
+    else
+      l_application_id := coalesce(apex_application.g_translated_flow_id, apex_application.g_flow_id);
+    end if;
+    return l_application_id;
   end get_application_id;
 
 
@@ -158,11 +165,18 @@ as
   end get_application_alias;
 
 
-  function get_page_id
+  function get_page_id(
+    p_ignore_translation in flag_type default C_TRUE)
     return number
   as
+    l_page_id apex_application_pages.page_id%type;
   begin
-    return apex_application.g_flow_step_id;
+    if p_ignore_translation = C_TRUE then
+      l_page_id := apex_application.g_flow_step_id;
+    else
+      l_page_id := coalesce(apex_application.g_translated_page_id, apex_application.g_flow_step_id);
+    end if;
+    return l_page_id;
   end get_page_id;
 
 

@@ -19,8 +19,12 @@ q'{   */\CR\}' ||
 q'{  procedure copy_#PAGE_ALIAS#\CR\}' || 
 q'{  as\CR\}' || 
 q'{  begin\CR\}' || 
+q'{    pit.enter_detailed('copy_#PAGE_ALIAS#');\CR\}' || 
+q'{  \CR\}' || 
 q'{    g_page_values := utl_apex.get_page_values#STATIC_ID|('|')|#;\CR\}' || 
 q'{    #COLUMN_LIST#\CR\}' || 
+q'{  \CR\}' || 
+q'{    pit.leave_detailed;\CR\}' || 
 q'{  end copy_#PAGE_ALIAS#;\CR\}' || 
 q'{    \CR\}' || 
 q'{-- METHOD IMPELEMENTATON\CR\}' || 
@@ -76,8 +80,12 @@ q'{   */\CR\}' ||
 q'{  procedure copy_#PAGE_ALIAS#\CR\}' || 
 q'{  as\CR\}' || 
 q'{  begin\CR\}' || 
+q'{    pit.enter_detailed('copy_#PAGE_ALIAS#');\CR\}' || 
+q'{  \CR\}' || 
 q'{    g_page_values := utl_apex.get_page_values#STATIC_ID|('|')|#;\CR\}' || 
 q'{    #COLUMN_LIST#\CR\}' || 
+q'{  \CR\}' || 
+q'{    pit.leave_detailed;\CR\}' || 
 q'{  end copy_#PAGE_ALIAS#;\CR\}' || 
 q'{    \CR\}' || 
 q'{-- METHOD IMPLEMENTATIONS\CR\}' || 

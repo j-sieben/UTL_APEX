@@ -80,13 +80,15 @@ as
     p_application_id in number)
     return number;
 
-  function get_application_id
+  function get_application_id(
+    p_ignore_translation in flag_type default C_TRUE)
     return number;
 
   function get_application_alias
     return varchar2;
     
-  function get_page_id
+  function get_page_id(
+    p_ignore_translation in flag_type default C_TRUE)
     return number;
     
   function get_page_alias

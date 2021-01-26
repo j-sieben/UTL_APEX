@@ -145,108 +145,25 @@ as
   end get_script_for_page_items;
   
   
-  /************ INTERFACE **********/
-  procedure create_session(
-    p_app_id in apex_applications.application_id%type,
-    p_app_page_id in apex_application_pages.page_id%type default 1,
-    p_app_user in apex_workspace_activity_log.apex_user%type)
-  as
-    $IF utl_apex.ver_le_05 $THEN
-    l_workspace_id apex_applications.workspace_id%type;
-    l_cgivar_name owa.vc_arr;
-    l_cgivar_val owa.vc_arr;
-    $END
-  begin
-    if apex_application.g_instance is null then
-      $IF utl_apex.ver_le_05 $THEN
-      htp.init;
-    
-      l_cgivar_name(1) := 'REQUEST_PROTOCOL';
-      l_cgivar_val(1) := 'HTTP';
-    
-      owa.init_cgi_env(
-        num_params => 1,
-        param_name => l_cgivar_name,
-        param_val => l_cgivar_val );
-    
-      select workspace_id
-        into l_workspace_id
-        from apex_applications
-       where application_id = p_app_id;
-    
-      wwv_flow_api.set_security_group_id(l_workspace_id);
-    
-      apex_application.g_instance := 1;
-      apex_application.g_flow_id := p_app_id;
-      apex_application.g_flow_step_id := p_app_page_id;
-    
-      apex_custom_auth.post_login(
-        p_uname => p_app_user,
-        p_session_id => null, -- could use APEX_CUSTOM_AUTH.GET_NEXT_SESSION_ID
-        p_app_page => apex_application.g_flow_id||':'||p_app_page_id);
-      $ELSE
-      apex_session.create_session(p_app_id, p_app_page_id, p_app_user);
-      $END
-    end if;
-  end create_session;
-  
-  
-  procedure drop_session
-  as
-  begin
-    rollback;
-    $IF utl_apex.ver_le_05 $THEN
-    $ELSE
-    if apex_application.g_instance is not null then
-      apex_session.delete_session;
-    end if;
-    commit;
-    $END
-  end drop_session;
-  
-  
-  procedure init_owa
-  as
-    l_cgivar_name owa.vc_arr;
-    l_cgivar_value owa.vc_arr;
-  begin
-    htp.init;
-    l_cgivar_name(1) := 'REQUEST_PROTOCOL';
-    l_cgivar_value(1) := 'HTTP';
-    owa.init_cgi_env(
-      num_params => 1,
-      param_name => l_cgivar_name,
-      param_val => l_cgivar_value);
-  end init_owa;
-  
-
-  function get_table_api(
+  /** Method to get a list of columns of a database table or view
+   * @param  p_owner            Owner of the table or view the API aims at
+   * @param  p_table_name       Name of the table or view the API aims at
+   * @param  p_pk_columns       Optional list of pk column names if P_TABLE_NAME is a view without constraints
+   * @param  p_exclude_columns  Optional list of column names to be ignored by the API
+   *                            Useful to suppress housekeeping columns like VALID_FROM/TO etc.
+   * @return Instance of UTL_DEV_APEX_COL_TAB with all selected columns
+   * @usage  Is used to calculate a list of all columns, respecting the settings for P_PK_COLUMNS and P_EXCLUDE_COLUMNS
+   */
+  function get_column_list(
+    p_owner in utl_apex.ora_name_type, 
     p_table_name in utl_apex.ora_name_type,
-    p_short_name in utl_apex.ora_name_type,
-    p_owner in utl_apex.ora_name_type default user,
-    p_pk_insert in utl_apex.flag_type default utl_apex.c_true,
-    p_pk_columns in char_table default null,
-    p_exclude_columns in char_table default null)
-    return clob
+    p_pk_columns in char_table, 
+    p_exclude_columns in char_table) 
+    return utl_dev_apex_col_tab
   as
-    C_UTTM_TYPE constant utl_apex.ora_name_type := 'TABLE_API';
-    C_COLUMN constant utl_apex.ora_name_type := 'COLUMN';
-    l_clob clob;
     l_column_list utl_dev_apex_col_tab;
   begin
-    pit.enter_mandatory(
-      p_params => msg_params(
-                    msg_param('p_table_name', p_table_name),
-                    msg_param('p_short_name', p_short_name),
-                    msg_param('p_owner', p_owner),
-                    msg_param('p_pk_insert', p_pk_insert)));
-      
-    -- check input parameters
-    pit.assert_not_null(p_table_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_TABLE_NAME'));
-    pit.assert_not_null(p_short_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_SHORT_NAME'));
-    
-    -- buffer column list in local variable for better performance on large data dictionaries
-      with params as (
+    with params as (
            -- Get input params and templates
            select upper(p_owner) owner,
                   upper(p_table_name) table_name,
@@ -289,9 +206,29 @@ as
               order by col.column_id) as utl_dev_apex_col_tab)
          into l_column_list
          from dual;
+         
+    return l_column_list;
+  end get_column_list;
+  
+  
+  procedure get_method_list(
+    p_owner in utl_apex.ora_name_type default user,
+    p_table_name IN utl_apex.ora_name_type, 
+    p_short_name IN utl_apex.ora_name_type, 
+    p_pk_insert IN utl_apex.flag_type,
+    p_pk_columns in char_table, 
+    p_exclude_columns in char_table, 
+    p_script IN OUT NOCOPY clob) 
+  as
+    C_UTTM_TYPE constant utl_apex.ora_name_type := 'TABLE_API';
+    C_COLUMN constant utl_apex.ora_name_type := 'COLUMN';
+    l_column_list utl_dev_apex_col_tab;
+  begin
+        
+    -- buffer column list in local variable for better performance on large data dictionaries
+    l_column_list := get_column_list(p_owner, p_table_name, p_pk_columns, p_exclude_columns);
     
-    -- generate method list
-      with params as (
+    with params as (
            -- Get input params and templates
            select lower(p_table_name) table_name,
                   lower(p_short_name) short_name,
@@ -393,9 +330,226 @@ as
                from params p
               where uttm_name = 'METHODS'
                 and uttm_mode = C_DEFAULT)) resultat
-      into l_clob
+      into p_script
       from dual;
+          
+  end get_method_list;
   
+  
+  /** Method to generate a table view if requested and required
+   * @param  p_owner               Owner of the table or view the API aims at
+   * @param  p_table_name          Name of the table or view the API aims at
+   * @param  p_include_table_view  Flag to indicate whether a table view has to be generated when creating a
+   *                               TAPI on a table. If set to UTL_APEX.C_TRUE (default) the access methods
+   *                               reference the view instead of the table.
+   * @usage  If requested and if the object is a table, this method generates a script to create a 1:1 view for 
+   *         the underlying table, including primary and foreign key constraints.
+   */
+  procedure generate_table_view(
+    p_owner in utl_apex.ora_name_type, 
+    p_table_name in out nocopy utl_apex.ora_name_type, 
+    p_include_table_view in utl_apex.flag_type, 
+    p_code out nocopy clob)
+  as
+    c_name_extension constant varchar2(10 byte) := '_v';
+    l_constraints clob;
+    l_table_exists utl_apex.flag_type;
+  begin
+    dbms_lob.createtemporary(p_code, false, dbms_lob.call);
+    
+    if p_include_table_view = utl_apex.C_TRUE then
+      select null
+        into l_table_exists
+        from all_objects
+       where owner = p_owner
+         and object_name = p_table_name
+         and object_type in ('TABLE');
+         
+      -- Primary and foreign key constraints
+      with templates as(
+         select 'alter table #TABLE_NAME# add constraint #CONSTRAINT_NAME# primary key (#COLUMN_LIST#) disable novalidate;' template, 'P' t_mode, c_name_extension name_extension from dual union all
+         select 'alter table #TABLE_NAME# add constraint #CONSTRAINT_NAME# foreign key (#COLUMN_LIST#) references #REF_TABLE_NAME#(#REF_COLUMN_LIST#) disable novalidate;', 'R', c_name_extension from dual union all
+         select '#COLUMN_NAME#', 'COL_LIST', null from dual union all
+         select '#REF_COLUMN_NAME#', 'REF_COL_LIST', null from dual)
+      select utl_text.generate_text(cursor(
+               select template, 
+                      lower(con.constraint_name) || name_extension constraint_name, 
+                      lower(con.table_name) || name_extension table_name, 
+                      lower(ref.table_name) ref_table_name,
+                      utl_text.generate_text(cursor(
+                        select template, lower(col.column_name) column_name
+                          from user_cons_columns col
+                          join templates
+                            on t_mode = 'COL_LIST'
+                         where col.constraint_name = con.constraint_name
+                         order by position), ', ') column_list,
+                      utl_text.generate_text(cursor(
+                        select template, lower(col.column_name) ref_column_name
+                          from user_cons_columns col
+                          join templates
+                            on t_mode = 'REF_COL_LIST'
+                         where col.constraint_name = con.r_constraint_name
+                         order by position), ', ') ref_column_list
+                 from user_constraints con
+                 join templates
+                   on con.constraint_type = t_mode
+                 left join user_constraints ref
+                   on con.r_constraint_name = ref.constraint_name
+                where con.table_name = p_table_name),
+                chr(10) || chr(10)) resultat
+      into l_constraints
+      from dual;
+      
+      -- View and constraints
+      with templates as(
+        select q'^create or replace view #VIEW_NAME# as 
+select #COLUMN_LIST#
+  from #TABLE_NAME#;
+    
+#CONSTRAINTS#
+  ^' template
+          from dual)
+      select utl_text.generate_text(cursor(
+               select template, 
+                      lower(table_name) table_name, 
+                      substr(lower(table_name), 1, 126) || c_name_extension view_name, 
+                      l_constraints constraints,
+                      utl_text.generate_text(cursor(
+                        select '#COLUMN_NAME#' template, lower(col.column_name) column_name
+                          from all_tab_columns col
+                         where col.owner = tab.owner
+                           and col.table_name = tab.table_name),
+                        ',' || chr(10) || '       ') column_list
+                 from all_tables tab
+                cross join templates
+                where owner = p_owner
+                  and table_name = p_table_name)) 
+        into p_code
+        from dual;
+        
+      p_table_name := p_table_name || C_NAME_EXTENSION;
+        
+    end if;
+  exception
+    when NO_DATA_FOUND then
+      -- table view requested but no table was referenced. Ignore
+      null;
+  end generate_table_view;
+  
+  
+  /************ INTERFACE **********/
+  procedure create_session(
+    p_app_id in apex_applications.application_id%type,
+    p_app_page_id in apex_application_pages.page_id%type default 1,
+    p_app_user in apex_workspace_activity_log.apex_user%type)
+  as
+    $IF utl_apex.ver_le_05 $THEN
+    l_workspace_id apex_applications.workspace_id%type;
+    l_cgivar_name owa.vc_arr;
+    l_cgivar_val owa.vc_arr;
+    $END
+  begin
+    if apex_application.g_instance is null then
+      $IF utl_apex.ver_le_05 $THEN
+      htp.init;
+    
+      l_cgivar_name(1) := 'REQUEST_PROTOCOL';
+      l_cgivar_val(1) := 'HTTP';
+    
+      owa.init_cgi_env(
+        num_params => 1,
+        param_name => l_cgivar_name,
+        param_val => l_cgivar_val );
+    
+      select workspace_id
+        into l_workspace_id
+        from apex_applications
+       where application_id = p_app_id;
+    
+      wwv_flow_api.set_security_group_id(l_workspace_id);
+    
+      apex_application.g_instance := 1;
+      apex_application.g_flow_id := p_app_id;
+      apex_application.g_flow_step_id := p_app_page_id;
+    
+      apex_custom_auth.post_login(
+        p_uname => p_app_user,
+        p_session_id => null, -- could use APEX_CUSTOM_AUTH.GET_NEXT_SESSION_ID
+        p_app_page => apex_application.g_flow_id||':'||p_app_page_id);
+      $ELSE
+      apex_session.create_session(p_app_id, p_app_page_id, p_app_user);
+      $END
+    end if;
+  end create_session;
+  
+  
+  procedure drop_session
+  as
+  begin
+    rollback;
+    $IF utl_apex.ver_le_05 $THEN
+    $ELSE
+    if apex_application.g_instance is not null then
+      apex_session.delete_session;
+    end if;
+    commit;
+    $END
+  end drop_session;
+  
+  
+  procedure init_owa
+  as
+    l_cgivar_name owa.vc_arr;
+    l_cgivar_value owa.vc_arr;
+  begin
+    htp.init;
+    l_cgivar_name(1) := 'REQUEST_PROTOCOL';
+    l_cgivar_value(1) := 'HTTP';
+    owa.init_cgi_env(
+      num_params => 1,
+      param_name => l_cgivar_name,
+      param_val => l_cgivar_value);
+  end init_owa;
+  
+
+  function get_table_api(
+    p_table_name in utl_apex.ora_name_type,
+    p_short_name in utl_apex.ora_name_type,
+    p_owner in utl_apex.ora_name_type default user,
+    p_pk_insert in utl_apex.flag_type default utl_apex.c_true,
+    p_pk_columns in char_table default null,
+    p_exclude_columns in char_table default null,
+    p_include_table_view in utl_apex.flag_type default utl_apex.c_true)
+    return clob
+  as
+    l_script clob;
+    l_clob clob;
+    l_column_list utl_dev_apex_col_tab := utl_dev_apex_col_tab();
+    l_table_name utl_apex.ora_name_type;
+  begin
+    pit.enter_mandatory(
+      p_params => msg_params(
+                    msg_param('p_table_name', p_table_name),
+                    msg_param('p_short_name', p_short_name),
+                    msg_param('p_owner', p_owner),
+                    msg_param('p_pk_insert', p_pk_insert),
+                    msg_param('p_include_table_view', p_include_table_view)));
+      
+    -- check input parameters
+    pit.assert_not_null(p_table_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_TABLE_NAME'));
+    pit.assert_not_null(p_short_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_SHORT_NAME'));
+    
+    -- Initialize
+    l_table_name := p_table_name;
+    
+    -- If requested and necessary, add create view statement and change table name
+    generate_table_view(p_owner, l_table_name, p_include_table_view, l_clob);
+    
+    -- generate method list
+    get_method_list(p_owner, l_table_name, p_short_name, p_pk_insert, p_pk_columns, p_exclude_columns, l_script);
+      
+    dbms_lob.append(l_clob, l_script);
+    
     pit.leave_mandatory;
     return l_clob;
   end get_table_api;
@@ -642,7 +796,6 @@ select utl_text.generate_text(cursor(
       l_item_view_name := 'UTL_DEV_APEX_FORM_COLLECTION';
     end if;
     
-    -- generate DDL for view
     l_stmt := utl_text.bulk_replace(C_VIEW_STMT, char_table(
                      'ITEM_VIEW_NAME', l_item_view_name,
                      'STATIC_ID', p_static_id,
