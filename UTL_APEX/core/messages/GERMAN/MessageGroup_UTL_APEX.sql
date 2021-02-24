@@ -112,6 +112,15 @@ begin
     p_pms_pml_name => 'GERMAN',
     p_error_number => -20000);
 
+  pit_admin.merge_message(
+    p_pms_name => 'UTL_ITEM_IS_REQUIRED',
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_text => q'^Element »#LABEL#« ist ein Pflichtfeld.^',
+    p_pms_description => q'^Offensichtlich.^',
+    p_pms_pse_id => 30,
+    p_pms_pml_name => 'GERMAN',
+    p_error_number => -20000);
+
   commit;
   pit_admin.create_message_package;
 end;

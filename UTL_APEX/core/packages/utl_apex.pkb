@@ -199,7 +199,7 @@ as
     l_default_timestamp_format ora_name_type;
     C_ITEM_NAME_BLACKLIST constant char_table := char_table('APEX$ROW_STATUS');
   begin
-    pit.enter_detailed(
+    pit.enter_detailed('get_page_element',
       p_params => msg_params(
                     msg_param('p_page_item', p_page_item)));
 
@@ -218,9 +218,11 @@ as
       l_page_id := get_page_id;
       l_default_date_format := get_default_date_format;
       l_default_timestamp_format := get_default_timestamp_format;
+      
+      pit.debug(msg.PIT_PASS_MESSAGE, msg_args('App: ' || l_application_id || ', Page: ' || l_page_id || ', Item: ' || p_page_item));
 
-      select item_name, label, format_mask, apex_util.get_session_state(item_name)
-        into p_item.item_name, p_item.item_label, p_item.format_mask, p_item.item_value
+      select item_name, label, format_mask, apex_util.get_session_state(item_name), C_FALSE, region_id, null
+        into p_item.item_name, p_item.item_label, p_item.format_mask, p_item.item_value, p_item.is_column, p_item.region_id, p_item.item_alias
         from apex_application_page_items
        where application_id = l_application_id
          and page_id = l_page_id
@@ -233,11 +235,11 @@ as
                 when instr(data_type, 'DATE') > 0 then l_default_date_format
                 when instr(data_type, 'TIMESTAMP') > 0 then l_default_timestamp_format
               end) format_mask,
-            apex_util.get_session_state(name)
+             apex_util.get_session_state(name), C_TRUE, region_id, column_id
         from apex_appl_page_ig_columns
        where application_id = l_application_id
          and page_id = l_page_id
-         and name = l_page_item;
+         and name = upper(p_page_item); -- IG columns without page prefix
     end if;
 
     pit.leave_detailed(
@@ -250,7 +252,7 @@ as
     when NO_DATA_FOUND then
       pit.leave_detailed(
         p_params => msg_params(
-                      msg_param('No item found', null)));
+                      msg_param('Result', 'No item found')));
   end get_page_element;
 
 
@@ -692,7 +694,7 @@ as
     p_application_id in number,
     p_page_id in number,
     p_only_columns in flag_type default null)
-    return utl_apex_page_item_t
+    return utl_apex_page_item_tab
     pipelined
   as
     l_form_type ora_name_type;
@@ -706,7 +708,7 @@ select d.page_items
    and (is_column_based = '#ONLY_COLUMNS#' or '#ONLY_COLUMNS#' is null)^';
     l_stmt max_char;
     l_cur sys_refcursor;
-    l_row utl_apex_page_item;
+    l_row utl_apex_page_item_t;
     l_row_count number := 0;
   begin
     pit.enter_detailed(
@@ -1601,6 +1603,7 @@ select d.page_items
   as
     type error_code_map_t is table of ora_name_type index by ora_name_type;
     l_error_code_map error_code_map_t;
+    l_error_code ora_name_type;
     l_message_list pit_message_table;
     l_message message_type;
     l_item item_rec;
@@ -1613,7 +1616,7 @@ select d.page_items
       if p_mapping is not null then
         for i in 1 .. p_mapping.count loop
           if mod(i, 2) = 1 then
-            l_error_code_map(p_mapping(i)) := p_mapping(i+1);
+            l_error_code_map(upper(p_mapping(i))) := upper(p_mapping(i+1));
           end if;
         end loop;
       end if;
@@ -1621,14 +1624,28 @@ select d.page_items
       for i in 1 .. l_message_list.count loop
         l_message := l_message_list(i);
         if l_message.severity in (pit.level_fatal, pit.level_error) then
-          if l_error_code_map.exists(l_message.error_code) then
-            get_page_element(l_error_code_map(l_message.error_code), l_item);
-            apex_error.add_error(
-              p_message => replace(l_message.message_text, '#LABEL#', l_item.item_label),
-              p_additional_info => l_message.message_description,
-              p_display_location => apex_error.c_inline_with_field_and_notif,
-              p_page_item_name => l_item.item_name);
+          pit.verbose(msg.PIT_PASS_MESSAGE, msg_args('Error occured'));
+          l_error_code := upper(l_message.error_code);
+          if l_error_code_map.exists(l_error_code) then
+            pit.verbose(msg.PIT_PASS_MESSAGE, msg_args('Error code found, retrieve item information'));
+            get_page_element(l_error_code_map(l_error_code), l_item);
+            if get_bool(l_item.is_column) then
+              apex_error.add_error(
+                p_message => replace(l_message.message_text, '#LABEL#', l_item.item_label),
+                p_additional_info => l_message.message_description,
+                p_display_location => apex_error.c_inline_with_field_and_notif,
+                p_region_id => l_item.region_id,
+                p_column_alias => l_item.item_alias,
+                p_row_num => 2);
+            else
+              apex_error.add_error(
+                p_message => replace(l_message.message_text, '#LABEL#', l_item.item_label),
+                p_additional_info => l_message.message_description,
+                p_display_location => apex_error.c_inline_with_field_and_notif,
+                p_page_item_name => 'C' || l_item.item_name);
+            end if;
           else
+            pit.verbose(msg.PIT_PASS_MESSAGE, msg_args('No mapping found'));
             apex_error.add_error(
               p_message => l_message.message_text,
               p_additional_info => l_message.message_description,

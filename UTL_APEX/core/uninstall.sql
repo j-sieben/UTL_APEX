@@ -11,7 +11,7 @@ declare
           select object_name name, object_type type
             from all_objects
            where object_name in (
-                 'UTL_DEV_APEX_COL_T', 'UTL_DEV_APEX_COL_TAB', 'UTL_APEX_PAGE_ITEM', 'UTL_APEX_PAGE_ITEM_T', -- Types
+                 'UTL_DEV_APEX_COL_T', 'UTL_DEV_APEX_COL_TAB', 'UTL_APEX_PAGE_ITEM_T', 'UTL_APEX_PAGE_ITEM_TAB', -- Types
                  'UTL_APEX', 'UTL_APEX_DDL',  -- Packages
                  'UTL_DEV_APEX_COLLECTION', 'UTL_DEV_APEX_FORM_COLLECTION', 'UTL_APEX_FETCH_ROW_COLUMNS', 'UTL_APEX_FORM_REGION_COLUMNS', 'UTL_APEX_IG_COLUMNS', 'UTL_APEX_PAGE_ITEMS', -- Views
                  '',  -- Tabellen

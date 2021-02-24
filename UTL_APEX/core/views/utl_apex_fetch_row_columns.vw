@@ -6,7 +6,7 @@ select /*+ no_merge (p) */
        i.application_id,
        i.page_id,
        null static_id,
-       utl_apex_page_item(lower(c.table_name), lower(substr(i.item_name, p.prefix)), i.item_name, c.data_type, i.format_mask) page_items,
+       utl_apex_page_item_t(lower(c.table_name), lower(substr(i.item_name, p.prefix)), i.item_name, i.label, c.data_type, i.format_mask) page_items,
        case when c.column_name is not null then 'Y' else 'N' end is_column_based
   from apex_application_page_items i
   join apex_application_page_proc pr

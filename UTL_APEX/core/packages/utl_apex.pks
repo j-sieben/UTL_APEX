@@ -18,12 +18,21 @@ as
   subtype page_value_t is utl_text.clob_tab;
   subtype string_table is wwv_flow_global.vc_arr2;
   
-  /** Type to represent a session state item with label and converted session state values */
+  /** Type to represent a session state item with label and converted session state values 
+   * %param  item_name    Name of the item. If a column is referenced, no page prefix is used
+   * %param  itm_label    The actually set item label
+   * %param  format_mask  If DATE or NUMBER, the actually set format mask or the default format mask
+   * %param  item_value   The actual item value
+   * %param  is_column    Flag to indicate whether the item is a column in an interactive grid
+   * %param  region_id    ID of the region, necessary when showing errors in an interactive grid
+   */
   type item_rec is record(
     item_name ora_name_type,
     item_label ora_name_type,
     format_mask ora_name_type,
-    item_value max_char);
+    item_value max_char,
+    is_column flag_type,
+    region_id number);
   
   type item_tab is table of item_rec;
   
@@ -333,7 +342,7 @@ as
    *         - STATIC_ID (NULL if not present),
    *         - APPLCIATION_ID / PAGE_ID
    *         - IS_COLUMN_BASED (flag_type): Flag that indicates whether the page item value is taken from a database column
-   *         - PAGE_ITEMS (utl_apex_page_item): Instance of the user defined type. @see UTL_APEX_PAGE_ITEM
+   *         - PAGE_ITEMS (utl_apex_page_item_t): Instance of the user defined type. @see UTL_APEX_PAGE_ITEM
    * @usage  Is used to read the page items along with meta data for these items from various APEX data dictionary views.
    *         The implementation must follow the guidelines outlined above, for examples see UTL_APEX_FETCH_ROW_COLUMNS view.
    */
@@ -343,7 +352,7 @@ as
     p_application_id in number,
     p_page_id in number,
     p_only_columns in flag_type default null)
-    return utl_apex_page_item_t
+    return utl_apex_page_item_tab
     pipelined;
     
     

@@ -31,11 +31,11 @@ prompt &s1.Type UTL_DEV_APEX_COL_T
 prompt &s1.Type UTL_DEV_APEX_COL_TAB
 @&TYPE_DIR.utl_dev_apex_col_tab.tps
 
-prompt &s1.Type UTL_APEX_PAGE_ITEM
-@&TYPE_DIR.utl_apex_page_item.tps
-
 prompt &s1.Type UTL_APEX_PAGE_ITEM_T
 @&TYPE_DIR.utl_apex_page_item_t.tps
+
+prompt &s1.Type UTL_APEX_PAGE_ITEM_TAB
+@&TYPE_DIR.utl_apex_page_item_tab.tps
 
 prompt
 prompt &section.

@@ -98,6 +98,15 @@ begin
     p_pms_pse_id => 30,
     p_pms_pmg_name => 'PIT',
     p_pms_pml_name => 'GERMAN');
+
+  pit_admin.merge_message(
+    p_pms_name => 'UTL_ITEM_IS_REQUIRED',
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_text => q'^Element "#LABEL#" is a mandatory field.^',
+    p_pms_description => q'^Obviously.^',
+    p_pms_pse_id => 30,
+    p_pms_pml_name => 'AMERICAN',
+    p_error_number => -20000);
     
   pit_admin.create_message_package;
 end;
