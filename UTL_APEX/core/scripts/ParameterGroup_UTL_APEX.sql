@@ -21,7 +21,15 @@ begin
     p_par_id => 'ITEM_VALUE_CONVENTION'
    ,p_par_pgr_id => 'UTL_APEX'
    ,p_par_description => 'Sets the convention on whether reading a session value from a non existing item throws an error or not.'
-   ,p_par_boolean_value => null
+   ,p_par_boolean_value => true
+   ,p_par_is_modifiable => null
+  );
+
+  param_admin.edit_parameter(
+    p_par_id => 'SHOW_ITEM_ERROR_AT_NOTIFICATION'
+   ,p_par_pgr_id => 'UTL_APEX'
+   ,p_par_description => 'Sets the convention on whether showing page item errors at the item only (FALSE) or at item and notification area (TRUE).'
+   ,p_par_boolean_value => true
    ,p_par_is_modifiable => null
   );
 

@@ -474,8 +474,8 @@ as
 
 
   /** Method to dynamically create an URL for an APEX application
-   * @param  p_url_template        Base part of the URL, consisting of APP_ALIAS:PAGE_ALIAS: Reference to the page to open.
-   * @param  p_hidden_item         Name of the hidden element the URL is stored at. Only applicable for the procedure overload
+   * @param [p_application]        Optional application id. If NULL, the actual application is chosen.
+   * @param [p_page]               Optional page id. If NULL, the actual page is chosen
    * @param [p_param_items]        colon separated list of parameter items to set
    * @param [p_value_items]        colon separated list of page items on the source page that will be passed to the target page
    * @param [p_value_list]         colon separated list of values that will be passed to the page. Is used only if P_VALUE_ITEMS is null
@@ -658,13 +658,26 @@ as
   
   /** Method to escape a CLOB instance for JSON
    * @param  p_text  CLOB instance that gets converted. 
-   * @usage  Wrapper around APEX_ESCAPE.JS_LITERAL without the limitation of 32K
+   * @usage  Wrapper around APEX_ESCAPE.JSON without the limitation of 32K
    *         Overloaded version as procedure and function
    */
   procedure escape_json(
     p_text in out nocopy clob);
     
   function escape_json(
+    p_text in clob)
+    return clob;
+    
+  
+  /** Method to escape a CLOB instance for JavaScript
+   * @param  p_text  CLOB instance that gets converted. 
+   * @usage  Wrapper around APEX_ESCAPE.JS_LITERAL without the limitation of 32K
+   *         Overloaded version as procedure and function
+   */
+  procedure escape_java_script(
+    p_text in out nocopy clob);
+    
+  function escape_java_script(
     p_text in clob)
     return clob;
 

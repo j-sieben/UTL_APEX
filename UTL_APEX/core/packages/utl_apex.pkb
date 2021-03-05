@@ -28,6 +28,7 @@ as
 
   g_item_value_convention boolean;
   g_item_prefix_convention binary_integer;
+  g_show_item_error apex_error.c_on_error_page%type;
 
   -- HELPER
   /** Method to download a blob file over the browser
@@ -108,6 +109,11 @@ as
   begin
     g_item_prefix_convention := param.get_integer(C_ITEM_PREFIX_CONVENTION, C_PARAM_GROUP);
     g_item_value_convention := param.get_boolean('ITEM_VALUE_CONVENTION', C_PARAM_GROUP);
+    if param.get_boolean('SHOW_ITEM_ERROR_AT_NOTIFICATION', C_PARAM_GROUP) then
+      g_show_item_error := apex_error.c_inline_with_field_and_notif;
+    else
+      g_show_item_error := apex_error.c_inline_with_field;
+    end if;
   end initialize;
 
 
@@ -1627,7 +1633,6 @@ select d.page_items
           pit.verbose(msg.PIT_PASS_MESSAGE, msg_args('Error occured'));
           l_error_code := upper(l_message.error_code);
           if l_error_code_map.exists(l_error_code) then
-            pit.verbose(msg.PIT_PASS_MESSAGE, msg_args('Error code found, retrieve item information'));
             get_page_element(l_error_code_map(l_error_code), l_item);
             if get_bool(l_item.is_column) then
               apex_error.add_error(
@@ -1638,14 +1643,22 @@ select d.page_items
                 p_column_alias => l_item.item_alias,
                 p_row_num => 2);
             else
-              apex_error.add_error(
-                p_message => replace(l_message.message_text, '#LABEL#', l_item.item_label),
-                p_additional_info => l_message.message_description,
-                p_display_location => apex_error.c_inline_with_field_and_notif,
-                p_page_item_name => 'C' || l_item.item_name);
+              if l_item.item_label is not null then
+                apex_error.add_error(
+                  p_message => replace(l_message.message_text, '#LABEL#', l_item.item_label),
+                  p_additional_info => l_message.message_description,
+                  p_display_location => g_show_item_error,
+                  p_page_item_name => l_item.item_name);
+              else
+                apex_error.add_error(
+                  p_message => l_message.message_text,
+                  p_additional_info => l_message.message_description,
+                  p_display_location => apex_error.c_inline_in_notification,
+                  p_page_item_name => l_item.item_name);
+              end if;
             end if;
           else
-            pit.verbose(msg.PIT_PASS_MESSAGE, msg_args('No mapping found'));
+            pit.warn(msg.PIT_PASS_MESSAGE, msg_args('No mapping found for error code ' || l_error_code));
             apex_error.add_error(
               p_message => l_message.message_text,
               p_additional_info => l_message.message_description,
@@ -1700,7 +1713,7 @@ select d.page_items
     dbms_lob.createtemporary(l_result, false, dbms_lob.call);
     while l_idx <= l_length loop
       l_chunk := dbms_lob.substr(p_text, l_chunk_size, l_idx);
-      l_chunk := trim('''' from apex_escape.js_literal(l_chunk));
+      l_chunk := trim('''' from apex_escape.json(l_chunk));
       dbms_lob.append(l_result, l_chunk);
       l_idx := l_idx + l_chunk_size;
     end loop;
@@ -1717,6 +1730,39 @@ select d.page_items
     escape_json(l_result);
     return l_result;
   end escape_json;
+
+
+  procedure escape_java_script(
+    p_text in out nocopy clob)
+  as
+    l_result clob;
+    l_chunk max_char;
+    -- Chunk size shouldn't exceed a quarter of max size because of UTF-8
+    l_chunk_size integer := 8191;
+    l_idx number := 1;
+    l_length number;
+  begin
+    l_length := dbms_lob.getlength(p_text);
+    dbms_lob.createtemporary(l_result, false, dbms_lob.call);
+    while l_idx <= l_length loop
+      l_chunk := dbms_lob.substr(p_text, l_chunk_size, l_idx);
+      l_chunk := trim('''' from apex_escape.js_literal(l_chunk));
+      dbms_lob.append(l_result, l_chunk);
+      l_idx := l_idx + l_chunk_size;
+    end loop;
+    p_text := l_result;
+  end escape_java_script;
+
+  function escape_java_script(
+    p_text in clob)
+    return clob
+  as
+    l_result clob;
+  begin
+    l_result := p_text;
+    escape_java_script(l_result);
+    return l_result;
+  end escape_java_script;
 
 begin
   initialize;
