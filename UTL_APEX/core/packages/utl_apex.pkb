@@ -24,37 +24,13 @@ as
   C_ITEM_PREFIX_CONVENTION constant ora_name_type := 'ITEM_PREFIX_CONVENTION';
 
   C_DATE constant ora_name_type := 'DATE';
-  C_DEFAULT constant ora_name_type := 'DEFAULT';
-
+  C_DEFAULT constant ora_name_type := 'DEFAULT';  
+  
   g_item_value_convention boolean;
   g_item_prefix_convention binary_integer;
   g_show_item_error apex_error.c_on_error_page%type;
 
   -- HELPER
-  /** Method to download a blob file over the browser
-   * @param  p_blob  The instance to download
-   * @param  p_file_name  File name of the downloaded blob instance
-   * @usage  Is used as the implementation for DOWNLOAD_CLOB/DOWNLOAD_BLOB
-   */
-  procedure download_file(
-   p_blob in blob,
-   p_file_name in varchar2)
-  as
-    l_blob blob := p_blob;
-  begin
-    -- Write http header
-    htp.init;
-    owa_util.mime_header('application/octet-stream', false, 'UTF-8');
-    htp.p('Content-length: ' || dbms_lob.getlength(p_blob));
-    htp.p('Content-Disposition: inline; filename="' || p_file_name || '"');
-    owa_util.http_header_close;
-
-    wpg_docload.download_file(l_blob);
-
-    stop_apex;
-  end download_file;
-
-
   /** Method to generate an URL based on APEX functionality
    * @param [p_application]        ID or alias of an APEX application. Defaults to the actual application alias
    * @param [p_page]               ID or alias of an APEX application page. Defaults to the actual page alias
@@ -146,6 +122,26 @@ as
      where application_id = p_application_id;
     return l_workspace_id;
   end get_workspace_id;
+  
+  
+  function get_help_websheet_id
+    return pls_integer
+  as
+    l_app_id pls_integer;
+    l_app_alias ora_name_type;
+  begin
+    pit.enter_mandatory;
+    
+    l_app_alias := get_application_alias;
+    
+    select application_id
+      into l_app_id
+      from apex_ws_applications
+     where application_name = l_app_alias;
+     
+    pit.leave_mandatory(msg_params(msg_param('ID', l_app_id)));
+    return l_app_id;
+  end get_help_websheet_id;
 
 
   function get_application_id(
@@ -226,26 +222,33 @@ as
       l_default_timestamp_format := get_default_timestamp_format;
       
       pit.debug(msg.PIT_PASS_MESSAGE, msg_args('App: ' || l_application_id || ', Page: ' || l_page_id || ', Item: ' || p_page_item));
-
-      select item_name, label, format_mask, apex_util.get_session_state(item_name), C_FALSE, region_id, null
-        into p_item.item_name, p_item.item_label, p_item.format_mask, p_item.item_value, p_item.is_column, p_item.region_id, p_item.item_alias
-        from apex_application_page_items
-       where application_id = l_application_id
-         and page_id = l_page_id
-         and item_name = l_page_item
-      union all
-      select name, heading,
-             coalesce(
-              format_mask,
-              case
-                when instr(data_type, 'DATE') > 0 then l_default_date_format
-                when instr(data_type, 'TIMESTAMP') > 0 then l_default_timestamp_format
-              end) format_mask,
-             apex_util.get_session_state(name), C_TRUE, region_id, column_id
-        from apex_appl_page_ig_columns
-       where application_id = l_application_id
-         and page_id = l_page_id
-         and name = upper(p_page_item); -- IG columns without page prefix
+      
+      with data as(
+            -- page items
+            select item_name, label, format_mask, apex_util.get_session_state(item_name) item_value, C_FALSE item_is_column, region_id, null column_id
+              from apex_application_page_items
+             where application_id = l_application_id
+               and page_id = l_page_id
+               and item_name = l_page_item
+            union all
+            -- IG columns
+            select name, heading,
+                   coalesce(
+                    format_mask,
+                    case
+                      when instr(data_type, 'DATE') > 0 then l_default_date_format
+                      when instr(data_type, 'TIMESTAMP') > 0 then l_default_timestamp_format
+                    end) format_mask,
+                   apex_util.get_session_state(name), C_TRUE, region_id, column_id
+              from apex_appl_page_ig_columns
+             where application_id = l_application_id
+               and page_id = l_page_id
+               and name = upper(p_page_item))
+      select item_name, label, format_mask, item_value, item_is_column, region_id, column_id
+        into p_item.item_name, p_item.item_label, p_item.format_mask, p_item.item_value, p_item.is_column, p_item.region_id, p_item.item_alias -- IG columns without page prefix
+        from data
+       where rownum = 1;
+    
     end if;
 
     pit.leave_detailed(
@@ -339,36 +342,36 @@ as
   end get_default_timestamp_format;
 
 
-  function get_true
+  function c_true
     return flag_type
   as
   begin
-    return C_TRUE;
-  end get_true;
+    return &C_TRUE.;
+  end c_true;
 
 
-  function get_false
+  function c_false
     return flag_type
   as
   begin
-    return C_FALSE;
-  end get_false;
+    return &C_FALSE.;
+  end c_false;
 
 
-  function get_yes
+  function c_yes
     return ora_name_type
   as
   begin
-    return C_YES;
-  end get_yes;
+    return 'YES';
+  end c_yes;
 
 
-  function get_no
+  function c_no
     return ora_name_type
   as
   begin
-    return C_NO;
-  end get_no;
+    return 'NO';
+  end c_no;
 
 
   function get_bool(
@@ -471,6 +474,15 @@ as
   end get_date;
 
 
+  function get_string(
+    p_page_item in varchar2)
+    return varchar2
+  is
+  begin
+    return get_value(p_page_item);
+  end get_string;
+
+
   function get_timestamp(
     p_page_item in varchar2)
     return timestamp
@@ -522,7 +534,7 @@ as
     get_page_element(p_page_item, l_item);
 
     if l_item.item_value is null and g_item_value_convention then
-      pit.assert_exists(l_item.item_name, msg.PAGE_ITEM_MISSING, msg_args(p_page_item));
+      pit.assert_not_null(l_item.item_name, msg.PAGE_ITEM_MISSING, msg_args(p_page_item));
     end if;
 
     pit.leave_optional(
@@ -1292,19 +1304,30 @@ select d.page_items
     p_blob in out nocopy blob,
     p_file_name in varchar2)
   as
+    l_blob blob := p_blob;
   begin
-    pit.enter_optional(
+    pit.enter_mandatory(
       p_params => msg_params(
                     msg_param('p_blob.length', to_char(dbms_lob.getlength(p_blob))),
                     msg_param('p_file_name', p_file_name)));
 
-    download_file(p_blob, p_file_name);
+    -- Write http header
+    htp.init;
+    owa_util.mime_header('application/octet-stream', false, 'UTF-8');
+    htp.p('Content-length: ' || dbms_lob.getlength(p_blob));
+    htp.p('Content-Disposition: inline; filename="' || p_file_name || '"');
+    owa_util.http_header_close;
 
+    wpg_docload.download_file(l_blob);
+
+    apex_application.stop_apex_engine;
     pit.leave_mandatory;
-  exception when others then
-    htp.p('error: ' || sqlerrm);
-    pit.leave_optional;
-    stop_apex;
+  exception 
+    when apex_application.e_stop_apex_engine then
+      null;
+    when others then
+      htp.p('error: ' || sqlerrm);
+      apex_application.stop_apex_engine;
   end download_blob;
 
 
@@ -1347,15 +1370,6 @@ select d.page_items
 
     pit.leave_optional;
   end set_clob;
-
-
-  procedure stop_apex
-  as
-  begin
-    pit.enter_optional;
-    apex_application.stop_apex_engine;
-    pit.leave_optional;
-  end stop_apex;
 
 
   procedure assert(

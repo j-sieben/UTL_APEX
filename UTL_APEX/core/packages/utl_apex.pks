@@ -16,7 +16,6 @@ as
   subtype max_sql_char is varchar2(4000 byte);
   subtype flag_type is &FLAG_TYPE.;
   subtype page_value_t is utl_text.clob_tab;
-  subtype string_table is wwv_flow_global.vc_arr2;
   
   /** Type to represent a session state item with label and converted session state values 
    * %param  item_name    Name of the item. If a column is referenced, no page prefix is used
@@ -28,6 +27,7 @@ as
    */
   type item_rec is record(
     item_name ora_name_type,
+    item_alias ora_name_type,
     item_label ora_name_type,
     format_mask ora_name_type,
     item_value max_char,
@@ -58,11 +58,6 @@ as
 
   FORMAT_JSON constant ora_name_type := 'JSON';
   FORMAT_HTML constant ora_name_type := 'HTML';
-
-  C_TRUE constant flag_type := &C_TRUE.;
-  C_FALSE constant flag_type := &C_FALSE.;
-  C_YES constant ora_name_type := 'YES';
-  C_NO constant ora_name_type := 'NO';
   
   /** Constants to adjust the default item prefixes
    * @usage  CONVENTION_PAGE_PREFIX means that each item is prefixed according to the APEX standards with <code>Pnn</code>
@@ -76,6 +71,51 @@ as
   
 
   /* Public function and procedure declarations */
+    
+  /** Getter for boolean values
+   * @usage  As it is possible to install UTL_APEX with different settings for the FLAG_TYPE, it is required to access the
+   *         boolean values using either the defined constants <code>C_TRUE</code> or <code>C_FALSE</code> or these getter
+   *         when used in SQL to make the code independent from your flag type
+   */
+  function c_true
+    return flag_type;
+    
+  function c_false
+    return flag_type;
+    
+  function c_yes
+    return ora_name_type;
+    
+  function c_no
+    return ora_name_type;
+    
+    
+  /** Method to cast a boolean value to a flag type representation an vice versa
+   * @param  p_bool  The boolean value to convert
+   * @usage  Is used to cast a boolean value to the flag type you defined when installing UTL_APEX.
+   */
+  function get_bool(
+    p_bool in boolean)
+    return flag_type;
+    
+  
+  function get_bool(
+    p_bool in flag_type)
+    return boolean;
+    
+    
+  /** Method to cast the input parameter to FLAG_TYPE.
+   * @param  p_value  Boolean value that is "falsy" or "truely"
+   * @return Recognized boolean value as FLAG_TYPE
+   * @usage  Is used to cast different TRUE or FALSE-flavours to FLAG_TYPE.
+   *         Example: 1, Y, J are recognized as GET_TRUE, 0, N, n are recognized as GET_FALSE
+   *         Caution: Use this with non boolean input values only. If a boolean value exists, use GET_BOOL instead.
+   */
+  function to_bool(
+    p_value in varchar2)
+    return flag_type;
+    
+    
   /** Getter methods as wrapper around APEX provided functionality
    *  Allows for better testing and refactoring when new APEX versions occur
    */
@@ -88,6 +128,15 @@ as
   function get_workspace_id(
     p_application_id in number)
     return number;
+    
+    
+  /** Determine the ID of the websheet helper application
+   * %return ID fo the websheet helper application
+   * %usage  Is called to initialize the help system.
+   */
+  function get_help_websheet_id
+    return pls_integer;
+    
 
   function get_application_id(
     p_ignore_translation in flag_type default C_TRUE)
@@ -140,49 +189,6 @@ as
     p_application_id in number default null)
     return varchar2;
     
-  /** Getter for boolean values
-   * @usage  As it is possible to install UTL_APEX with different settings for the FLAG_TYPE, it is required to access the
-   *         boolean values using either the defined constants <code>C_TRUE</code> or <code>C_FALSE</code> or these getter
-   *         when used in SQL to make the code independent from your flag type
-   */
-  function get_true
-    return flag_type;
-    
-  function get_false
-    return flag_type;
-    
-  function get_yes
-    return ora_name_type;
-    
-  function get_no
-    return ora_name_type;
-    
-    
-  /** Method to cast a boolean value to a flag type representation an vice versa
-   * @param  p_bool  The boolean value to convert
-   * @usage  Is used to cast a boolean value to the flag type you defined when installing UTL_APEX.
-   */
-  function get_bool(
-    p_bool in boolean)
-    return flag_type;
-    
-  
-  function get_bool(
-    p_bool in flag_type)
-    return boolean;
-    
-    
-  /** Method to cast the input parameter to FLAG_TYPE.
-   * @param  p_value  Boolean value that is "falsy" or "truely"
-   * @return Recognized boolean value as FLAG_TYPE
-   * @usage  Is used to cast different TRUE or FALSE-flavours to FLAG_TYPE.
-   *         Example: 1, Y, J are recognized as GET_TRUE, 0, N, n are recognized as GET_FALSE
-   *         Caution: Use this with non boolean input values only. If a boolean value exists, use GET_BOOL instead.
-   */
-  function to_bool(
-    p_value in varchar2)
-    return flag_type;
-    
   
   /** Method to cast a page item value to number, based on the actual format mask
    * @param  p_page_item  Name of the item of which the acutal value has to be casted
@@ -202,6 +208,18 @@ as
   function get_date(
     p_page_item in varchar2)
     return date;
+    
+  
+  /** Method to get a page item value
+   * @param  p_page_item  Name of the item of which the acutal value has to be casted
+   * @return DATE-value or NULL
+   * @usage  Is used as a "type safe" way to get a string value from the session context.
+   *         Functional overload of GET_VALUE, makes it clear that the value is treated as a string
+   *         i.e. no conversion possible.
+   */
+  function get_string(
+    p_page_item in varchar2)
+    return varchar2;
     
   
   /** Method to cast a page item value to timestamp, based on the actual format mask
@@ -527,13 +545,6 @@ as
   procedure set_clob(
     p_value in clob,
     p_collection in varchar2 default 'CLOB_CONTENT');  
-    
-    
-  /** Method to stop the rendering process of APEX.
-   * @usage  Is used to prevent further rendering of the APEX machine. Call it if no further rendering is necessary (such as
-   *         when downloading files) or when a fatal error has occurred.
-   */
-  procedure stop_apex;
 
 
   /* ASSERTIONS-Wrapper */
