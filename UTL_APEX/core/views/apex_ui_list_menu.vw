@@ -23,7 +23,7 @@ select level level_value,
    left join apex_application_build_options o
      on l.application_id = o.application_id
     and l.build_option = o.build_option_name
-  where l.application_id = (select v('APP_ID') from dual)
+  where l.application_id = (select utl_apex.get_application_id(utl_apex.C_FALSE) from dual)
     and coalesce(o.build_option_status, 'Include') = 'Include'
     and utl_apex.user_is_authorized(l.authorization_scheme) = utl_apex.c_true
   start with list_entry_parent_id is null
