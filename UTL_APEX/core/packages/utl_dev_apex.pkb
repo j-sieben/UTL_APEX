@@ -402,12 +402,7 @@ as
       
       -- View and constraints
       with templates as(
-        select q'^create or replace view #VIEW_NAME# as 
-select #COLUMN_LIST#
-  from #TABLE_NAME#;
-    
-#CONSTRAINTS#
-  ^' template
+        select q'^create or replace view #VIEW_NAME# as #CR#select #COLUMN_LIST##CR  from #TABLE_NAME#;#CR##CR##CONSTRAINTS##CR#^' template
           from dual)
       select utl_text.generate_text(cursor(
                select template, 

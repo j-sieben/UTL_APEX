@@ -691,6 +691,13 @@ as
   function escape_java_script(
     p_text in clob)
     return clob;
+    
+    
+  /** Method to emit a language selector
+   * @usage  Wrapper around APEX_LANG.EMIT_LANGUAGE_SELECTOR_LIST which emits a 
+   *         respective list. Adds CSS to beautify the appearance
+   */
+  procedure emit_language_selector_list;
 
 end utl_apex;
 /

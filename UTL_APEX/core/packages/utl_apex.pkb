@@ -1777,6 +1777,13 @@ select d.page_items
     escape_java_script(l_result);
     return l_result;
   end escape_java_script;
+  
+  
+  procedure emit_language_selector_list
+  as
+  begin
+    apex_lang.emit_language_selector_list;
+  end emit_language_selector_list;
 
 begin
   initialize;
