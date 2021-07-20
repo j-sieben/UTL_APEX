@@ -1302,18 +1302,20 @@ select d.page_items
 
   procedure download_blob(
     p_blob in out nocopy blob,
-    p_file_name in varchar2)
+    p_file_name in varchar2,
+    p_mime_type in varchar2 default 'application/octet-stream')
   as
     l_blob blob := p_blob;
   begin
     pit.enter_mandatory(
       p_params => msg_params(
                     msg_param('p_blob.length', to_char(dbms_lob.getlength(p_blob))),
-                    msg_param('p_file_name', p_file_name)));
+                    msg_param('p_file_name', p_file_name),
+                    msg_param('p_mime_type', p_mime_type)));
 
     -- Write http header
     htp.init;
-    owa_util.mime_header('application/octet-stream', false, 'UTF-8');
+    owa_util.mime_header(p_mime_type, false, 'UTF-8');
     htp.p('Content-length: ' || dbms_lob.getlength(p_blob));
     htp.p('Content-Disposition: inline; filename="' || p_file_name || '"');
     owa_util.http_header_close;
@@ -1333,13 +1335,14 @@ select d.page_items
 
   procedure download_clob(
     p_clob in clob,
-    p_file_name in varchar2)
+    p_file_name in varchar2,
+    p_mime_type in varchar2 default 'application/octet-stream')
   as
     l_blob blob;
   begin
     pit.enter_optional;
     l_blob := utl_text.clob_to_blob(p_clob);
-    download_blob(l_blob, p_file_name);
+    download_blob(l_blob, p_file_name, p_mime_type);
     pit.leave_optional;
   end download_clob;
 

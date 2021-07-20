@@ -52,6 +52,8 @@ as
   VER_LE_20 constant boolean := &VER_LE_20.;
   VER_LE_2001 constant boolean := &VER_LE_2001.;
   VER_LE_2002 constant boolean := &VER_LE_2002.;
+  VER_LE_20 constant boolean := &VER_LE_21.;
+  VER_LE_2101 constant boolean := &VER_LE_2101.;
   
   APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
@@ -523,18 +525,21 @@ as
 
   /** Methods to download a LOB over the browser
    * @param  p_blob       BLOB instance to download
-   * @param  p_file_name  Name of the file to download.
+   * @param  p_file_name  Name of the file to download
+   * @param  p_mime_type  Optional mime type of the download
    * @usage  Is called to offer a file as a download over APEX
    */
   procedure download_blob(
     p_blob in out nocopy blob,
-    p_file_name in varchar2);
+    p_file_name in varchar2,
+    p_mime_type in varchar2 default 'application/octet-stream');
 
 
   /** Overload for CLOB instances */
   procedure download_clob(
     p_clob in clob,
-    p_file_name in varchar2);
+    p_file_name in varchar2,
+    p_mime_type in varchar2 default 'application/octet-stream');
     
     
   /** Method to pass a CLOB to an apex collection
