@@ -10,7 +10,8 @@ as
   C_FORM_REGION constant utl_apex.ora_name_type := 'NATIVE_FORM';
   C_IG_REGION constant utl_apex.ora_name_type := 'NATIVE_IG';  
   
-  /********* HELPER **********/  /** Method to decide upon the view name based on the form type detected on the page for this combination of parameters
+  /********* HELPER **********/  
+  /** Method to decide upon the view name based on the form type detected on the page for this combination of parameters
    * @return Name of the view as detected.
    * @usage  Is used to get the correct view name based upon the type of form. Supported form types are:
    *         - NATIVE_IG: Interactive Grid, identified by static id => UTL_APEX_IG_COLUMNS
@@ -739,35 +740,13 @@ as
   
   function get_collection_view(
     p_source_table in utl_apex.ora_name_type,
-    p_page_view in utl_apex.ora_name_type,
-    p_static_id in varchar2 default null)
+    p_page_view in utl_apex.ora_name_type)
     return clob
   as
-    C_OBJECT_EXISTS constant varchar2(1000) := q'^select 1
-  from user_objects
- where object_name = upper('#OBJECT_NAME#')
-   and object_type in ('VIEW', 'TABLE')^';
-    C_VIEW_STMT constant utl_apex.max_char := q'^with tmpl_list as(
-       select uttm_name, uttm_text template
-         from utl_text_templates
-        where uttm_type = '#APEX_TMPL_TYPE#'
-          and uttm_mode = '#DEFAULT#')
-select utl_text.generate_text(cursor(
-         select template, '#VIEW_NAME#' view_name, 
-                utl_text.generate_text(cursor(
-                  select t.template, collection_name, lower(column_name) column_name, lower(column_from_collection) column_from_collection
-                    from #ITEM_VIEW_NAME# c
-                   cross join tmpl_list t
-                   where t.uttm_name = 'COLUMN_LIST'
-                     and c.table_name = '#VIEW_NAME#'), ',' || chr(10) || '       ') column_list
-           from tmpl_list
-          where uttm_name = 'VIEW'))
-  from dual^';
-    l_stmt utl_apex.max_char;
     l_code clob;       
     l_cur sys_refcursor;
     l_item_view_name utl_apex.ora_name_type;
-    C_LEGACY_FORM_REGION boolean;
+    l_is_legacy_form_region boolean;
   begin
     pit.enter_mandatory(
       p_params => msg_params(
@@ -777,31 +756,36 @@ select utl_text.generate_text(cursor(
     -- check input parameters
     pit.assert_not_null(p_source_table, msg.UTL_PARAMETER_REQUIRED, msg_args('P_SOURCE_TABLE'));
     pit.assert_not_null(p_page_view, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_VIEW'));
+    
+    -- Check whether P_SOURCE_TABLE maps to an existing table or view
+    open l_cur for 
+      select null
+        from user_objects
+       where object_name = upper(p_source_table)
+         and object_type in ('VIEW', 'TABLE');
     pit.assert_exists(
-      p_stmt => replace(C_OBJECT_EXISTS, '#OBJECT_NAME#', p_source_table),
+      p_cursor => l_cur,
       p_message_name => msg.UTL_OBJECT_DOES_NOT_EXIST,
       p_msg_args => msg_args('View/table', p_source_table));
       
-    -- initialize
-    C_LEGACY_FORM_REGION := p_static_id is null;
-    
-    if C_LEGACY_FORM_REGION then
-      l_item_view_name := 'UTL_DEV_APEX_COLLECTION';
-    else
-      l_item_view_name := 'UTL_DEV_APEX_FORM_COLLECTION';
-    end if;
-    
-    l_stmt := utl_text.bulk_replace(C_VIEW_STMT, char_table(
-                     'ITEM_VIEW_NAME', l_item_view_name,
-                     'STATIC_ID', p_static_id,
-                     'VIEW_NAME', p_page_view,
-                     'DEFAULT', C_DEFAULT,
-                     'APEX_TMPL_TYPE', C_APEX_TMPL_TYPE));
-    open l_cur for l_stmt;
-    
-    fetch l_cur into l_code;
-    
-    close l_cur;
+    -- Generate view DDL
+    with tmpl_list as(
+           select uttm_name, uttm_text template
+             from utl_text_templates
+            where uttm_type = C_APEX_TMPL_TYPE
+              and uttm_mode = C_DEFAULT)
+    select utl_text.generate_text(cursor(
+             select template, p_page_view view_name, 
+                    utl_text.generate_text(cursor(
+                      select t.template, collection_name, lower(column_name) column_name, lower(column_from_collection) column_from_collection
+                        from UTL_DEV_APEX_COLLECTION c
+                       cross join tmpl_list t
+                       where t.uttm_name = 'COLUMN_LIST'
+                         and upper(c.table_name) = upper(p_source_table)), ',' || chr(10) || '       ') column_list
+               from tmpl_list
+              where uttm_name = 'VIEW'))
+      into l_code
+      from dual;
     
     pit.leave_mandatory;
     return l_code;
@@ -814,22 +798,13 @@ select utl_text.generate_text(cursor(
     p_static_id in varchar2 default null)
     return clob
   as
-    C_HAS_ALIAS_STMT constant varchar2(1000) := q'^select null
-  from apex_application_pages
- where application_id = #APPLICATION_ID#
-   and page_id = #PAGE_ID#
-   and page_alias is not null^';
-    C_HAS_FETCH_ROW_PROCESS constant varchar2(1000) := q'^select null
-  from apex_application_page_proc
- where application_id = #APPLICATION_ID#
-   and page_id = #PAGE_ID#
-   and process_type_code = 'DML_FETCH_ROW'^';
     l_stmt utl_apex.max_char;
     l_code clob;
     l_view_name utl_apex.ora_name_type;
-    l_collection_name utl_apex.ora_name_type;
+    l_collection_name utl_apex.ora_name_type;    
+    l_is_legacy_form_region boolean;
     
-    C_LEGACY_FORM_REGION boolean;
+    -- Don't refactor, as the VIEW_NAME is variable
     C_PACKAGE_STMT constant utl_apex.max_char := q'^with tmpl_list as(
        select uttm_name, uttm_text template
          from utl_text_templates
@@ -867,7 +842,7 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
                     msg_param('p_application_id', to_char(p_application_id)),
                     msg_param('p_page_id', to_char(p_page_id))));
       
-    C_LEGACY_FORM_REGION := p_static_id is null;
+    l_is_legacy_form_region := p_static_id is null;
     
     -- check input parameters
     -- NOT NULL
@@ -875,21 +850,27 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
     pit.assert_not_null(p_page_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_ID'));
     
     -- APEX page has PAGE ALIAS
-    l_stmt := utl_text.bulk_replace(C_HAS_ALIAS_STMT, char_table(
-                  'APPLICATION_ID', p_application_id,
-                  'PAGE_ID', p_page_id));
+    open l_cur for 
+      select null
+        from apex_application_pages
+       where application_id = p_application_id
+         and page_id = p_page_id
+         and page_alias is not null;
     pit.assert_exists(
-      p_stmt => l_stmt,
+      p_cursor => l_cur,
       p_message_name => msg.UTL_PAGE_ALIAS_REQUIRED,
       p_msg_args => msg_args(to_char(p_page_id)));
       
-    if C_LEGACY_FORM_REGION then
+    if l_is_legacy_form_region then
       -- APEX page has FETCH ROW process
-      l_stmt := utl_text.bulk_replace(C_HAS_FETCH_ROW_PROCESS, char_table(
-                    'APPLICATION_ID', p_application_id,
-                    'PAGE_ID', p_page_id));
+      open l_cur for 
+        select null
+          from apex_application_page_proc
+         where application_id = p_application_id
+           and page_id = p_page_id
+           and process_type_code = 'DML_FETCH_ROW';
       pit.assert_exists(
-        p_stmt => l_stmt,
+        p_cursor => l_cur,
         p_message_name => msg.UTL_FETCH_ROW_REQUIRED);
         
       l_item_view_name := 'UTL_DEV_APEX_COLLECTION';
