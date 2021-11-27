@@ -15,9 +15,6 @@ begin
   dbms_output.put_line('&s1.INHERIT PRIVILEGES from &SYS_USER. to public granted');
   execute immediate 'grant inherit privileges on user &SYS_USER. to public';
   $END
-  
-  dbms_output.put_line('&s1.EXECUTE on &APEX_USER..wwv_flow_error granted as a workaround');
-  execute immediate 'grant execute on &APEX_USER..wwv_flow_error to &INSTALL_USER.';
 end;
 /
 

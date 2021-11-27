@@ -1042,15 +1042,7 @@ select d.page_items
 
         case l_source_type
           when C_IG_REGION then
-            pit.debug(msg.PIT_PASS_MESSAGE, msg_args('... handling error for Interactive Grid'));
-            wwv_flow_error.add_error(
-              p_message => l_message.message_text,
-              p_additional_info => l_message.message_description,
-              p_display_location => apex_error.c_inline_with_field_and_notif,
-              p_region_id => l_region_id,
-              p_column_name => l_item.item_name,
-              p_model_instance_id => null,
-              p_model_record_id => l_primary_key);
+            pit.warn(msg.PIT_PASS_MESSAGE, msg_args('Handling IG errors in UTL_APEX is not yet supported due to a missing API for it');
         else
           -- Fallback, works as if P_REGION_ID is NULL
           if p_page_item is not null then
