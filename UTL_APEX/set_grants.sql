@@ -17,5 +17,3 @@ begin
   $END
 end;
 /
-
-alter session set current_schema

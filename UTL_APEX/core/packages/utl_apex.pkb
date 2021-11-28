@@ -1042,7 +1042,7 @@ select d.page_items
 
         case l_source_type
           when C_IG_REGION then
-            pit.warn(msg.PIT_PASS_MESSAGE, msg_args('Handling IG errors in UTL_APEX is not yet supported due to a missing API for it');
+            pit.warn(msg.PIT_PASS_MESSAGE, msg_args('Handling IG errors in UTL_APEX is not yet supported due to a missing API for it'));
         else
           -- Fallback, works as if P_REGION_ID is NULL
           if p_page_item is not null then
