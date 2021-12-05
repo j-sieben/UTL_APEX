@@ -599,7 +599,7 @@ as
 
   procedure assert_not_null(
     p_condition in varchar2,
-    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -607,7 +607,7 @@ as
 
   procedure assert_not_null(
     p_condition in number,
-    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -615,7 +615,7 @@ as
 
   procedure assert_not_null(
     p_condition in date,
-    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);

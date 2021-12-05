@@ -346,7 +346,7 @@ as
     return flag_type
   as
   begin
-    return &C_TRUE.;
+    return 'Y';--&C_TRUE.;
   end c_true;
 
 
@@ -354,7 +354,7 @@ as
     return flag_type
   as
   begin
-    return &C_FALSE.;
+    return 'N';--&C_FALSE.;
   end c_false;
 
 
@@ -534,7 +534,7 @@ as
     get_page_element(p_page_item, l_item);
 
     if l_item.item_value is null and g_item_value_convention then
-      pit.assert_not_null(l_item.item_name, msg.PAGE_ITEM_MISSING, msg_args(p_page_item));
+      pit.assert_not_null(l_item.item_name, msg.UTL_APEX_MISSING_ITEM, msg_args(p_page_item));
     end if;
 
     pit.leave_optional(
@@ -542,7 +542,7 @@ as
                     msg_param('Value', substr(l_item.item_value, 1, 200))));
     return l_item.item_value;
   exception
-    when msg.PAGE_ITEM_MISSING_ERR then
+    when msg.UTL_APEX_MISSING_ITEM_ERR then
       pit.handle_exception(msg.SQL_ERROR);
       raise;
   end get_value;
@@ -564,7 +564,7 @@ as
   exception
     when others then
       pit.leave_mandatory;
-      pit.error(msg.PAGE_ITEM_MISSING, msg_args(p_page_item));
+      pit.error(msg.UTL_APEX_MISSING_ITEM, msg_args(p_page_item));
   end set_value;
 
 
@@ -637,7 +637,7 @@ as
     l_convention binary_integer;
   begin
     l_convention := coalesce(p_convention, param.get_integer(C_ITEM_PREFIX_CONVENTION, C_PARAM_GROUP));
-    pit.assert(l_convention in (CONVENTION_PAGE_PREFIX, CONVENTION_PAGE_ALIAS, CONVENTION_APP_ALIAS), msg.INVALID_ITEM_PREFIX);
+    pit.assert(l_convention in (CONVENTION_PAGE_PREFIX, CONVENTION_PAGE_ALIAS, CONVENTION_APP_ALIAS), msg.UTL_APEX_INVALID_ITEM_PREFIX);
 
     g_item_prefix_convention := l_convention;
   end set_item_prefix_convention;
@@ -964,13 +964,13 @@ select d.page_items
     -- exclude names with umlauts
     pit.assert(
        p_condition => regexp_instr(l_name, C_UMLAUT_REGEX) = 0,
-       p_message_name => msg.UTL_NAME_CONTAINS_UMLAUT,
+       p_message_name => msg.UTL_APEX_NAME_CONTAINS_UMLAUT,
        p_msg_args => msg_args(l_name));
 
     -- limit length according to naming conventions
     pit.assert(
        p_condition => length(l_name) <= C_MAX_LENGTH,
-       p_message_name => msg.UTL_NAME_TOO_LONG,
+       p_message_name => msg.UTL_APEX_NAME_TOO_LONG,
        p_msg_args => msg_args(l_name, to_char(C_MAX_LENGTH)));
 
     -- name against Oracle naming conventions. Throws errors, so catch them rather than use ASSERT
@@ -978,7 +978,7 @@ select d.page_items
        l_name := dbms_assert.simple_sql_name(l_name);
     exception
        when others then
-          pit.error(msg.UTL_NAME_INVALID, msg_args(l_name));
+          pit.error(msg.UTL_APEX_NAME_INVALID, msg_args(l_name));
     end;
 
     pit.leave_optional(msg_params(msg_param('Result', 'OK')));
@@ -1211,7 +1211,7 @@ select d.page_items
   procedure unhandled_request
   as
   begin
-    pit.error(msg.UTL_INVALID_REQUEST, msg_args(get_request));
+    pit.error(msg.UTL_APEX_INVALID_REQUEST, msg_args(get_request));
   end unhandled_request;
 
 
@@ -1465,7 +1465,7 @@ select d.page_items
 
   procedure assert_not_null(
     p_condition in varchar2,
-    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1489,7 +1489,7 @@ select d.page_items
 
   procedure assert_not_null(
     p_condition in number,
-    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1513,7 +1513,7 @@ select d.page_items
 
   procedure assert_not_null(
     p_condition in date,
-    p_message_name in ora_name_type default msg.UTL_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)

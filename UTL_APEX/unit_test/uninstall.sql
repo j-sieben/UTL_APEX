@@ -14,7 +14,7 @@ declare
   pragma exception_init(synonym_does_not_exist, -1434);
   cursor delete_object_cur is
           select object_name name, object_type type
-            from all_objects
+            from user_objects
            where object_name in (
                  '', -- Typen
                  'UT_UTL_APEX', 'UTL_TEST_APEX',  -- Packages
@@ -24,7 +24,6 @@ declare
                  '' -- Sequenzen
                  )
              and object_type not like '%BODY'
-             and owner = upper('&INSTALL_USER.')
            order by object_type, object_name;
   
 begin

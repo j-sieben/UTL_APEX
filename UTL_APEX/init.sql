@@ -8,30 +8,29 @@ whenever sqlerror exit
 clear screen
 set termout off
 
-col sys_user new_val SYS_USER format a30
-col apex_user new_val APEX_USER format a30
-col install_user new_val INSTALL_USER format a30
-col remote_user new_val REMOTE_USER format a30
-col default_language new_val DEFAULT_LANGUAGE format a30
 
-select user sys_user,
-       upper('&1.') install_user,
-       upper('&2.') default_language
-  from V$NLS_VALID_VALUES
- where parameter = 'LANGUAGE'
-   and value = upper('&2.');
-   
-select username apex_user
-  from all_users
- where username like 'APEX_______'
-   and oracle_maintained = 'Y'
- order by username desc
- fetch first row only;
-   
-select owner remote_user
-  from dba_tab_privs
- where grantee = '&INSTALL_USER.'
-   and table_name = 'PIT_ADMIN';
+define MIN_UT_VERSION="v3.1"
+
+col ora_name_type new_val ORA_NAME_TYPE format a128
+col flag_type new_val FLAG_TYPE format a128
+col c_quote new_val C_QUOTE format a128
+col default_language new_val DEFAULT_LANGUAGE format a128
+col c_true new_val C_TRUE format a128
+col c_false new_val C_FALSE format a128
+
+select lower(data_type) || '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end ORA_NAME_TYPE
+  from all_tab_columns
+ where table_name = 'USER_TABLES'
+   and column_name = 'TABLE_NAME';
+
+select lower(data_type) || '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end FLAG_TYPE,
+       case when data_type in ('CHAR', 'VARCHAR2') then '''' end C_QUOTE
+  from all_tab_columns
+ where table_name = 'PARAMETER_LOCAL'
+   and column_name = 'PAL_BOOLEAN_VALUE';
+
+select pit.get_default_language DEFAULT_LANGUAGE, &C_QUOTE.pit_util.c_true&C_QUOTE. C_TRUE, &C_QUOTE.pit_util.c_false&C_QUOTE. C_FALSE
+  from dual;
   
 col ver_le_0500 new_val VER_LE_0500 format a5
 col ver_le_0501 new_val VER_LE_0501 format a5
@@ -47,6 +46,7 @@ col ver_le_2001 new_val VER_LE_2001 format a5
 col ver_le_2002 new_val VER_LE_2002 format a5
 col ver_le_21 new_val VER_LE_21 format a5
 col ver_le_2101 new_val VER_LE_2101 format a5
+col ver_le_2102 new_val VER_LE_2102 format a5
 col apex_version new_val apex_version format a30
 with apex_version as(
        select to_number(substr(version_no, 1, instr(version_no, '.', 1) - 1)) major_version, 
@@ -94,26 +94,12 @@ select case major_version
        case minor_version
          when 21.1 then 'true'
          else 'false' end ver_le_2101,
+       case minor_version
+         when 21.2 then 'true'
+         else 'false' end ver_le_2102,
        to_char(minor_version, 'fm99.99') apex_version
   from apex_version;
 
-col ora_name_type new_val ORA_NAME_TYPE format a30
-
-select 'varchar2(' || data_length || ' byte)' ORA_NAME_TYPE
-  from all_tab_columns
- where table_name = 'USER_TABLES'
-   and column_name = 'TABLE_NAME';
-
--- ADJUST THIS SETTING IF YOU WANT ANOTHER TYPE 
-define FLAG_TYPE="char(1 byte)";
-define C_TRUE="'Y'";
-define C_FALSE="'N'";
-
---define FLAG_TYPE="number(1, 0)";
---define C_TRUE=1;
---define C_FALSE=0;
-
-define MIN_UT_VERSION="v3.1"
    
 define section="********************************************************************************"
 define h1="*** "

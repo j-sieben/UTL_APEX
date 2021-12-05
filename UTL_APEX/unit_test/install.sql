@@ -49,7 +49,6 @@ set feedback off
 set lines 120
 set pages 9999
 whenever sqlerror exit
-alter session set current_schema=&INSTALL_USER.;
 
 prompt
 prompt &section.

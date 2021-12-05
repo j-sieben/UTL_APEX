@@ -9,17 +9,16 @@ declare
   pragma exception_init(synonym_does_not_exist, -1434);
   cursor delete_object_cur is
           select object_name name, object_type type
-            from all_objects
+            from user_objects
            where object_name in (
                  'UTL_DEV_APEX_COL_T', 'UTL_DEV_APEX_COL_TAB', 'UTL_APEX_PAGE_ITEM_T', 'UTL_APEX_PAGE_ITEM_TAB', -- Types
-                 'UTL_APEX', 'UTL_APEX_DDL',  -- Packages
+                 'UTL_APEX', 'UTL_DEV_APEX',  -- Packages
                  'UTL_DEV_APEX_COLLECTION', 'UTL_DEV_APEX_FORM_COLLECTION', 'UTL_APEX_FETCH_ROW_COLUMNS', 'UTL_APEX_FORM_REGION_COLUMNS', 'UTL_APEX_IG_COLUMNS', 'UTL_APEX_PAGE_ITEMS', -- Views
                  '',  -- Tabellen
-                 'WWV_FLOW_ERROR',  -- Synonyme
+                 '',  -- Synonyme
                  '' -- Sequenzen
                  )
              and object_type not like '%BODY'
-             and owner = upper('&INSTALL_USER.')
            order by object_type, object_name;
   l_has_objects boolean := false;
 begin
@@ -49,10 +48,15 @@ begin
      
   -- Try to delete templates (table may not be present anymore)
   begin
-    execute immediate q'^delete from utl_text_templates where uttm_type in ('APEX_COLLECTION', 'APEX_FORM', 'APEX_IG')^';
+    dbms_output.put_line('&s1.Removing Template APEX_COLLECTION');
+    utl_text.remove_templates('APEX_COLLECTION');
+    dbms_output.put_line('&s1.Removing Template APEX_FORM');
+    utl_text.remove_templates('APEX_FORM');
+    dbms_output.put_line('&s1.Removing Template APEX_IG');
+    utl_text.remove_templates('APEX_IG');
   exception
     when others then
-      null;
+      dbms_output.put_line(substr(sqlerrm, 12));
   end;
    
   commit;

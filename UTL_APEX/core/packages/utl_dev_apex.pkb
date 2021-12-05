@@ -532,8 +532,8 @@ as
                     msg_param('p_include_table_view', p_include_table_view)));
       
     -- check input parameters
-    pit.assert_not_null(p_table_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_TABLE_NAME'));
-    pit.assert_not_null(p_short_name, msg.UTL_PARAMETER_REQUIRED, msg_args('P_SHORT_NAME'));
+    pit.assert_not_null(p_table_name, msg.UTL_APEX_PARAMETER_REQUIRED, msg_args('P_TABLE_NAME'));
+    pit.assert_not_null(p_short_name, msg.UTL_APEX_PARAMETER_REQUIRED, msg_args('P_SHORT_NAME'));
     
     -- Initialize
     l_table_name := p_table_name;
@@ -577,8 +577,8 @@ as
                     msg_param('p_delete_method', p_delete_method)));
       
     -- check input parameters
-    pit.assert_not_null(p_application_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_APPLICATION_ID'));
-    pit.assert_not_null(p_page_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_ID'));
+    pit.assert_not_null(p_application_id, msg.UTL_APEX_PARAMETER_REQUIRED, msg_args('P_APPLICATION_ID'));
+    pit.assert_not_null(p_page_id, msg.UTL_APEX_PARAMETER_REQUIRED, msg_args('P_PAGE_ID'));
     
     -- Analyze whether one methode for insert and update are requested
     if p_insert_method = p_update_method or p_insert_method is null then
@@ -754,8 +754,8 @@ as
                     msg_param('p_page_view', p_page_view)));
       
     -- check input parameters
-    pit.assert_not_null(p_source_table, msg.UTL_PARAMETER_REQUIRED, msg_args('P_SOURCE_TABLE'));
-    pit.assert_not_null(p_page_view, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_VIEW'));
+    pit.assert_not_null(p_source_table, msg.UTL_APEX_PARAMETER_REQUIRED, msg_args('P_SOURCE_TABLE'));
+    pit.assert_not_null(p_page_view, msg.UTL_APEX_PARAMETER_REQUIRED, msg_args('P_PAGE_VIEW'));
     
     -- Check whether P_SOURCE_TABLE maps to an existing table or view
     open l_cur for 
@@ -765,7 +765,7 @@ as
          and object_type in ('VIEW', 'TABLE');
     pit.assert_exists(
       p_cursor => l_cur,
-      p_message_name => msg.UTL_OBJECT_DOES_NOT_EXIST,
+      p_message_name => msg.UTL_APEX_OBJECT_DOES_NOT_EXIST,
       p_msg_args => msg_args('View/table', p_source_table));
       
     -- Generate view DDL
@@ -846,8 +846,8 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
     
     -- check input parameters
     -- NOT NULL
-    pit.assert_not_null(p_application_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_APPLICATION_ID'));
-    pit.assert_not_null(p_page_id, msg.UTL_PARAMETER_REQUIRED, msg_args('P_PAGE_ID'));
+    pit.assert_not_null(p_application_id, msg.UTL_APEX_PARAMETER_REQUIRED, msg_args('P_APPLICATION_ID'));
+    pit.assert_not_null(p_page_id, msg.UTL_APEX_PARAMETER_REQUIRED, msg_args('P_PAGE_ID'));
     
     -- APEX page has PAGE ALIAS
     open l_cur for 
@@ -858,7 +858,7 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
          and page_alias is not null;
     pit.assert_exists(
       p_cursor => l_cur,
-      p_message_name => msg.UTL_PAGE_ALIAS_REQUIRED,
+      p_message_name => msg.UTL_APEX_PAGE_ALIAS_REQUIRED,
       p_msg_args => msg_args(to_char(p_page_id)));
       
     if l_is_legacy_form_region then
@@ -871,7 +871,7 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
            and process_type_code = 'DML_FETCH_ROW';
       pit.assert_exists(
         p_cursor => l_cur,
-        p_message_name => msg.UTL_FETCH_ROW_REQUIRED);
+        p_message_name => msg.UTL_APEX_FETCH_ROW_REQUIRED);
         
       l_item_view_name := 'UTL_DEV_APEX_COLLECTION';
       select attribute_02, attribute_02

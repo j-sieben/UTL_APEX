@@ -88,28 +88,28 @@ as
   procedure get_true 
   as
   begin
-    ut.expect(utl_apex.get_true).to_equal(utl_apex.C_TRUE);
+    ut.expect(utl_apex.c_true).to_equal(utl_apex.C_TRUE);
   end get_true;
   
 
   procedure get_false 
   as
   begin
-    ut.expect(utl_apex.get_false).to_equal(utl_apex.C_FALSE);
+    ut.expect(utl_apex.c_false).to_equal(utl_apex.C_FALSE);
   end get_false;
   
 
   procedure get_yes 
   as
   begin
-    ut.expect(utl_apex.get_yes).to_equal(utl_apex.C_YES);
+    ut.expect(utl_apex.c_yes).to_equal(utl_apex.C_YES);
   end get_yes;
   
 
   procedure get_no 
   as
   begin
-    ut.expect(utl_apex.get_no).to_equal(utl_apex.C_NO);
+    ut.expect(utl_apex.c_no).to_equal(utl_apex.C_NO);
   end get_no;
   
 
@@ -681,7 +681,7 @@ as
   begin
     ut.expect(
       utl_apex.validate_simple_sql_name(l_name)
-      ).to_equal(to_char(pit.get_message_text(msg.UTL_NAME_TOO_LONG, msg_args(l_name, C_MAX_LENGTH))));
+      ).to_equal(to_char(pit.get_message_text(msg.UTL_APEX_NAME_TOO_LONG, msg_args(l_name, C_MAX_LENGTH))));
   end validate_long_sql_name;
   
   
@@ -691,7 +691,7 @@ as
   begin
     ut.expect(
       utl_apex.validate_simple_sql_name(l_name)
-      ).to_equal(to_char(pit.get_message_text(msg.UTL_NAME_CONTAINS_UMLAUT, msg_args(l_name))));
+      ).to_equal(to_char(pit.get_message_text(msg.UTL_APEX_NAME_CONTAINS_UMLAUT, msg_args(l_name))));
   end validate_umlaut_sql_name;
   
   
@@ -702,7 +702,7 @@ as
     
     ut.expect(
       utl_apex.validate_simple_sql_name(l_name)
-      ).to_equal(to_char(pit.get_message_text(msg.UTL_NAME_INVALID, msg_args(l_name))));
+      ).to_equal(to_char(pit.get_message_text(msg.UTL_APEX_NAME_INVALID, msg_args(l_name))));
   end validate_invalid_sql_name;
   
   
