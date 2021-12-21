@@ -5,9 +5,8 @@ set feedback off
 set lines 120
 set pages 9999
 whenever sqlerror exit
-clear screen
-set termout off
-
+--clear screen
+set termout on
 
 define MIN_UT_VERSION="v3.1"
 
@@ -24,12 +23,13 @@ select lower(data_type) || '(' || data_length || case char_used when 'B' then ' 
    and column_name = 'TABLE_NAME';
 
 select lower(data_type) || '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end FLAG_TYPE,
-       case when data_type in ('CHAR', 'VARCHAR2') then '''' end C_QUOTE
+       case when data_type in ('CHAR', 'VARCHAR2') then '''' end C_QUOTE,
+       pit_util.c_true C_TRUE, pit_util.c_false C_FALSE
   from all_tab_columns
  where table_name = 'PARAMETER_LOCAL'
    and column_name = 'PAL_BOOLEAN_VALUE';
 
-select pit.get_default_language DEFAULT_LANGUAGE, &C_QUOTE.pit_util.c_true&C_QUOTE. C_TRUE, &C_QUOTE.pit_util.c_false&C_QUOTE. C_FALSE
+select pit.get_default_language DEFAULT_LANGUAGE, &C_QUOTE&C_TRUE.&C_QUOTE. C_TRUE, &C_QUOTE.&C_FALSE.&C_QUOTE. C_FALSE
   from dual;
   
 col ver_le_0500 new_val VER_LE_0500 format a5

@@ -25,10 +25,6 @@ prompt &h1.Install UTL_APEX core functionality
 
 @check_unit_test_exists.sql "unit_test/install.sql" "installation"
 
-prompt
-prompt &section.
-prompt &h1.Finalize installation
-
 prompt &h1.Finished UTL_APEX Installation
 
-exit
+--exit
