@@ -31,7 +31,7 @@ begin
     :run_script := '&SCRIPT.';
   else
     :msg := '&s1.APEX version < &VERSION., skipping ' || l_script;
-    :run_script := 'null.sql';
+    :run_script := 'tools/null.sql';
   end if;
 end;
 /

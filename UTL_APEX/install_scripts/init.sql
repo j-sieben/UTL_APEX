@@ -5,8 +5,7 @@ set feedback off
 set lines 120
 set pages 9999
 whenever sqlerror exit
---clear screen
-set termout on
+set termout off
 
 define MIN_UT_VERSION="v3.1"
 

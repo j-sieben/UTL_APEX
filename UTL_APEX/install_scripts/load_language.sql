@@ -1,7 +1,7 @@
 -- Parameters:
 -- 1: Language to install
 
-@init.sql
+@install_scripts/init.sql
 
 prompt
 prompt &section.

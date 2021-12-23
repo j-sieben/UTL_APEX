@@ -60,19 +60,19 @@ prompt &s1.View APEX_UI_LIST_MENU
 @&VIEW_DIR.apex_ui_list_menu.vw
 
 prompt &s1.View UTL_APEX_FETCH_ROW_COLUMNS
-@check_apex_version_gt.sql 5.1 "&VIEW_DIR.utl_apex_fetch_row_columns.vw"
+@tools/check_apex_version_gt.sql 5.1 "&VIEW_DIR.utl_apex_fetch_row_columns.vw"
 
 prompt &s1.View UTL_APEX_FORM_REGION_COLUMNS
-@check_apex_version_gt.sql 19 "&VIEW_DIR.utl_apex_form_region_columns.vw"
+@tools/check_apex_version_gt.sql 19 "&VIEW_DIR.utl_apex_form_region_columns.vw"
 
 prompt &s1.View UTL_APEX_IG_COLUMNS
 @&VIEW_DIR.utl_apex_ig_columns.vw
 
 prompt &s1.View UTL_DEV_APEX_COLLECTION
-@check_apex_version_gt.sql 5.1 "&VIEW_DIR.utl_dev_apex_collection.vw"
+@tools/check_apex_version_gt.sql 5.1 "&VIEW_DIR.utl_dev_apex_collection.vw"
 
 prompt &s1.View UTL_DEV_APEX_FORM_COLLECTION
-@check_apex_version_gt.sql 19 "&VIEW_DIR.utl_dev_apex_form_collection.vw"
+@tools/check_apex_version_gt.sql 19 "&VIEW_DIR.utl_dev_apex_form_collection.vw"
 
 prompt
 prompt &section.
