@@ -346,7 +346,7 @@ as
     return flag_type
   as
   begin
-    return 'Y';--&C_TRUE.;
+    return &C_TRUE.;
   end c_true;
 
 
@@ -354,7 +354,7 @@ as
     return flag_type
   as
   begin
-    return 'N';--&C_FALSE.;
+    return &C_FALSE.;
   end c_false;
 
 
@@ -372,6 +372,22 @@ as
   begin
     return 'NO';
   end c_no;
+  
+  
+  function get_true
+    return flag_type
+  as
+  begin
+    return &C_TRUE.;
+  end get_true;
+  
+  
+  function get_false
+    return flag_type
+  as
+  begin
+    return &C_FALSE.;
+  end get_false;
 
 
   function get_bool(

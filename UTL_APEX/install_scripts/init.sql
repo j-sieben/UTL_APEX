@@ -23,7 +23,7 @@ select lower(data_type) || '(' || data_length || case char_used when 'B' then ' 
 
 select lower(data_type) || '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end FLAG_TYPE,
        case when data_type in ('CHAR', 'VARCHAR2') then '''' end C_QUOTE,
-       pit_util.get_true C_TRUE, pit_util.get_false C_FALSE
+       pit_util.c_true C_TRUE, pit_util.c_false C_FALSE
   from all_tab_columns
  where table_name = 'PARAMETER_LOCAL'
    and column_name = 'PAL_BOOLEAN_VALUE';
