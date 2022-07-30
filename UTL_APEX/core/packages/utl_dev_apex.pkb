@@ -819,7 +819,7 @@ as
 select utl_text.generate_text(cursor(
          select t.template, '#PAGE_VIEW_NAME#' view_name, '#PAGE_VIEW_NAME#' collection_name, 
                 lower(app.alias) app_alias, lower(apa.page_alias) page_alias, 
-                lower(substr('#STATIC_ID#', instr('#STATIC_ID#', '_') + 1)) form_id,
+                coalesce(lower(substr('#STATIC_ID#', instr('#STATIC_ID#', '_') + 1)), lower(apa.page_alias)) form_id,
                 utl_text.generate_text(cursor(
                   select t.template, lower(c.collection_name) collection_name, c.column_to_collection, c.page_alias, lower(c.column_name) column_name
                     from columns c
