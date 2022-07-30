@@ -1,6 +1,6 @@
 create or replace force view utl_dev_apex_form_collection as
 with columns as(
-        select apl.application_id, app.page_id, lower(app.page_alias) page_alias, lower(apr.table_name) table_name, 
+        select apl.application_id, app.page_id, lower(app.page_alias) page_alias, static_id, lower(apr.table_name) table_name, 
                utc.column_id, lower(utc.column_name) column_name, acm.collection_data_type data_type,
                -- Pivotierte Mappings aus Template-Tabelle
                acm.convert_to_collection,
@@ -36,7 +36,7 @@ with columns as(
              on case api.item_source_data_type when 'CLOB' then 'VARCHAR2' else api.item_source_data_type end = acm.data_type
          where apr.source_type_code in ('NATIVE_FORM')),
      weighted_colums as(
-       select application_id, page_id, page_alias, table_name, column_id, column_name, number_format, date_format, timestamp_format,
+       select application_id, page_id, page_alias, static_id, table_name, column_id, column_name, number_format, date_format, timestamp_format,
               -- Limit von 5 NUMBER und DATE-Spalten beachten, anschließend auf CHAR casten
               case when data_type in ('N', 'C') and column_rank > 5 then 'C' else data_type end  ||
               to_char(rank() over (partition by table_name,
@@ -49,8 +49,8 @@ with columns as(
               -- Limit auf LOB und XMLTYPE beachten
         where not(data_type in ('CLOB', 'BLOB', 'XMLTYPE') 
           and column_rank > 1))
-select application_id, page_id, page_alias, table_name, column_id, collection_name, column_name, number_format, date_format, timestamp_format,
-       'g_#PAGE_ALIAS#_row.' || case when collection_name like 'C%' then convert_to_collection else column_name end column_to_collection,
+select application_id, page_id, page_alias, static_id, table_name, column_id, collection_name, column_name, number_format, date_format, timestamp_format,
+       'l_row.' || case when collection_name like 'C%' then convert_to_collection else column_name end column_to_collection,
        case when collection_name like 'C%' then convert_from_collection else collection_name end column_from_collection,
        convert_to_collection, convert_from_collection, convert_from_item
   from weighted_colums

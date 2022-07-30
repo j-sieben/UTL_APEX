@@ -378,7 +378,7 @@ as
     return flag_type
   as
   begin
-    return &C_TRUE.;
+    return c_true;
   end get_true;
   
   
@@ -386,7 +386,7 @@ as
     return flag_type
   as
   begin
-    return &C_FALSE.;
+    return c_false;
   end get_false;
 
 
@@ -550,7 +550,7 @@ as
     get_page_element(p_page_item, l_item);
 
     if l_item.item_value is null and g_item_value_convention then
-      pit.assert_not_null(l_item.item_name, msg.UTL_APEX_MISSING_ITEM, msg_args(p_page_item));
+      pit.assert_not_null(l_item.item_name, msg.UTL_APEX_MISSING_ITEM, msg_args(p_page_item, to_char(get_page_id)));
     end if;
 
     pit.leave_optional(
@@ -580,7 +580,7 @@ as
   exception
     when others then
       pit.leave_mandatory;
-      pit.error(msg.UTL_APEX_MISSING_ITEM, msg_args(p_page_item));
+      pit.error(msg.UTL_APEX_MISSING_ITEM, msg_args(p_page_item, to_char(get_page_id)));
   end set_value;
 
 

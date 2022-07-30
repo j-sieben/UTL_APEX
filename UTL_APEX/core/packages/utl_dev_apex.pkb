@@ -811,12 +811,13 @@ as
         where uttm_type = '#APEX_TMPL_TYPE#'
           and uttm_mode = '#DEFAULT#'),
        columns as(
-         select *
+         select /*+ no_merge */ *
            from #VIEW_NAME#
           where application_id = #APPLICATION_ID#
-            and page_id = #PAGE_ID#)
-select /*+ no_merg(c) */ utl_text.generate_text(cursor(
-         select t.template, '#PAGE_VIEW_NAME#' view_name, '#PAGE_VIEW_NAME#' collection_name, lower(apa.page_alias) page_alias, 
+            and page_id = #PAGE_ID#
+            and static_id = '#STATIC_ID#')
+select utl_text.generate_text(cursor(
+         select t.template, '#PAGE_VIEW_NAME#' view_name, '#PAGE_VIEW_NAME#' collection_name, lower(app.alias) app_alias, lower(apa.page_alias) page_alias, 
                 utl_text.generate_text(cursor(
                   select t.template, lower(c.collection_name) collection_name, c.column_to_collection, c.page_alias, lower(c.column_name) column_name
                     from columns c
@@ -830,8 +831,10 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
                    where t.uttm_name = 'COPY_LIST'), ';' || chr(10) || '    ') copy_list
            from tmpl_list t
           where uttm_name = 'PACKAGE')) trigger_stmt
-  from apex_application_pages apa
- where apa.application_id = #APPLICATION_ID#
+  from apex_applications app
+  join apex_application_pages apa
+    on app.application_id = apa.application_id
+ where app.application_id = #APPLICATION_ID#
    and apa.page_id = #PAGE_ID#^';
        
     l_cur sys_refcursor;
@@ -892,7 +895,8 @@ select /*+ no_merg(c) */ utl_text.generate_text(cursor(
         from apex_application_page_regions
        where application_id = p_application_id
          and page_id = p_page_id
-         and source_type_code in ('NATIVE_FORM');
+         and source_type_code in ('NATIVE_FORM')
+         and static_id = p_static_id;
       $END
     end if;
     

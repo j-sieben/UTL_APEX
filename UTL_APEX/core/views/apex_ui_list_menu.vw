@@ -1,9 +1,8 @@
 create or replace force view apex_ui_list_menu as
  with params as(
-        select utl_apex.get_application_id(utl_apex.C_FALSE) p_application_id
+        select  /*+ no_merge */ utl_apex.get_application_id(utl_apex.C_FALSE) p_application_id
           from dual)
- select /*+ no_merge(p) */
-        level level_value,
+ select level level_value,
         l1.list_name,
         l1.display_sequence,
         l1.parent_entry_text,
@@ -28,8 +27,7 @@ create or replace force view apex_ui_list_menu as
    join params p
      on l1.application_id = p_application_id
    left join (
-        select /*+ no_merge(p) */
-               l.application_id, l.list_name, l.entry_text, lower(p.page_alias) parent_page_alias
+        select l.application_id, l.list_name, l.entry_text, lower(p.page_alias) parent_page_alias
           from apex_application_list_entries l
           join apex_application_pages p
             on l.application_id = p.application_id
