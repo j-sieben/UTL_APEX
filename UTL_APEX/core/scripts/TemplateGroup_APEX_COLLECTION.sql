@@ -43,19 +43,19 @@ q'{  authid definer\CR\}' ||
 q'{as\CR\}' || 
 q'{\CR\}' || 
 q'{  /**\CR\}' || 
-q'{    Function: validate_#PAGE_ALIAS#\CR\}' || 
-q'{      Method to validate page #PAGE_ALIAS#\CR\}' || 
+q'{    Function: validate_#FORM_ID#\CR\}' || 
+q'{      Method to validate page #FORM_ID#\CR\}' || 
 q'{    \CR\}' || 
 q'{    Returns: Always true, exceptions are integrated into the APEX exception stack\CR\}' || 
 q'{   */\CR\}' || 
-q'{  function validate_#PAGE_ALIAS#\CR\}' || 
+q'{  function validate_#FORM_ID#\CR\}' || 
 q'{    return boolean;\CR\}' || 
 q'{    \CR\}' || 
 q'{  /**\CR\}' || 
-q'{    Procedure: process_#PAGE_ALIAS#\CR\}' || 
+q'{    Procedure: process_#FORM_ID#\CR\}' || 
 q'{      Persists entered data into APEX collection #COLLECTION_NAME#\CR\}' || 
 q'{   */\CR\}' || 
-q'{  procedure process_#PAGE_ALIAS#;\CR\}' || 
+q'{  procedure process_#FORM_ID#;\CR\}' || 
 q'{\CR\}' || 
 q'{end #APP_ALIAS#_ui_#PAGE_ALIAS#;\CR\}' || 
 q'{/\CR\}' || 
@@ -65,43 +65,43 @@ q'{as\CR\}' ||
 q'{  C_YES constant varchar2(10 byte) := 'YES';\CR\}' || 
 q'{  C_NO constant varchar2(10 byte) := 'NO';\CR\}' || 
 q'{\CR\}' || 
-q'{  function copy_#PAGE_ALIAS#\CR\}' || 
+q'{  function copy_#FORM_ID#\CR\}' || 
 q'{    return #VIEW_NAME#%rowtype\CR\}' || 
 q'{  as\CR\}' || 
 q'{    l_row #VIEW_NAME#%rowtype;\CR\}' || 
 q'{  begin\CR\}' || 
-q'{    pit.enter_optional('copy_#PAGE_ALIAS#');\CR\}' || 
+q'{    pit.enter_optional('copy_#FORM_ID#');\CR\}' || 
 q'{\CR\}' || 
 q'{    #COPY_LIST#;\CR\}' || 
 q'{\CR\}' || 
 q'{    pit.leave_optional;\CR\}' || 
 q'{    return l_row;\CR\}' || 
-q'{  end copy_#PAGE_ALIAS#;\CR\}' || 
+q'{  end copy_#FORM_ID#;\CR\}' || 
 q'{  \CR\}' || 
 q'{  \CR\}' || 
-q'{  function validate_#PAGE_ALIAS#\CR\}' || 
+q'{  function validate_#FORM_ID#\CR\}' || 
 q'{    return boolean\CR\}' || 
 q'{  as\CR\}' || 
 q'{    l_row #VIEW_NAME#%rowtype;\CR\}' || 
 q'{  begin\CR\}' || 
 q'{    pit.enter_mandatory;\CR\}' || 
 q'{\CR\}' || 
-q'{    -- l_row := copy_#PAGE_ALIAS#;\CR\}' || 
+q'{    -- l_row := copy_#FORM_ID#;\CR\}' || 
 q'{    -- TODO: validation logic goes here. If it exists, uncomment COPY function\CR\}' || 
 q'{\CR\}' || 
 q'{    pit.leave_mandatory;\CR\}' || 
 q'{    return true;\CR\}' || 
-q'{  end validate_#PAGE_ALIAS#;\CR\}' || 
+q'{  end validate_#FORM_ID#;\CR\}' || 
 q'{  \CR\}' || 
 q'{    \CR\}' || 
-q'{  procedure process_#PAGE_ALIAS#\CR\}' || 
+q'{  procedure process_#FORM_ID#\CR\}' || 
 q'{  as\CR\}' || 
 q'{    C_COLLECTION_NAME constant varchar2(30 byte) := '#COLLECTION_NAME#';\CR\}' || 
 q'{    l_row #VIEW_NAME#%rowtype;\CR\}' || 
 q'{  begin\CR\}' || 
 q'{    pit.enter_mandatory;\CR\}' || 
 q'{\CR\}' || 
-q'{    l_row := copy_#PAGE_ALIAS#;  \CR\}' || 
+q'{    l_row := copy_#FORM_ID#;  \CR\}' || 
 q'{    case\CR\}' || 
 q'{    when utl_apex.INSERTING then\CR\}' || 
 q'{      apex_collection.add_member(\CR\}' || 
@@ -123,7 +123,7 @@ q'{      null;\CR\}' ||
 q'{    end case;\CR\}' || 
 q'{\CR\}' || 
 q'{    pit.leave_mandatory;\CR\}' || 
-q'{  end process_#PAGE_ALIAS#;\CR\}' || 
+q'{  end process_#FORM_ID#;\CR\}' || 
 q'{\CR\}' || 
 q'{end #APP_ALIAS#_ui_#PAGE_ALIAS#;\CR\}' || 
 q'{/}',
