@@ -3,6 +3,7 @@
 -- default language of PIT
 
 @install_scripts/init.sql
+
 @tools/set_compiler_flags.sql
 
 prompt
