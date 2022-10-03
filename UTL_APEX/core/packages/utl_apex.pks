@@ -54,8 +54,6 @@ as
   VER_LE_2002 constant boolean := &VER_LE_2002.;
   VER_LE_21 constant boolean := &VER_LE_21.;
   VER_LE_2101 constant boolean := &VER_LE_2101.;
-  VER_LE_22 constant boolean := &VER_LE_22.;
-  VER_LE_2201 constant boolean := &VER_LE_2201.;
   
   APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';

@@ -5,7 +5,7 @@ set feedback off
 set lines 120
 set pages 9999
 whenever sqlerror exit
-set termout off
+set termout on
 
 define MIN_UT_VERSION="v3.1"
 
@@ -21,9 +21,12 @@ select lower(data_type) || '(' || data_length || case char_used when 'B' then ' 
  where table_name = 'USER_TABLES'
    and column_name = 'TABLE_NAME';
 
-select lower(data_type) || '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end FLAG_TYPE,
-       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_true) else pit_util.c_true end C_TRUE, 
-       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_false) else pit_util.c_false end C_FALSE
+select lower(data_type) || '(' ||     
+         case when data_type in ('CHAR', 'VARCHAR2') then data_length || case char_used when 'B' then ' byte)' else ' char)' end
+         else data_precision || ', ' || data_scale || ')'
+       end FLAG_TYPE,
+       case when data_type in ('CHAR', 'VARCHAR2') then '''' end C_QUOTE,
+       pit_util.c_true C_TRUE, pit_util.c_false C_FALSE
   from all_tab_columns
  where table_name = 'PARAMETER_LOCAL'
    and column_name = 'PAL_BOOLEAN_VALUE';
