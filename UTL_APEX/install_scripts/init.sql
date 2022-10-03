@@ -22,13 +22,13 @@ select lower(data_type) || '(' || data_length || case char_used when 'B' then ' 
    and column_name = 'TABLE_NAME';
 
 select lower(data_type) || '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end FLAG_TYPE,
-       case when data_type in ('CHAR', 'VARCHAR2') then '''' end C_QUOTE,
-       pit_util.c_true C_TRUE, pit_util.c_false C_FALSE
+       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_true) else pit_util.c_true end C_TRUE, 
+       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_false) else pit_util.c_false end C_FALSE
   from all_tab_columns
  where table_name = 'PARAMETER_LOCAL'
    and column_name = 'PAL_BOOLEAN_VALUE';
 
-select pit.get_default_language DEFAULT_LANGUAGE, &C_QUOTE&C_TRUE.&C_QUOTE. C_TRUE, &C_QUOTE.&C_FALSE.&C_QUOTE. C_FALSE
+select pit.get_default_language DEFAULT_LANGUAGE
   from dual;
   
 col ver_le_0500 new_val VER_LE_0500 format a5
@@ -46,6 +46,8 @@ col ver_le_2002 new_val VER_LE_2002 format a5
 col ver_le_21 new_val VER_LE_21 format a5
 col ver_le_2101 new_val VER_LE_2101 format a5
 col ver_le_2102 new_val VER_LE_2102 format a5
+col ver_le_22 new_val VER_LE_22 format a5
+col ver_le_2201 new_val VER_LE_2201 format a5
 col apex_version new_val apex_version format a30
 with apex_version as(
        select to_number(substr(version_no, 1, instr(version_no, '.', 1) - 1)) major_version, 
@@ -96,6 +98,12 @@ select case major_version
        case minor_version
          when 21.2 then 'true'
          else 'false' end ver_le_2102,
+       case major_version 
+         when 221 then 'true'
+         else 'false' end ver_le_22,
+       case minor_version
+         when 22.1 then 'true'
+         else 'false' end ver_le_2201,
        to_char(minor_version, 'fm99.99') apex_version
   from apex_version;
 

@@ -73,7 +73,8 @@ as
                p_page => p_page,
                p_clear_cache => p_clear_cache,
                p_items => p_param_list,
-               p_values => p_value_list);
+               p_values => p_value_list,
+               p_triggering_element => p_triggering_element);
     $END
     return l_url;
   end get_url;  
@@ -1269,7 +1270,8 @@ select d.page_items
                p_page => p_page,
                p_clear_cache => p_clear_cache,
                p_param_list => l_param_list,
-               p_value_list => l_value_list);
+               p_value_list => l_value_list,
+               p_triggering_element => p_triggering_element);
 
     pit.leave_optional(p_params => msg_params(msg_param('URL', l_url)));
     return l_url;

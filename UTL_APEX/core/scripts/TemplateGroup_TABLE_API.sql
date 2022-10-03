@@ -2,7 +2,7 @@ set define off
 set sqlprefix off
 
 begin
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'METHODS',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'DEFAULT',
@@ -74,7 +74,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'PARAM_LIST',
@@ -83,7 +83,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'PK_LIST',
@@ -92,7 +92,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'UPDATE_LIST',
@@ -101,7 +101,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'RECORD_LIST',
@@ -110,7 +110,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'USING_LIST',
@@ -119,7 +119,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'ON_LIST',
@@ -128,7 +128,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'INSERT_LIST',
@@ -137,7 +137,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'COL_LIST',
@@ -146,7 +146,7 @@ q'{  end merge_#SHORT_NAME#;}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'MERGE',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'DEFAULT',
@@ -164,7 +164,7 @@ q'{            #INSERT_LIST#);}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN',
     p_uttm_type => 'TABLE_API',
     p_uttm_mode => 'PIT_LIST',

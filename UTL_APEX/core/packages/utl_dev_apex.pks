@@ -130,6 +130,14 @@ as
     p_page_id in binary_integer,
     p_static_id in varchar2 default null)
     return clob;
+    
+    
+  /** Method to create procedures based on a view which is based on a collection
+   */
+  function get_collection_methods(
+    p_table_name in utl_apex.ora_name_type,
+    p_view_name in utl_apex.ora_name_type)
+    return clob;
   
   
   /** Method to create a script that can be imported into a package to take over all values of a page.

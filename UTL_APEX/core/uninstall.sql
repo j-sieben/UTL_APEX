@@ -49,11 +49,11 @@ begin
   -- Try to delete templates (table may not be present anymore)
   begin
     dbms_output.put_line('&s1.Removing Template APEX_COLLECTION');
-    utl_text.remove_templates('APEX_COLLECTION');
+    utl_text_admin.delete_template(p_uttm_type => 'APEX_COLLECTION');
     dbms_output.put_line('&s1.Removing Template APEX_FORM');
-    utl_text.remove_templates('APEX_FORM');
+    utl_text_admin.delete_template(p_uttm_type => 'APEX_FORM');
     dbms_output.put_line('&s1.Removing Template APEX_IG');
-    utl_text.remove_templates('APEX_IG');
+    utl_text_admin.delete_template(p_uttm_type => 'APEX_IG');
   exception
     when others then
       dbms_output.put_line(substr(sqlerrm, 12));

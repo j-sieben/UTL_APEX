@@ -52,8 +52,10 @@ as
   VER_LE_20 constant boolean := &VER_LE_20.;
   VER_LE_2001 constant boolean := &VER_LE_2001.;
   VER_LE_2002 constant boolean := &VER_LE_2002.;
-  VER_LE_20 constant boolean := &VER_LE_21.;
+  VER_LE_21 constant boolean := &VER_LE_21.;
   VER_LE_2101 constant boolean := &VER_LE_2101.;
+  VER_LE_22 constant boolean := &VER_LE_22.;
+  VER_LE_2201 constant boolean := &VER_LE_2201.;
   
   APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
@@ -94,12 +96,12 @@ as
   /** Deprecated getter methods
    */
   function get_true
-    return flag_type
-    pragma deprecated (get_true, 'Deprecated, use utl_apex.C_TRUE instead');
-    
+    return flag_type;
+    pragma deprecate (get_true, 'Deprecated, use utl_apex.C_TRUE instead');
+
   function get_false
-    return flag_type
-    pragma deprecated (get_true, 'Deprecated, use utl_apex.C_TRUE instead');
+    return flag_type;
+    pragma deprecate (get_false, 'Deprecated, use utl_apex.C_TRUE instead');
     
     
   /** Method to cast a boolean value to a flag type representation an vice versa

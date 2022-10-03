@@ -2,7 +2,7 @@ set define off
 set sqlprefix off
 
 begin
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COLUMN_LIST',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
@@ -11,7 +11,7 @@ begin
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'COPY_LIST',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
@@ -20,7 +20,7 @@ begin
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'VIEW',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
@@ -34,7 +34,7 @@ q'{}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'PACKAGE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
@@ -131,7 +131,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'PARAMETER_LIST',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'DEFAULT',
@@ -140,7 +140,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'BLOB',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -149,7 +149,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'CHAR',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -158,7 +158,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'CLOB',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -167,7 +167,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'DATE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -176,7 +176,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'INTEGER',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -185,7 +185,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'NUMBER',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -194,7 +194,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'ROWID',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -203,7 +203,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'TIMESTAMP',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -212,7 +212,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'VARCHAR2',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -221,7 +221,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'XMLTYPE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_TO_COLLECTION',
@@ -230,7 +230,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'BLOB',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -239,7 +239,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'CHAR',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -248,7 +248,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'CLOB',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -257,7 +257,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'DATE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -266,7 +266,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'INTEGER',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -275,7 +275,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'NUMBER',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -284,7 +284,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'ROWID',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -293,7 +293,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'TIMESTAMP',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -302,7 +302,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'VARCHAR2',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -311,7 +311,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'XMLTYPE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_COLLECTION',
@@ -320,7 +320,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'BLOB',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -329,7 +329,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'CHAR',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -338,7 +338,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'CLOB',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -347,7 +347,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'DATE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -356,7 +356,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'INTEGER',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -365,7 +365,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'NUMBER',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -374,7 +374,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'ROWID',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -383,7 +383,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'TIMESTAMP',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -392,7 +392,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'VARCHAR2',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -401,7 +401,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'XMLTYPE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'CONVERT_FROM_ITEM',
@@ -410,7 +410,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'BLOB',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
@@ -419,7 +419,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'CHAR',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
@@ -428,7 +428,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'CLOB',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
@@ -437,7 +437,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'DATE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
@@ -446,7 +446,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'INTEGER',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
@@ -455,7 +455,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'NUMBER',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
@@ -464,7 +464,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'ROWID',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
@@ -473,7 +473,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'TIMESTAMP',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
@@ -482,7 +482,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'VARCHAR2',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',
@@ -491,7 +491,7 @@ q'{/}',
     p_uttm_log_severity => 70
   );
 
-  utl_text.merge_template(
+  utl_text_admin.merge_template(
     p_uttm_name => 'XMLTYPE',
     p_uttm_type => 'APEX_COLLECTION',
     p_uttm_mode => 'COLLECTION_DATA_TYPE',

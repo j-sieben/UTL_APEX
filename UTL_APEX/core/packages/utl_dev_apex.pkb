@@ -925,6 +925,36 @@ select utl_text.generate_text(cursor(
       raise;
   end get_collection_methods;
   
+
+  function get_collection_methods(
+    p_table_name in utl_apex.ora_name_type,
+    p_view_name in utl_apex.ora_name_type)
+    return clob
+  as
+    l_stmt clob;
+  begin
+    with tmpl_list as(
+           select uttm_name, uttm_text template
+             from utl_text_templates
+            where uttm_type = 'APEX_COLLECTION'
+              and uttm_mode = 'DEFAULT')
+    select utl_text.generate_text(cursor(
+             select template, upper(p_view_name) collection_name, lower(p_view_name) view_name,  
+                    utl_text.generate_text(cursor(
+                      select t.template, lower(collection_name) collection_name, lower(column_name) column_name, replace(lower(column_to_collection), 'g_#page_alias#', 'p') column_to_collection
+                        from UTL_DEV_APEX_COLLECTION c
+                       cross join tmpl_list t
+                       where t.uttm_name = 'PARAMETERS'
+                         and upper(c.table_name) = upper(p_table_name)), 
+                    ',' || chr(10), 4) param_list
+               from tmpl_list
+              where uttm_name = 'PROCEDURES')) ergebnis
+      into l_stmt
+      from dual;
+      
+    return l_stmt;
+  end get_collection_methods;
+  
   
   function get_page_item_script(
     p_static_id in varchar2 default null,
