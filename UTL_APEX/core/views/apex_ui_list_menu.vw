@@ -1,7 +1,15 @@
 create or replace force view apex_ui_list_menu as
  with params as(
-        select  /*+ no_merge */ utl_apex.get_application_id(utl_apex.C_FALSE) p_application_id
-          from dual)
+        select  /*+ no_merge */ 
+               utl_apex.get_application_id(utl_apex.C_FALSE) p_application_id
+          from dual),
+      apex_list_entries as (
+        select application_id, upper(substr(entry_target, instr(entry_target, ':') + 1, instr(entry_target, ':', 1, 2) - instr(entry_target, ':') - 1)) page_alias,
+               list_name, display_sequence, list_entry_id, list_entry_parent_id, parent_entry_text, entry_image, entry_text, entry_target, entry_image_attributes, entry_image_alt_attribute, 
+               build_option, authorization_scheme,
+               entry_attribute_01, entry_attribute_02, entry_attribute_03, entry_attribute_04, entry_attribute_05, 
+               entry_attribute_06, entry_attribute_07, entry_attribute_08, entry_attribute_09, entry_attribute_10
+          from apex_application_list_entries)
  select level level_value,
         l1.list_name,
         l1.display_sequence,
@@ -22,18 +30,19 @@ create or replace force view apex_ui_list_menu as
         l1.entry_attribute_07 attribute_07,
         l1.entry_attribute_08 attribute_08,
         l1.entry_attribute_09 attribute_09,
-        l1.entry_attribute_10 attribute_10
-   from apex_application_list_entries l1
+        l1.entry_attribute_10 attribute_10,
+        l1.page_alias
+   from apex_list_entries l1
    join params p
      on l1.application_id = p_application_id
    left join (
-        select l.application_id, l.list_name, l.entry_text, lower(p.page_alias) parent_page_alias
-          from apex_application_list_entries l
-          join apex_application_pages p
-            on l.application_id = p.application_id
+        select l.application_id, l.list_name, l.entry_text, upper(l.page_alias) parent_page_alias
+          from apex_list_entries l
+          join apex_application_pages p1
+            on l.application_id = p1.application_id
           join params p
-            on p.application_id = p_application_id
-           and upper(substr(entry_target, instr(entry_target, ':') + 1, instr(entry_target, ':', 1, 2) - instr(entry_target, ':') - 1)) = p.page_alias) l2
+            on p1.application_id = p_application_id
+           and l.page_alias in (to_char(p1.page_id), upper(p1.page_alias))) l2
      on l1.parent_entry_text = l2.entry_text
     and l1.list_name = l2.list_name
    left join apex_application_build_options o

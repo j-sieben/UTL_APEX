@@ -42,7 +42,6 @@ prompt
 prompt &section.
 prompt &h2.Views
 
-
 prompt
 prompt &section.
 prompt &h2.Package specifications

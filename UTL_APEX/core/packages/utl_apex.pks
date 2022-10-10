@@ -54,6 +54,7 @@ as
   VER_LE_2002 constant boolean := &VER_LE_2002.;
   VER_LE_21 constant boolean := &VER_LE_21.;
   VER_LE_2101 constant boolean := &VER_LE_2101.;  
+  VER_LE_2102 constant boolean := &VER_LE_2102.;  
   VER_LE_22 constant boolean := &VER_LE_22.;
   VER_LE_2201 constant boolean := &VER_LE_2201.;
   
