@@ -500,6 +500,23 @@ as
   end get_string;
 
 
+  function get_boolean(
+    p_page_item in varchar2)
+    return flag_type
+  is
+    l_value varchar2(10 byte);
+    l_result flag_type;
+  begin
+    l_value := upper(get_value(p_page_item));
+    if l_value in ('1', 'Y', 'J', 'YES', 'JA', 'TRUE', to_char('''' || replace(&C_TRUE., '''') || '''')) then
+      l_result := C_TRUE;
+    else
+      l_result := C_FALSE;
+    end if;
+    return l_result;
+  end get_boolean;
+
+
   function get_timestamp(
     p_page_item in varchar2)
     return timestamp

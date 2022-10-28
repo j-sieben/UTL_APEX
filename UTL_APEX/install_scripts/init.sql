@@ -51,6 +51,7 @@ col ver_le_2101 new_val VER_LE_2101 format a5
 col ver_le_2102 new_val VER_LE_2102 format a5
 col ver_le_22 new_val VER_LE_22 format a5
 col ver_le_2201 new_val VER_LE_2201 format a5
+col ver_le_2202 new_val VER_LE_2202 format a5
 col apex_version new_val apex_version format a30
 with apex_version as(
        select to_number(substr(version_no, 1, instr(version_no, '.', 1) - 1)) major_version, 
@@ -107,6 +108,9 @@ select case major_version
        case minor_version
          when 22.1 then 'true'
          else 'false' end ver_le_2201,
+       case minor_version
+         when 22.2 then 'true'
+         else 'false' end ver_le_2202,
        to_char(minor_version, 'fm99.99') apex_version
   from apex_version;
 

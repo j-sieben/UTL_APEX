@@ -5,12 +5,10 @@ as
     Oracle APEX related utilites
   */
 
-  /* Types */
-  $IF dbms_db_version.version < 12 $THEN
-  subtype ora_name_type is varchar2(30 byte);
-  $ELSE
-  subtype ora_name_type is varchar2(128 byte);
-  $END
+  /**
+    Group: Types
+  */
+  subtype ora_name_type is &ORA_NAME_TYPE.;
   subtype small_char is varchar2(255 byte);
   subtype max_char is varchar2(32767 byte);
   subtype max_sql_char is varchar2(4000 byte);
@@ -57,6 +55,7 @@ as
   VER_LE_2102 constant boolean := &VER_LE_2102.;  
   VER_LE_22 constant boolean := &VER_LE_22.;
   VER_LE_2201 constant boolean := &VER_LE_2201.;
+  VER_LE_2202 constant boolean := &VER_LE_2202.;
   
   APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
@@ -235,6 +234,18 @@ as
   function get_string(
     p_page_item in varchar2)
     return varchar2;
+    
+  
+  /** Method to get a page item value
+   * @param  p_page_item  Name of the item of which the acutal value has to be casted
+   * @return BOOLEAN-value of type FLAG_TYPE or NULL
+   * @usage  Is used as a "type safe" way to get a string value from the session context.
+   *         Functional overload of GET_VALUE, makes it clear that the value is treated as a string
+   *         i.e. no conversion possible.
+   */
+  function get_boolean(
+    p_page_item in varchar2)
+    return flag_type;
     
   
   /** Method to cast a page item value to timestamp, based on the actual format mask
