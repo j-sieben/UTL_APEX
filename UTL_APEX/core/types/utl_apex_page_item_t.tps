@@ -1,4 +1,4 @@
-create or replace type utl_apex_page_item_t
+create or replace type utl_apex_page_item_t force
   authid definer
 as object
 (

@@ -8,32 +8,52 @@ whenever sqlerror exit
 set termout off
 
 define MIN_UT_VERSION="v3.1"
+variable with_pit_var varchar2(10 byte);
+variable flag_type_var varchar2(100);
+variable true_var varchar2(10 byte);
+variable false_var varchar2(10 byte);
+variable default_lang_var varchar2(128 byte);
 
 col ora_name_type new_val ORA_NAME_TYPE format a128
 col flag_type new_val FLAG_TYPE format a128
-col c_quote new_val C_QUOTE format a128
 col default_language new_val DEFAULT_LANGUAGE format a128
 col c_true new_val C_TRUE format a128
 col c_false new_val C_FALSE format a128
+col pit_installed new_val PIT_INSTALLED format a128
 
 select lower(data_type) || '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end ORA_NAME_TYPE
   from all_tab_columns
  where table_name = 'USER_TABLES'
    and column_name = 'TABLE_NAME';
 
-select lower(data_type) || '(' ||     
-         case when data_type in ('CHAR', 'VARCHAR2') then data_length || case char_used when 'B' then ' byte)' else ' char)' end
-         else data_precision || ', ' || data_scale || ')'
-       end FLAG_TYPE,
-       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_true) else to_char(pit_util.c_true) end C_TRUE, 
-       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_false) else to_char(pit_util.c_false) end C_FALSE
-  from all_tab_columns
- where table_name = 'PARAMETER_LOCAL'
-   and column_name = 'PAL_BOOLEAN_VALUE';
-
-select pit.get_default_language DEFAULT_LANGUAGE
-  from dual;
+begin
+  :with_pit_var := 'true';
+  execute immediate 'begin :x := pit_util.C_TRUE; end;' using out :true_var;
+  execute immediate 'begin :x := pit_util.C_FALSE; end;' using out :false_var;
+  execute immediate 'begin :x := pit.get_default_language; end;' using out :default_lang_var;
+  select lower(data_type) || '(' ||     
+           case when data_type in ('CHAR', 'VARCHAR2') then data_length || case char_used when 'B' then ' byte)' else ' char)' end
+           else data_precision || ', ' || data_scale || ')'
+         end,
+         case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(:true_var) else to_char(:true_var) end, 
+         case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(:false_var) else to_char(:false_var) end
+    into :flag_type_var, :true_var, :false_var
+    from all_tab_columns
+   where table_name = 'PARAMETER_LOCAL'
+     and column_name = 'PAL_BOOLEAN_VALUE';
   
+exception
+  when others then
+    :with_pit_var := 'false';
+    select q'^char(1 byte)^' flag_type, 'Y' C_TRUE, 'N' C_FALSE, 'AMERICAN' default_language
+      into :flag_type_var, :true_var, :false_var, :default_lang_var
+      from dual;
+end;
+/
+
+select :flag_type_var FLAG_TYPE, :true_var C_TRUE, :false_var C_FALSE, :default_lang_var, :default_lang_var DEFAULT_LANGUAGE, :with_pit_var PIT_INSTALLED
+  from dual;
+
 col ver_le_0500 new_val VER_LE_0500 format a5
 col ver_le_0501 new_val VER_LE_0501 format a5
 col ver_le_05 new_val VER_LE_05 format a5
@@ -103,7 +123,7 @@ select case major_version
          when 21.2 then 'true'
          else 'false' end ver_le_2102,
        case major_version 
-         when 221 then 'true'
+         when 22 then 'true'
          else 'false' end ver_le_22,
        case minor_version
          when 22.1 then 'true'

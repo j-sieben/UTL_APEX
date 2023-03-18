@@ -50,32 +50,15 @@ as
     p_triggering_element in varchar2 default null)
     return varchar2
   as
-    $IF utl_apex.ver_le_05 $THEN
-    C_URL constant max_sql_char := q'^'f?p=#APP#:#PAGE#:#SESSION_ID#:#DEBUG#::#CLEAR_CACHE#:#PARAM_LIST#:#VALUE_LIST#'^';
-    $END
     l_url utl_apex.max_sql_char;
   begin
-    $IF utl_apex.ver_le_0500 $THEN
-    l_url := utl_text.bulk_replace(C_URL, char_table(
-               'APP', p_application,
-               'PAGE', p_page,
-               'SESSION_ID', get_session_id,
-               'DEBUG', get_debug,
-               'CLEAR_CACHE', p_clear_cache,
-               'PARAM_LIST', p_param_list,
-               'VALUE_LIST', p_value_list));
-    l_url := apex_util.prepare_url(
-               p_url => l_url,
-               p_triggering_element => p_triggering_element);
-    $ELSE
     l_url := apex_page.get_url(
                p_application => p_application,
                p_page => p_page,
                p_clear_cache => p_clear_cache,
                p_items => p_param_list,
                p_values => p_value_list,
-               p_triggering_element => p_triggering_element);
-    $END
+               p_triggering_element => dbms_assert.enquote_literal(p_triggering_element));
     return l_url;
   end get_url;  
 
@@ -84,7 +67,7 @@ as
   procedure initialize
   as
   begin
-    g_item_prefix_convention := param.get_integer(C_ITEM_PREFIX_CONVENTION, C_PARAM_GROUP);
+    g_item_prefix_convention := 1;--param.get_integer(C_ITEM_PREFIX_CONVENTION, C_PARAM_GROUP);
     g_item_value_convention := param.get_boolean('ITEM_VALUE_CONVENTION', C_PARAM_GROUP);
     if param.get_boolean('SHOW_ITEM_ERROR_AT_NOTIFICATION', C_PARAM_GROUP) then
       g_show_item_error := apex_error.c_inline_with_field_and_notif;
@@ -123,26 +106,6 @@ as
      where application_id = p_application_id;
     return l_workspace_id;
   end get_workspace_id;
-  
-  
-  function get_help_websheet_id
-    return pls_integer
-  as
-    l_app_id pls_integer;
-    l_app_alias ora_name_type;
-  begin
-    pit.enter_mandatory;
-    
-    l_app_alias := get_application_alias;
-    
-    select application_id
-      into l_app_id
-      from apex_ws_applications
-     where application_name = l_app_alias;
-     
-    pit.leave_mandatory(msg_params(msg_param('ID', l_app_id)));
-    return l_app_id;
-  end get_help_websheet_id;
 
 
   function get_application_id(
@@ -347,7 +310,7 @@ as
     return flag_type
   as
   begin
-    return &C_TRUE.;
+    return 'Y';--&C_TRUE.;
   end c_true;
 
 
@@ -355,7 +318,7 @@ as
     return flag_type
   as
   begin
-    return &C_FALSE.;
+    return 'N';--&C_FALSE.;
   end c_false;
 
 
@@ -454,7 +417,7 @@ as
     return l_number;
   exception
     when others then
-      pit.handle_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'NUMBER'));
+      pit.handle_exception(msg.PIT_IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'NUMBER'));
       return null;
   end get_number;
 
@@ -486,7 +449,7 @@ as
     return l_date;
   exception
     when others then
-      pit.handle_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'DATE'));
+      pit.handle_exception(msg.PIT_IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'DATE'));
       return null;
   end get_date;
 
@@ -508,7 +471,7 @@ as
     l_result flag_type;
   begin
     l_value := upper(get_value(p_page_item));
-    if l_value in ('1', 'Y', 'J', 'YES', 'JA', 'TRUE', to_char('''' || replace(&C_TRUE., '''') || '''')) then
+    if l_value in ('1', 'Y', 'J', 'YES', 'JA', 'TRUE', to_char('''' || replace(C_TRUE, '''') || '''')) then
       l_result := C_TRUE;
     else
       l_result := C_FALSE;
@@ -550,7 +513,7 @@ as
     return coalesce(l_timestamp, l_timestamp_tz);
   exception
     when others then
-      pit.handle_exception(msg.IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'TIMESTAMP'));
+      pit.handle_exception(msg.PIT_IMPOSSIBLE_CONVERSION, msg_args(l_item.item_value, l_item.format_mask, 'TIMESTAMP'));
       return null;
   end get_timestamp;
 
@@ -577,7 +540,7 @@ as
     return l_item.item_value;
   exception
     when msg.UTL_APEX_MISSING_ITEM_ERR then
-      pit.handle_exception(msg.SQL_ERROR);
+      pit.handle_exception(msg.PIT_SQL_ERROR);
       raise;
   end get_value;
 
@@ -924,8 +887,8 @@ select d.page_items
            templates as (
              select uttm_text template, uttm_mode
                from utl_text_templates
-              where uttm_name in (C_TEMPLATE_NAME_COLUMNS, C_TEMPLATE_NAME_FRAME)
-                and uttm_type = C_TEMPLATE_TYPE),
+              where uttm_type = C_TEMPLATE_TYPE
+                and uttm_name in (C_TEMPLATE_NAME_COLUMNS, C_TEMPLATE_NAME_FRAME)),
            data as (
              select *
                from table(utl_apex.get_page_items(l_view_name, p_static_id, get_application_id, get_page_id, C_TRUE)) c),
@@ -1107,7 +1070,7 @@ select d.page_items
 
     pit.leave_optional;
   exception
-    when msg.ASSERT_IS_NOT_NULL_ERR then
+    when msg.PIT_ASSERT_IS_NOT_NULL_ERR then
       -- Assertion is violated if no error was passed in. Accept this as a sign that no error has occurred
       pit.leave_optional;
   end set_error;
@@ -1147,16 +1110,12 @@ select d.page_items
 
     -- Switch item_value_convention off to avoid exceptions when checking C_ROW_DML_ACTION and no IG is present
     g_item_value_convention := false;
-
-    $IF utl_apex.ver_le_0500 $THEN
-    l_result := get_request member of C_INSERT_WHITELIST;
-    $ELSE
     -- Starting with version 5.1, insert might be detected by using C_ROW_DML_ACTION in interactive Grid or Form regions (>= 19.1)
     -- CAVE: Don't refactor to GET_VALUE instead of APEX_UTIL.GET_SESSION_STATE as C_ROW_DML_ACTION is no page item
     if get_request member of C_INSERT_WHITELIST or apex_util.get_session_state(C_ROW_DML_ACTION) = C_INSERT_FLAG then
       l_result := true;
     end if;
-    $END
+    
     -- reset item value convention
     g_item_value_convention := l_item_value_convention;
 
@@ -1177,16 +1136,13 @@ select d.page_items
 
     -- Switch item_value_convention off to avoid exceptions when checking C_ROW_DML_ACTION and no IG is present
     g_item_value_convention := false;
-
-    $IF utl_apex.ver_le_0500 $THEN
-    l_result := get_request member of C_UPDATE_WHITELIST;
-    $ELSE
+    
     -- Starting with version 5.1, insert might be detected by using C_ROW_DML_ACTION in interactive Grid or Form regions (>= 19.1)
     -- CAVE: Don't refactor to GET_VALUE instead of APEX_UTIL.GET_SESSION_STATE as C_ROW_DML_ACTION is no page item
     if get_request member of C_UPDATE_WHITELIST or apex_util.get_session_state(C_ROW_DML_ACTION) = C_UPDATE_FLAG then
       l_result := true;
     end if;
-    $END
+    
     -- rest item value convntion
     g_item_value_convention := l_item_value_convention;
 
@@ -1208,15 +1164,12 @@ select d.page_items
     -- Switch item_value_convention off to avoid exceptions when checking C_ROW_DML_ACTION and no IG is present
     g_item_value_convention := false;
 
-    $IF utl_apex.ver_le_0500 $THEN
-    l_result := get_request member of C_DELETE_WHITELIST;
-    $ELSE
     -- Starting with version 5.1, insert might be detected by using C_ROW_DML_ACTION in interactive Grid or Form regions (>= 19.1)
     -- CAVE: Don't refactor to GET_VALUE instead of APEX_UTIL.GET_SESSION_STATE as C_ROW_DML_ACTION is no page item
     if get_request member of C_DELETE_WHITELIST or apex_util.get_session_state(C_ROW_DML_ACTION) = C_DELETE_FLAG then
       l_result := true;
     end if;
-    $END
+    
     -- rest item value convntion
     g_item_value_convention := l_item_value_convention;
 
@@ -1404,7 +1357,7 @@ select d.page_items
 
   procedure assert(
     p_condition in boolean,
-    p_message_name in ora_name_type default msg.ASSERT_TRUE,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_TRUE,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1428,7 +1381,7 @@ select d.page_items
 
   procedure assert_is_null(
     p_condition in varchar2,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1452,7 +1405,7 @@ select d.page_items
 
   procedure assert_is_null(
     p_condition in number,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1476,7 +1429,7 @@ select d.page_items
 
   procedure assert_is_null(
     p_condition in date,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1572,7 +1525,7 @@ select d.page_items
 
   procedure assert_exists(
     p_stmt in varchar2,
-    p_message_name in ora_name_type default msg.ASSERT_EXISTS,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_EXISTS,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1596,7 +1549,7 @@ select d.page_items
 
   procedure assert_not_exists(
     p_stmt in varchar2,
-    p_message_name in ora_name_type default msg.ASSERT_NOT_EXISTS,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_NOT_EXISTS,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1622,7 +1575,7 @@ select d.page_items
     p_value in varchar2,
     p_type in varchar2,
     p_format_mask in varchar2 default null,
-    p_message_name in ora_name_type default msg.ASSERT_DATATYPE,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_DATATYPE,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null,

@@ -8,7 +8,7 @@ as
   /**
     Group: Types
   */
-  subtype ora_name_type is &ORA_NAME_TYPE.;
+  subtype ora_name_type is varchar2(128 byte);--&ORA_NAME_TYPE.;
   subtype small_char is varchar2(255 byte);
   subtype max_char is varchar2(32767 byte);
   subtype max_sql_char is varchar2(4000 byte);
@@ -38,9 +38,6 @@ as
   
   /* Package constants */
   /* APEX Version constants according to DBMS_DB_VERSION */
-  VER_LE_05 constant boolean := &VER_LE_05.;
-  VER_LE_0500 constant boolean := &VER_LE_0500.;
-  VER_LE_0501 constant boolean := &VER_LE_0501.;
   VER_LE_18 constant boolean := &VER_LE_18.;
   VER_LE_1801 constant boolean := &VER_LE_1801.;
   VER_LE_1802 constant boolean := &VER_LE_1802.;
@@ -59,6 +56,8 @@ as
   
   APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
+  
+  PIT_INSTALLED constant boolean := &PIT_INSTALLED.;
 
   FORMAT_JSON constant ora_name_type := 'JSON';
   FORMAT_HTML constant ora_name_type := 'HTML';
@@ -142,14 +141,6 @@ as
   function get_workspace_id(
     p_application_id in number)
     return number;
-    
-    
-  /** Determine the ID of the websheet helper application
-   * %return ID fo the websheet helper application
-   * %usage  Is called to initialize the help system.
-   */
-  function get_help_websheet_id
-    return pls_integer;
     
 
   function get_application_id(
@@ -309,7 +300,8 @@ as
     p_app_item in varchar2,
     p_value in varchar2);
     
-    
+  
+  $IF &PIT_INSTALLED. $THEN
   /** Method to set a success message via a PIT message
    * @param  p_message   Name of the message, one of the MSG.constants
    * @param [p_msg_args] Optional arguments for the message
@@ -318,6 +310,7 @@ as
   procedure set_success_message(
     p_message in ora_name_type,
     p_msg_args in msg_args default null);
+  $END
     
   
   /** Method to check whether actual user has got an authorization
@@ -451,6 +444,7 @@ as
     return ora_name_type;
 
 
+  $IF &PIT_INSTALLED. $THEN
   /** Method to register validation error messages.
    * @param  p_page_item  page item or column that is affected by the validation
    * @param [p_message]   Name of a PIT message name, If NULL, PIT.GET_ACTIVE_MESSAGE is used.
@@ -466,7 +460,7 @@ as
     p_message in ora_name_type default null,
     p_msg_args in msg_args default null,
     p_region_id in ora_name_type default null);
-
+  
 
   /** Method to register validation error messages.
    * @param  p_test       Test expression
@@ -484,7 +478,7 @@ as
     p_message in ora_name_type default null,
     p_msg_args in msg_args default null,
     p_region_id in ora_name_type default null);
-
+  $END
 
   /** Methods to analyse the requested operation during a page submit
    * @return TRUE, if the respective operation was requested
@@ -576,8 +570,9 @@ as
     p_collection in varchar2 default 'CLOB_CONTENT');  
 
 
+  $IF &PIT_INSTALLED. $THEN
   /* ASSERTIONS-Wrapper */
-  /** Methods call <code>PIT.ASSERT...</code> catch them and pass them to the APEX UI by adding them to the APEX error stack
+  /** Methods call <code>PIT.PIT_ASSERT...</code> catch them and pass them to the APEX UI by adding them to the APEX error stack
    * @param  p_condition     Test to execute
    * @param [p_message_name] Optional PIT message name to throw if <code>P_CONDITION</code> evaluates to <code>FALSE</code>
    *                         If NULL, PIT.GET_ACTIVE_MESSAGE is used.
@@ -585,13 +580,13 @@ as
    *                         If NULL, the error message is shown without page item relation
    * @param [p_msg_args]     Optional message arguments. If null, the item label is passed
    * @param [p_region_id]    Optional static region id, required to create validations for interactive grids
-   * @usage  These methods are used as a convenience wrapper around <code>PIT.ASSERT...</code> by eliminating repetitive code
+   * @usage  These methods are used as a convenience wrapper around <code>PIT.PIT_ASSERT...</code> by eliminating repetitive code
    *         to encorporate the error message into the APEX error stack and assign it to a page item.
    *         Further documentation @see PIT
    */
   procedure assert(
     p_condition in boolean,
-    p_message_name in ora_name_type default msg.ASSERT_TRUE,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_TRUE,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -599,7 +594,7 @@ as
 
   procedure assert_is_null(
     p_condition in varchar2,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -607,7 +602,7 @@ as
 
   procedure assert_is_null(
     p_condition in number,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -615,7 +610,7 @@ as
 
   procedure assert_is_null(
     p_condition in date,
-    p_message_name in ora_name_type default msg.ASSERT_IS_NULL,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -647,7 +642,7 @@ as
 
   procedure assert_exists(
     p_stmt in varchar2,
-    p_message_name in ora_name_type default msg.ASSERT_EXISTS,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_EXISTS,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -655,7 +650,7 @@ as
 
   procedure assert_not_exists(
     p_stmt in varchar2,
-    p_message_name in ora_name_type default msg.ASSERT_NOT_EXISTS,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_NOT_EXISTS,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -665,12 +660,12 @@ as
     p_value in varchar2,
     p_type in varchar2,
     p_format_mask in varchar2 default null,
-    p_message_name in ora_name_type default msg.ASSERT_DATATYPE,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_DATATYPE,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null,
     p_accept_null in boolean default true);
-    
+  $END
   
   /** Method to encapsulate PIT collection mode error treatment
    * @param [p_mapping] CHAR_TABLE instance with error code - page item names couples, according to DECODE function

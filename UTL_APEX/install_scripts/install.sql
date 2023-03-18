@@ -9,12 +9,6 @@
 prompt
 prompt &section.
 prompt &h1.UTL_APEX Installation
-prompt
-prompt &section.
-prompt &h1.Remove existing installation
-@core/uninstall.sql
-
-@tools/check_unit_test_exists.sql "unit_test/uninstall.sql" "deinstallation"
 
 prompt
 prompt &section.

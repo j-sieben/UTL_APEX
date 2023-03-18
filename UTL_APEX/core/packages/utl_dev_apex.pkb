@@ -77,7 +77,7 @@ as
    *         - STATIC: script is returned as varchar2 to be included in PL/SQL packages
    */
   function get_script_for_page_items(
-    p_uttm_mode in utl_text_templates.uttm_mode%type,
+    p_uttm_mode in utl_apex.ora_name_type,
     p_static_id in varchar2,
     p_table_name in varchar2,
     p_application_id in number default utl_apex.get_application_id,
@@ -116,8 +116,8 @@ as
            templates as (
              select uttm_text template, uttm_mode
                from utl_text_templates
-              where uttm_name in (C_TEMPLATE_NAME_COLUMNS, C_TEMPLATE_NAME_FRAME)
-                and uttm_type = C_TEMPLATE_TYPE),
+              where uttm_type = C_TEMPLATE_TYPE
+                and uttm_name in (C_TEMPLATE_NAME_COLUMNS, C_TEMPLATE_NAME_FRAME)),
            data as (
              select *
                from table(utl_apex.get_page_items(l_view_name, p_static_id, p_application_id, p_page_id, utl_apex.C_TRUE)) c),
@@ -439,42 +439,9 @@ as
     p_app_page_id in apex_application_pages.page_id%type default 1,
     p_app_user in apex_workspace_activity_log.apex_user%type)
   as
-    $IF utl_apex.ver_le_05 $THEN
-    l_workspace_id apex_applications.workspace_id%type;
-    l_cgivar_name owa.vc_arr;
-    l_cgivar_val owa.vc_arr;
-    $END
   begin
     if apex_application.g_instance is null then
-      $IF utl_apex.ver_le_05 $THEN
-      htp.init;
-    
-      l_cgivar_name(1) := 'REQUEST_PROTOCOL';
-      l_cgivar_val(1) := 'HTTP';
-    
-      owa.init_cgi_env(
-        num_params => 1,
-        param_name => l_cgivar_name,
-        param_val => l_cgivar_val );
-    
-      select workspace_id
-        into l_workspace_id
-        from apex_applications
-       where application_id = p_app_id;
-    
-      wwv_flow_api.set_security_group_id(l_workspace_id);
-    
-      apex_application.g_instance := 1;
-      apex_application.g_flow_id := p_app_id;
-      apex_application.g_flow_step_id := p_app_page_id;
-    
-      apex_custom_auth.post_login(
-        p_uname => p_app_user,
-        p_session_id => null, -- could use APEX_CUSTOM_AUTH.GET_NEXT_SESSION_ID
-        p_app_page => apex_application.g_flow_id||':'||p_app_page_id);
-      $ELSE
       apex_session.create_session(p_app_id, p_app_page_id, p_app_user);
-      $END
     end if;
   end create_session;
   
@@ -483,13 +450,10 @@ as
   as
   begin
     rollback;
-    $IF utl_apex.ver_le_05 $THEN
-    $ELSE
     if apex_application.g_instance is not null then
       apex_session.delete_session;
     end if;
     commit;
-    $END
   end drop_session;
   
   
@@ -563,7 +527,7 @@ as
   as 
     l_view_name utl_apex.ora_name_type;
     l_column_list utl_apex.max_char;
-    l_mode utl_text_templates.uttm_mode%type;
+    l_mode utl_apex.ora_name_type;
     l_code clob;
   begin
     pit.enter_mandatory(
@@ -620,8 +584,8 @@ as
                   template_list as(
                     select uttm_text ddl_template, uttm_mode data_type
                       from utl_text_templates
-                     where uttm_name = 'COLUMN'
-                       and uttm_type = 'APEX_FORM')
+                     where uttm_type = 'APEX_FORM'
+                       and uttm_name = 'COLUMN')
           select t.ddl_template template, 
                  p.page_alias page_alias_upper, lower(p.page_alias) page_alias,
                  substr(p.item_name, instr(p.item_name, '_', 1) + 1) item_name,
@@ -637,32 +601,7 @@ as
     -- generate methods
     if p_static_id is not null then
       -- static id means that a form region or interactive grid is referenced
-      $IF utl_apex.VER_LE_05 $THEN
-      select utl_text.generate_text(cursor(
-               select t.uttm_text template, l_column_list column_list,
-                      lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
-                      lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
-                      lower(coalesce(p_check_method, 'check_' || app.page_alias)) check_method,
-                      lower(coalesce(p_insert_method, 'merge_' || app.page_alias)) insert_method,
-                      lower(p_update_method) update_method,
-                      lower(coalesce(p_delete_method, 'delete_' || app.page_alias)) delete_method,
-                      lower(p_static_id) static_id
-                 from apex_application_pages app
-                 join apex_application_page_proc apo
-                   on app.application_id = apo.application_id
-                  and app.page_id = apo.page_id
-                cross join utl_text_templates t
-                where app.application_id = p_application_id
-                  and app.page_id = p_page_id
-                  and apo.process_type_code = 'DML_FETCH_ROW'
-                  and t.uttm_name = 'METHODS'
-                  and t.uttm_type = 'APEX_FORM'
-                  and t.uttm_mode = l_mode
-               )
-             )
-        into l_code
-        from dual;
-      $ELSIF utl_apex.VER_LE_18 $THEN
+      $IF utl_apex.VER_LE_18 $THEN
       select utl_text.generate_text(cursor(
              select t.uttm_text template, l_column_list column_list,
                     lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
@@ -699,12 +638,14 @@ as
                join apex_application_page_regions apr
                  on app.application_id = apr.application_id
                 and app.page_id = apr.page_id
-              cross join utl_text_templates t
+              cross join (
+                    select *
+                      from utl_text_templates
+                     where uttm_type = 'APEX_FORM'
+                       and uttm_name = 'METHODS') t
               where app.application_id = p_application_id
                 and app.page_id = p_page_id
                 and apr.static_id = p_static_id
-                and t.uttm_name = 'METHODS'
-                and t.uttm_type = 'APEX_FORM'
                 and t.uttm_mode = l_mode))
       into l_code
       from dual;
@@ -722,12 +663,14 @@ as
                  join apex_application_page_proc apo
                    on app.application_id = apo.application_id
                   and app.page_id = apo.page_id
-                cross join utl_text_templates t
+                cross join (
+                      select *
+                        from utl_text_templates
+                       where uttm_type = 'APEX_FORM'
+                         and uttm_name = 'METHODS') t
                 where app.application_id = p_application_id
                   and app.page_id = p_page_id
                   and apo.process_type_code = 'DML_FETCH_ROW'
-                  and t.uttm_name = 'METHODS'
-                  and t.uttm_type = 'APEX_FORM'
                   and t.uttm_mode = l_mode))
         into l_code
         from dual;
@@ -886,9 +829,7 @@ select utl_text.generate_text(cursor(
          and page_id = p_page_id
          and process_type_code = 'DML_FETCH_ROW';      
     else
-      $IF utl_apex.ver_le_05 $THEN
-      null;
-      $ELSIF utl_apex.ver_le_18 $THEN
+      $IF utl_apex.ver_le_18 $THEN
       null;
       $ELSE
       l_item_view_name := 'UTL_DEV_APEX_FORM_COLLECTION';

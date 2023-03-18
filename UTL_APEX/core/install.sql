@@ -9,7 +9,7 @@ prompt
 prompt &section.
 prompt &h2.Messages
 prompt &s1.Message Group UTL_APEX
-@&MSG_DIR.MessageGroup_UTL_APEX.sql
+@tools/check_pit_exists.sql &MSG_DIR.MessageGroup_UTL_APEX
 
 prompt
 prompt &section.
@@ -87,4 +87,25 @@ prompt &section.
 prompt &h2.Package dependent Scripts
 prompt &s1.Script set_parameter
 @&SCRIPT_DIR.ParameterGroup_UTL_APEX.sql
+
+
+prompt &h1.Recompiling invalid objects
+declare
+  l_invalid_objects binary_integer;
+begin
+  dbms_utility.compile_schema(
+    schema => user,
+    compile_all => false);
+    
+  select count(*)
+    into l_invalid_objects
+    from user_objects
+   where status = 'INVALID';
+   
+  dbms_output.put_line(l_invalid_objects || ' invalid objects found');
+end;
+/
+prompt &h1.Finished UTL_APEX Installation
+
+exit
 

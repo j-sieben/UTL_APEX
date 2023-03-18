@@ -21,7 +21,7 @@ as
       session state values for a given form
       
     Parameter:
-      p_table - Table or viewn that is the basis of the form that contains the data
+      p_table - Table or view that is the basis of the form that contains the data
                 It may be the UI-View used for the form or the underlying view or
                 table for the UI-View in case all column names match
                 
