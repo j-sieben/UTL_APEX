@@ -67,7 +67,7 @@ as
   procedure initialize
   as
   begin
-    g_item_prefix_convention := 1;--param.get_integer(C_ITEM_PREFIX_CONVENTION, C_PARAM_GROUP);
+    g_item_prefix_convention := param.get_integer(C_ITEM_PREFIX_CONVENTION, C_PARAM_GROUP);
     g_item_value_convention := param.get_boolean('ITEM_VALUE_CONVENTION', C_PARAM_GROUP);
     if param.get_boolean('SHOW_ITEM_ERROR_AT_NOTIFICATION', C_PARAM_GROUP) then
       g_show_item_error := apex_error.c_inline_with_field_and_notif;
@@ -1453,7 +1453,7 @@ select d.page_items
 
   procedure assert_not_null(
     p_condition in varchar2,
-    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NOT_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1477,7 +1477,7 @@ select d.page_items
 
   procedure assert_not_null(
     p_condition in number,
-    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NOT_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)
@@ -1501,7 +1501,7 @@ select d.page_items
 
   procedure assert_not_null(
     p_condition in date,
-    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NOT_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null)

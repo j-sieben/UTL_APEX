@@ -8,7 +8,7 @@ as
   /**
     Group: Types
   */
-  subtype ora_name_type is varchar2(128 byte);--&ORA_NAME_TYPE.;
+  subtype ora_name_type is &ORA_NAME_TYPE.;
   subtype small_char is varchar2(255 byte);
   subtype max_char is varchar2(32767 byte);
   subtype max_sql_char is varchar2(4000 byte);
@@ -618,7 +618,7 @@ as
 
   procedure assert_not_null(
     p_condition in varchar2,
-    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NOT_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -626,7 +626,7 @@ as
 
   procedure assert_not_null(
     p_condition in number,
-    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NOT_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
@@ -634,7 +634,7 @@ as
 
   procedure assert_not_null(
     p_condition in date,
-    p_message_name in ora_name_type default msg.UTL_APEX_PARAMETER_REQUIRED,
+    p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NOT_NULL,
     p_page_item in ora_name_type default null,
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null);
