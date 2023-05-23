@@ -1,9 +1,9 @@
 create or replace force view utl_apex_fetch_row_columns as
 with params as(
-       select length(utl_apex.get_page_prefix) + 1 prefix
+       select /*+ no_merge */
+              length(utl_apex.get_page_prefix) + 1 prefix
          from dual)
-select /*+ no_merge (p) */
-       i.application_id,
+select i.application_id,
        i.page_id,
        null static_id,
        utl_apex_page_item_t(lower(c.table_name), lower(substr(i.item_name, p.prefix)), i.item_name, i.label, c.data_type, i.format_mask) page_items,
