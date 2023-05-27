@@ -734,12 +734,12 @@ select d.page_items
                     msg_param('p_page_id', p_page_id),
                     msg_param('p_only_columns', p_only_columns)));
 
-    l_stmt := utl_text.bulk_replace(C_STMT, char_table(
-                'VIEW_NAME', p_view_name,
-                'APP_ID', p_application_id,
-                'PAGE_ID', p_page_id,
-                'STATIC_ID', p_static_id,
-                'ONLY_COLUMNS', case when p_only_columns is not null then C_TRUE end));
+    l_stmt := replace(replace(replace(replace(replace(C_STMT,
+                'VIEW_NAME', p_view_name),
+                'APP_ID', p_application_id),
+                'PAGE_ID', p_page_id),
+                'STATIC_ID', p_static_id),
+                'ONLY_COLUMNS', case when p_only_columns is not null then C_TRUE end);
 
     open l_cur for l_stmt;
     fetch l_cur into l_row;
