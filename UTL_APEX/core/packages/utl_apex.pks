@@ -38,12 +38,6 @@ as
   
   /* Package constants */
   /* APEX Version constants according to DBMS_DB_VERSION */
-  VER_LE_18 constant boolean := &VER_LE_18.;
-  VER_LE_1801 constant boolean := &VER_LE_1801.;
-  VER_LE_1802 constant boolean := &VER_LE_1802.;
-  VER_LE_19 constant boolean := &VER_LE_19.;
-  VER_LE_1901 constant boolean := &VER_LE_1901.;
-  VER_LE_1902 constant boolean := &VER_LE_1902.;
   VER_LE_20 constant boolean := &VER_LE_20.;
   VER_LE_2001 constant boolean := &VER_LE_2001.;
   VER_LE_2002 constant boolean := &VER_LE_2002.;
@@ -53,6 +47,8 @@ as
   VER_LE_22 constant boolean := &VER_LE_22.;
   VER_LE_2201 constant boolean := &VER_LE_2201.;
   VER_LE_2202 constant boolean := &VER_LE_2202.;
+  VER_LE_22 constant boolean := &VER_LE_23.;
+  VER_LE_2201 constant boolean := &VER_LE_2301.;
   
   APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';

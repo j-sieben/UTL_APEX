@@ -601,30 +601,6 @@ as
     -- generate methods
     if p_static_id is not null then
       -- static id means that a form region or interactive grid is referenced
-      $IF utl_apex.VER_LE_18 $THEN
-      select utl_text.generate_text(cursor(
-             select t.uttm_text template, l_column_list column_list,
-                    lower(apo.attribute_02) view_name, upper(apo.attribute_02) view_name_upper,
-                    lower(app.page_alias) page_alias, upper(app.page_alias) page_alias_upper,
-                      lower(coalesce(p_check_method, 'check_' || app.page_alias)) check_method,
-                      lower(coalesce(p_insert_method, 'merge_' || app.page_alias)) insert_method,
-                      lower(p_update_method) update_method,
-                      lower(coalesce(p_delete_method, 'delete_' || app.page_alias)) delete_method,
-                    lower(p_static_id) static_id
-               from apex_application_pages app
-               join apex_application_page_proc apo
-                 on app.application_id = apo.application_id
-                and app.page_id = apo.page_id
-              cross join utl_text_templates t
-              where app.application_id = p_application_id
-                and app.page_id = p_page_id
-                and apo.process_type_code = 'DML_FETCH_ROW'
-                and t.uttm_name = 'METHODS'
-                and t.uttm_type = 'APEX_FORM'
-                and t.uttm_mode = l_mode))
-      into l_code
-      from dual;
-      $ELSE
       select utl_text.generate_text(cursor(
              select t.uttm_text template, l_column_list column_list,
                     lower(apr.table_name) view_name, upper(apr.table_name) view_name_upper,
@@ -649,7 +625,6 @@ as
                 and t.uttm_mode = l_mode))
       into l_code
       from dual;
-      $END
     else
       select utl_text.generate_text(cursor(
                select t.uttm_text template, l_column_list column_list,
@@ -829,9 +804,6 @@ select utl_text.generate_text(cursor(
          and page_id = p_page_id
          and process_type_code = 'DML_FETCH_ROW';      
     else
-      $IF utl_apex.ver_le_18 $THEN
-      null;
-      $ELSE
       l_item_view_name := 'UTL_DEV_APEX_FORM_COLLECTION';
       select table_name, table_name
         into l_view_name, l_collection_name
@@ -840,7 +812,6 @@ select utl_text.generate_text(cursor(
          and page_id = p_page_id
          and source_type_code in ('NATIVE_FORM')
          and static_id = p_static_id;
-      $END
     end if;
     
     -- generate package code

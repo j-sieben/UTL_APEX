@@ -5,7 +5,7 @@ set feedback off
 set lines 120
 set pages 9999
 whenever sqlerror exit
-set termout off
+set termout on
 
 define MIN_UT_VERSION="v3.1"
 variable with_pit_var varchar2(10 byte);
@@ -54,15 +54,6 @@ end;
 select :flag_type_var FLAG_TYPE, :true_var C_TRUE, :false_var C_FALSE, :default_lang_var, :default_lang_var DEFAULT_LANGUAGE, :with_pit_var PIT_INSTALLED
   from dual;
 
-col ver_le_0500 new_val VER_LE_0500 format a5
-col ver_le_0501 new_val VER_LE_0501 format a5
-col ver_le_05 new_val VER_LE_05 format a5
-col ver_le_1801 new_val VER_LE_1801 format a5
-col ver_le_1802 new_val VER_LE_1802 format a5
-col ver_le_18 new_val VER_LE_18 format a5
-col ver_le_19 new_val VER_LE_19 format a5
-col ver_le_1901 new_val VER_LE_1901 format a5
-col ver_le_1902 new_val VER_LE_1902 format a5
 col ver_le_20 new_val VER_LE_20 format a5
 col ver_le_2001 new_val VER_LE_2001 format a5
 col ver_le_2002 new_val VER_LE_2002 format a5
@@ -72,39 +63,14 @@ col ver_le_2102 new_val VER_LE_2102 format a5
 col ver_le_22 new_val VER_LE_22 format a5
 col ver_le_2201 new_val VER_LE_2201 format a5
 col ver_le_2202 new_val VER_LE_2202 format a5
+col ver_le_23 new_val VER_LE_23 format a5
+col ver_le_2301 new_val VER_LE_2301 format a5
 col apex_version new_val apex_version format a30
 with apex_version as(
        select to_number(substr(version_no, 1, instr(version_no, '.', 1) - 1)) major_version, 
               to_number(substr(version_no, 1, instr(version_no, '.', 1, 2) - 1), '99.99') minor_version
          from apex_release r)
 select case major_version 
-         when 5 then 'true'
-         else 'false' end ver_le_05,
-       case minor_version
-         when 5.0 then 'true'
-         else 'false' end ver_le_0500,
-       case minor_version
-         when 5.1 then 'true'
-         else 'false' end ver_le_0501,
-       case major_version 
-         when 18 then 'true'
-         else 'false' end ver_le_18,
-       case minor_version
-         when 18.1 then 'true'
-         else 'false' end ver_le_1801,
-       case minor_version
-         when 18.2 then 'true'
-         else 'false' end ver_le_1802,
-       case major_version 
-         when 19 then 'true'
-         else 'false' end ver_le_19,
-       case minor_version
-         when 19.1 then 'true'
-         else 'false' end ver_le_1901,
-       case minor_version
-         when 19.2 then 'true'
-         else 'false' end ver_le_1902,
-       case major_version 
          when 20 then 'true'
          else 'false' end ver_le_20,
        case minor_version
@@ -131,6 +97,12 @@ select case major_version
        case minor_version
          when 22.2 then 'true'
          else 'false' end ver_le_2202,
+       case major_version 
+         when 23 then 'true'
+         else 'false' end ver_le_23,
+       case minor_version
+         when 23.1 then 'true'
+         else 'false' end ver_le_2301,
        to_char(minor_version, 'fm99.99') apex_version
   from apex_version;
 
