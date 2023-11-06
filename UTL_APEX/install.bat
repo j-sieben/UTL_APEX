@@ -12,5 +12,3 @@ set /p SID=Enter service name for the database or PDB:
 set nls_lang=GERMAN_GERMANY.AL32UTF8
 
 echo @install_scripts/install.sql | sqlplus %InstallUser%/%PWD%@%SID% 
-
-pause

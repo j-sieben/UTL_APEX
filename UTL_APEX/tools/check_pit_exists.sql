@@ -1,4 +1,4 @@
-set termout on
+set termout off
 
 column script new_value SCRIPT
 select case when '&PIT_INSTALLED.' = 'true'

@@ -25,7 +25,7 @@ with columns as(
            and api.item_source = utc.column_name
           join (select uttm_name data_type, convert_to_collection, convert_from_collection, convert_from_item, collection_data_type
                   from (select uttm_name, uttm_mode, uttm_text
-                          from utl_text_templates
+                          from utl_text_templates_v
                          where uttm_type = 'APEX_COLLECTION'
                            and uttm_mode in ('CONVERT_TO_COLLECTION', 'CONVERT_FROM_COLLECTION', 'CONVERT_FROM_ITEM', 'COLLECTION_DATA_TYPE'))
                  pivot (max(uttm_text) for uttm_mode in ('CONVERT_TO_COLLECTION' as convert_to_collection,

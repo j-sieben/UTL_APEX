@@ -9,7 +9,7 @@ prompt
 prompt &section.
 prompt &h2.Messages
 prompt &s1.Message Group UTL_APEX
-@tools/check_pit_exists.sql &MSG_DIR.MessageGroup_UTL_APEX
+@&MSG_DIR.MessageGroup_UTL_APEX
 
 prompt
 prompt &section.

@@ -115,7 +115,7 @@ as
            ),
            templates as (
              select uttm_text template, uttm_mode
-               from utl_text_templates
+               from utl_text_templates_v
               where uttm_type = C_TEMPLATE_TYPE
                 and uttm_name in (C_TEMPLATE_NAME_COLUMNS, C_TEMPLATE_NAME_FRAME)),
            data as (
@@ -235,7 +235,7 @@ as
                   lower(p_short_name) short_name,
                   p_pk_insert pk_insert,
                   uttm_name, uttm_mode, uttm_text
-             from utl_text_templates
+             from utl_text_templates_v
             where uttm_type = C_UTTM_TYPE)
     select /*+ no_merge (column_data) */
            utl_text.generate_text(cursor(
@@ -583,7 +583,7 @@ as
                   ),
                   template_list as(
                     select uttm_text ddl_template, uttm_mode data_type
-                      from utl_text_templates
+                      from utl_text_templates_v
                      where uttm_type = 'APEX_FORM'
                        and uttm_name = 'COLUMN')
           select t.ddl_template template, 
@@ -616,7 +616,7 @@ as
                 and app.page_id = apr.page_id
               cross join (
                     select *
-                      from utl_text_templates
+                      from utl_text_templates_v
                      where uttm_type = 'APEX_FORM'
                        and uttm_name = 'METHODS') t
               where app.application_id = p_application_id
@@ -640,7 +640,7 @@ as
                   and app.page_id = apo.page_id
                 cross join (
                       select *
-                        from utl_text_templates
+                        from utl_text_templates_v
                        where uttm_type = 'APEX_FORM'
                          and uttm_name = 'METHODS') t
                 where app.application_id = p_application_id
@@ -689,7 +689,7 @@ as
     -- Generate view DDL
     with tmpl_list as(
            select uttm_name, uttm_text template
-             from utl_text_templates
+             from utl_text_templates_v
             where uttm_type = C_APEX_TMPL_TYPE
               and uttm_mode = C_DEFAULT)
     select utl_text.generate_text(cursor(
@@ -725,7 +725,7 @@ as
     -- Don't refactor, as the VIEW_NAME is variable
     C_PACKAGE_STMT constant utl_apex.max_char := q'^with tmpl_list as(
        select uttm_name, uttm_text template
-         from utl_text_templates
+         from utl_text_templates_v
         where uttm_type = '#APEX_TMPL_TYPE#'
           and uttm_mode = '#DEFAULT#'),
        columns as(
@@ -847,7 +847,7 @@ select utl_text.generate_text(cursor(
   begin
     with tmpl_list as(
            select uttm_name, uttm_text template
-             from utl_text_templates
+             from utl_text_templates_v
             where uttm_type = 'APEX_COLLECTION'
               and uttm_mode = 'DEFAULT')
     select utl_text.generate_text(cursor(
@@ -916,7 +916,7 @@ select utl_text.generate_text(cursor(
                   p_view_name view_name,
                   p_table_name table_name,
                   p_table_shortcut table_shortcut
-             from utl_text_templates
+             from utl_text_templates_v
             where uttm_type = 'APEX_FORM'
               and uttm_name = 'VIEW_TO_TABLE')
     select utl_text.generate_text(cursor(

@@ -226,13 +226,21 @@ as
   /** Method to get a page item value
    * @param  p_page_item  Name of the item of which the acutal value has to be casted
    * @return BOOLEAN-value of type FLAG_TYPE or NULL
+   * @usage  Is used as a "type safe" way to get a flag value from the session context.
+   */
+  function get_flag(
+    p_page_item in varchar2)
+    return flag_type;
+    
+  
+  /** Method to get a page item value
+   * @param  p_page_item  Name of the item of which the acutal value has to be casted
+   * @return BOOLEAN-value
    * @usage  Is used as a "type safe" way to get a string value from the session context.
-   *         Functional overload of GET_VALUE, makes it clear that the value is treated as a string
-   *         i.e. no conversion possible.
    */
   function get_boolean(
     p_page_item in varchar2)
-    return flag_type;
+    return boolean;
     
   
   /** Method to cast a page item value to timestamp, based on the actual format mask

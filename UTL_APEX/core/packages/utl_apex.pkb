@@ -463,7 +463,7 @@ as
   end get_string;
 
 
-  function get_boolean(
+  function get_flag(
     p_page_item in varchar2)
     return flag_type
   is
@@ -471,10 +471,27 @@ as
     l_result flag_type;
   begin
     l_value := upper(get_value(p_page_item));
-    if l_value in ('1', 'Y', 'J', 'YES', 'JA', 'TRUE', to_char('''' || replace(C_TRUE, '''') || '''')) then
+    if l_value in ('1', 'Y', 'J', 'YES', 'JA', 'TRUE', to_char('''' || to_char(C_TRUE) || '''')) then
       l_result := C_TRUE;
     else
       l_result := C_FALSE;
+    end if;
+    return l_result;
+  end get_flag;
+
+
+  function get_boolean(
+    p_page_item in varchar2)
+    return boolean
+  is
+    l_value varchar2(10 byte);
+    l_result boolean;
+  begin
+    l_value := upper(get_value(p_page_item));
+    if l_value in ('1', 'Y', 'J', 'YES', 'JA', 'TRUE', to_char('''' || to_char(C_TRUE) || '''')) then
+      l_result := true;
+    else
+      l_result := false;
     end if;
     return l_result;
   end get_boolean;
@@ -886,7 +903,7 @@ select d.page_items
                from dual),
            templates as (
              select uttm_text template, uttm_mode
-               from utl_text_templates
+               from utl_text_templates_v
               where uttm_type = C_TEMPLATE_TYPE
                 and uttm_name in (C_TEMPLATE_NAME_COLUMNS, C_TEMPLATE_NAME_FRAME)),
            data as (

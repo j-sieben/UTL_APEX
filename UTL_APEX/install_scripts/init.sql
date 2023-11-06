@@ -4,8 +4,13 @@ set echo off
 set feedback off
 set lines 120
 set pages 9999
+
+whenever sqlerror continue
+alter session set plsql_implicit_conversion_bool = true;
+
 whenever sqlerror exit
-set termout on
+
+set termout off
 
 define MIN_UT_VERSION="v3.1"
 variable with_pit_var varchar2(10 byte);
@@ -31,16 +36,17 @@ begin
   execute immediate 'begin :x := pit_util.C_TRUE; end;' using out :true_var;
   execute immediate 'begin :x := pit_util.C_FALSE; end;' using out :false_var;
   execute immediate 'begin :x := pit.get_default_language; end;' using out :default_lang_var;
-  select lower(data_type) || '(' ||     
-           case when data_type in ('CHAR', 'VARCHAR2') then data_length || case char_used when 'B' then ' byte)' else ' char)' end
-           else data_precision || ', ' || data_scale || ')'
-         end,
-         case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(:true_var) else to_char(:true_var) end, 
-         case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(:false_var) else to_char(:false_var) end
-    into :flag_type_var, :true_var, :false_var
-    from all_tab_columns
-   where table_name = 'PARAMETER_LOCAL'
-     and column_name = 'PAL_BOOLEAN_VALUE';
+
+select lower(data_type) ||    
+         case when data_type in ('CHAR', 'VARCHAR2') then '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end
+         when data_type in ('NUMBER') then '(' || data_precision || ', ' || data_scale || ')'
+         else null
+       end FLAG_TYPE,
+       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_true) else to_char(pit_util.c_true) end C_TRUE, 
+       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_false) else to_char(pit_util.c_false) end C_FALSE
+  from all_tab_columns
+ where table_name = 'PARAMETER_LOCAL'
+   and column_name = 'PAL_BOOLEAN_VALUE';
   
 exception
   when others then
@@ -50,6 +56,7 @@ exception
       from dual;
 end;
 /
+
 
 select :flag_type_var FLAG_TYPE, :true_var C_TRUE, :false_var C_FALSE, :default_lang_var, :default_lang_var DEFAULT_LANGUAGE, :with_pit_var PIT_INSTALLED
   from dual;
