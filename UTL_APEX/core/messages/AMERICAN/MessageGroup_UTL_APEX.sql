@@ -112,6 +112,24 @@ begin
     p_pms_pml_name => 'AMERICAN',
     p_error_number => -20000);
 
+  pit_admin.merge_message(
+    p_pms_name => 'UTL_APEX_INVALID_MAPPING',
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_text => q'^No mapping found for error code #1#.^',
+    p_pms_description => q'^Check whether a mapping to an input element should be carried out for this error.^',
+    p_pms_pse_id => pit.level_warn,
+    p_pms_pml_name => 'AMERICAN',
+    p_error_number => null);
+
+  pit_admin.merge_message(
+    p_pms_name => 'UTL_APEX_NO_IG_SUPPORT',
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_text => q'^Handling IG errors in UTL_APEX is not yet supported due to a missing API for it.^',
+    p_pms_description => q'^^',
+    p_pms_pse_id => pit.level_warn,
+    p_pms_pml_name => 'AMERICAN',
+    p_error_number => null);
+
   commit;
   pit_admin.create_message_package;
 end;

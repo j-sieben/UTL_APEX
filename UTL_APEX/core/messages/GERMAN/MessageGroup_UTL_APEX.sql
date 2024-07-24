@@ -112,6 +112,24 @@ begin
     p_pms_pml_name => 'GERMAN',
     p_error_number => -20000);
 
+  pit_admin.merge_message(
+    p_pms_name => 'UTL_APEX_INVALID_MAPPING',
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_text => q'^Für Error-Code #1# konnte kein Mapping gefunden werden.^',
+    p_pms_description => q'^Kontrollieren Sie, ob für diesen Fehler ein Mapping auf ein Eingabeelement durchgeführt werden sollte.^',
+    p_pms_pse_id => pit.level_warn,
+    p_pms_pml_name => 'GERMAN',
+    p_error_number => null);
+
+  pit_admin.merge_message(
+    p_pms_name => 'UTL_APEX_NO_IG_SUPPORT',
+    p_pms_pmg_name => 'UTL_APEX',
+    p_pms_text => q'^Fehler in Interactive Grids können in UTL_APEX nicht zugeordnet werden, da hierfür keine API von APEX existiert.^',
+    p_pms_description => q'^^',
+    p_pms_pse_id => pit.level_warn,
+    p_pms_pml_name => 'GERMAN',
+    p_error_number => null);
+
   commit;
   pit_admin.create_message_package;
 end;

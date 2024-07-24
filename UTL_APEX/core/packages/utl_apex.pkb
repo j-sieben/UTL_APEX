@@ -185,8 +185,6 @@ as
       l_default_date_format := get_default_date_format;
       l_default_timestamp_format := get_default_timestamp_format;
       
-      pit.raise_debug(msg.PIT_PASS_MESSAGE, msg_args('App: ' || l_application_id || ', Page: ' || l_page_id || ', Item: ' || p_page_item));
-      
       with data as(
             -- page items
             select item_name, label, format_mask, apex_util.get_session_state(item_name) item_value, C_FALSE item_is_column, region_id, null column_id
@@ -867,9 +865,6 @@ select d.page_items
       end loop;
 
       l_key_list := rtrim(l_key_list, ',');
-      pit.raise_debug(msg.PIT_PASS_MESSAGE, msg_args('... get_page_values: ' || page_values.COUNT || ' page item values read: ' || l_key_list));
-    else
-      pit.raise_warn(msg.PIT_PASS_MESSAGE, msg_args('No View name found'));
     end if;
 
     pit.leave_optional(msg_params(msg_param('Result', to_char(page_values.count) || ' Item values')));
@@ -1056,7 +1051,7 @@ select d.page_items
 
         case l_source_type
           when C_IG_REGION then
-            pit.raise_warn(msg.PIT_PASS_MESSAGE, msg_args('Handling IG errors in UTL_APEX is not yet supported due to a missing API for it'));
+            pit.raise_warn(msg.UTL_APEX_NO_IG_SUPPORT);
         else
           -- Fallback, works as if P_REGION_ID is NULL
           if p_page_item is not null then
@@ -1644,7 +1639,6 @@ select d.page_items
       for i in 1 .. l_message_list.count loop
         l_message := l_message_list(i);
         if l_message.severity in (pit.level_fatal, pit.level_error) then
-          pit.verbose(msg.PIT_PASS_MESSAGE, msg_args('Error occured'));
           l_error_code := upper(l_message.error_code);
           if l_error_code_map.exists(l_error_code) then
             get_page_element(l_error_code_map(l_error_code), l_item);
@@ -1672,7 +1666,7 @@ select d.page_items
               end if;
             end if;
           else
-            pit.raise_warn(msg.PIT_PASS_MESSAGE, msg_args('No mapping found for error code ' || l_error_code));
+            pit.raise_warn(msg.UTL_APEX_INVALID_MAPPING, msg_args(l_error_code));
             apex_error.add_error(
               p_message => l_message.message_text,
               p_additional_info => l_message.message_description,
