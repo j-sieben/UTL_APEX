@@ -185,7 +185,7 @@ as
       l_default_date_format := get_default_date_format;
       l_default_timestamp_format := get_default_timestamp_format;
       
-      pit.debug(msg.PIT_PASS_MESSAGE, msg_args('App: ' || l_application_id || ', Page: ' || l_page_id || ', Item: ' || p_page_item));
+      pit.raise_debug(msg.PIT_PASS_MESSAGE, msg_args('App: ' || l_application_id || ', Page: ' || l_page_id || ', Item: ' || p_page_item));
       
       with data as(
             -- page items
@@ -578,7 +578,7 @@ as
   exception
     when others then
       pit.leave_mandatory;
-      pit.error(msg.UTL_APEX_MISSING_ITEM, msg_args(p_page_item, to_char(get_page_id)));
+      pit.raise_error(msg.UTL_APEX_MISSING_ITEM, msg_args(p_page_item, to_char(get_page_id)));
   end set_value;
 
 
@@ -867,9 +867,9 @@ select d.page_items
       end loop;
 
       l_key_list := rtrim(l_key_list, ',');
-      pit.debug(msg.PIT_PASS_MESSAGE, msg_args('... get_page_values: ' || page_values.COUNT || ' page item values read: ' || l_key_list));
+      pit.raise_debug(msg.PIT_PASS_MESSAGE, msg_args('... get_page_values: ' || page_values.COUNT || ' page item values read: ' || l_key_list));
     else
-      pit.warn(msg.PIT_PASS_MESSAGE, msg_args('No View name found'));
+      pit.raise_warn(msg.PIT_PASS_MESSAGE, msg_args('No View name found'));
     end if;
 
     pit.leave_optional(msg_params(msg_param('Result', to_char(page_values.count) || ' Item values')));
@@ -952,7 +952,7 @@ select d.page_items
   exception
     when NO_DATA_FOUND then
       pit.leave_optional(msg_params(msg_param('Error', p_element_name || ' not found')));
-      pit.error(msg.UTL_APEX_MISSING_ITEM, msg_args(p_element_name, to_char(get_page_id)));
+      pit.raise_error(msg.UTL_APEX_MISSING_ITEM, msg_args(p_element_name, to_char(get_page_id)));
       -- unreachable code to avoid compiler warning
       return null;
   end get;
@@ -992,7 +992,7 @@ select d.page_items
        l_name := dbms_assert.simple_sql_name(l_name);
     exception
        when others then
-          pit.error(msg.UTL_APEX_NAME_INVALID, msg_args(l_name));
+          pit.raise_error(msg.UTL_APEX_NAME_INVALID, msg_args(l_name));
     end;
 
     pit.leave_optional(msg_params(msg_param('Result', 'OK')));
@@ -1056,7 +1056,7 @@ select d.page_items
 
         case l_source_type
           when C_IG_REGION then
-            pit.warn(msg.PIT_PASS_MESSAGE, msg_args('Handling IG errors in UTL_APEX is not yet supported due to a missing API for it'));
+            pit.raise_warn(msg.PIT_PASS_MESSAGE, msg_args('Handling IG errors in UTL_APEX is not yet supported due to a missing API for it'));
         else
           -- Fallback, works as if P_REGION_ID is NULL
           if p_page_item is not null then
@@ -1215,7 +1215,7 @@ select d.page_items
   procedure unhandled_request
   as
   begin
-    pit.error(msg.UTL_APEX_INVALID_REQUEST, msg_args(get_request));
+    pit.raise_error(msg.UTL_APEX_INVALID_REQUEST, msg_args(get_request));
   end unhandled_request;
 
 
@@ -1672,7 +1672,7 @@ select d.page_items
               end if;
             end if;
           else
-            pit.warn(msg.PIT_PASS_MESSAGE, msg_args('No mapping found for error code ' || l_error_code));
+            pit.raise_warn(msg.PIT_PASS_MESSAGE, msg_args('No mapping found for error code ' || l_error_code));
             apex_error.add_error(
               p_message => l_message.message_text,
               p_additional_info => l_message.message_description,

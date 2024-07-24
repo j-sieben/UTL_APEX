@@ -45,7 +45,7 @@ as
        and static_id = p_static_id
        and source_type_code in (C_FORM_REGION, C_IG_REGION);
      
-    pit.debug(msg.PIT_PASS_MESSAGE, msg_args('FormType: ' || l_form_type));
+    pit.raise_debug(msg.PIT_PASS_MESSAGE, msg_args('FormType: ' || l_form_type));
      
     case l_form_type
     when C_PAGE_FORM then
