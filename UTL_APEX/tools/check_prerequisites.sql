@@ -38,3 +38,19 @@ begin
   
 end;
 /
+
+  
+declare
+  l_version number;
+  x_old_Version exception;
+begin
+  -- Dynamic PL/SQL to avoid compilation errors
+  execute immediate 'begin :x := pit.version; end' using out l_version;
+  if l_version < 1.2 then
+   raise x_old_version;
+  end if;
+exception
+  when others then
+    raise_application_error(-20000, 'PIT in version 1.2 or greater is required to install ADC');
+end;
+/
