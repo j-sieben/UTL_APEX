@@ -1,5 +1,5 @@
 set verify off
-set serveroutput on
+set serveroutput off
 set echo off
 set feedback off
 set lines 120
@@ -14,7 +14,7 @@ end;
 
 whenever sqlerror exit
 
-set termout offd
+set termout off
 
 define MIN_UT_VERSION="v3.1"
 variable with_pit_var varchar2(10 byte);
@@ -30,16 +30,11 @@ col c_true new_val C_TRUE format a128
 col c_false new_val C_FALSE format a128
 col pit_installed new_val PIT_INSTALLED format a128
 
+
 select lower(data_type) || '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end ORA_NAME_TYPE
   from all_tab_columns
  where table_name = 'USER_TABLES'
    and column_name = 'TABLE_NAME';
-
-begin
-  :with_pit_var := 'true';
-  execute immediate 'begin :x := pit_util.C_TRUE; end;' using out :true_var;
-  execute immediate 'begin :x := pit_util.C_FALSE; end;' using out :false_var;
-  execute immediate 'begin :x := pit.get_default_language; end;' using out :default_lang_var;
 
 select lower(data_type) ||    
          case when data_type in ('CHAR', 'VARCHAR2') then '(' || data_length || case char_used when 'B' then ' byte)' else ' char)' end
@@ -47,23 +42,11 @@ select lower(data_type) ||
          else null
        end FLAG_TYPE,
        case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_true) else to_char(pit_util.c_true) end C_TRUE, 
-       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_false) else to_char(pit_util.c_false) end C_FALSE
+       case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_false) else to_char(pit_util.c_false) end C_FALSE,
+       pit.get_default_language default_language
   from all_tab_columns
  where table_name = 'PARAMETER_LOCAL'
    and column_name = 'PAL_BOOLEAN_VALUE';
-  
-exception
-  when others then
-    :with_pit_var := 'false';
-    select q'^char(1 byte)^' flag_type, 'Y' C_TRUE, 'N' C_FALSE, 'AMERICAN' default_language
-      into :flag_type_var, :true_var, :false_var, :default_lang_var
-      from dual;
-end;
-/
-
-
-select :flag_type_var FLAG_TYPE, :true_var C_TRUE, :false_var C_FALSE, :default_lang_var DEFAULT_LANGUAGE, :with_pit_var PIT_INSTALLED
-  from dual;
 
 col ver_le_20 new_val VER_LE_20 format a5
 col ver_le_2001 new_val VER_LE_2001 format a5
@@ -77,6 +60,7 @@ col ver_le_2202 new_val VER_LE_2202 format a5
 col ver_le_23 new_val VER_LE_23 format a5
 col ver_le_2301 new_val VER_LE_2301 format a5
 col apex_version new_val apex_version format a30
+
 with apex_version as(
        select to_number(substr(version_no, 1, instr(version_no, '.', 1) - 1)) major_version, 
               to_number(substr(version_no, 1, instr(version_no, '.', 1, 2) - 1), '99.99') minor_version
