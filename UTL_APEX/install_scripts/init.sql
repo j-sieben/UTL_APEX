@@ -5,8 +5,12 @@ set feedback off
 set lines 120
 set pages 9999
 
-whenever sqlerror continue
-alter session set plsql_implicit_conversion_bool = true;
+begin
+  execute immediate 'alter session set plsql_implicit_conversion_bool = true';
+exception
+  when others then 
+    null;
+end;
 
 whenever sqlerror exit
 
