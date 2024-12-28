@@ -47,7 +47,8 @@ as
     p_clear_cache in varchar2 default null,
     p_param_list in varchar2 default null,
     p_value_list in varchar2 default null,
-    p_triggering_element in varchar2 default null)
+    p_triggering_element in varchar2 default null,
+    p_request in varchar2 default null)
     return varchar2
   as
     l_url utl_apex.max_sql_char;
@@ -56,11 +57,12 @@ as
                p_application => p_application,
                p_page => p_page,
                p_clear_cache => p_clear_cache,
+               p_request => p_request,
                p_items => p_param_list,
                p_values => p_value_list,
                p_triggering_element => dbms_assert.enquote_literal(p_triggering_element));
     return l_url;
-  end get_url;  
+  end get_url;
 
 
   /** Default initialization method */
