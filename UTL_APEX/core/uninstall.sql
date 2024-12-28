@@ -43,9 +43,7 @@ begin
   if not l_has_objects then
     dbms_output.put_line('&s1.No installed objects found.');
   end if;
-  $IF &PIT_INSTALLED. $THEN
   pit_admin.delete_message_group('UTL_APEX', true);
-  $END
   -- Try to delete templates (table may not be present anymore)
   begin
     dbms_output.put_line('&s1.Removing Template APEX_COLLECTION');

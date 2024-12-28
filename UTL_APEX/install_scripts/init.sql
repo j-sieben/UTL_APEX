@@ -11,6 +11,7 @@ exception
   when others then 
     null;
 end;
+/
 
 whenever sqlerror exit
 
@@ -43,7 +44,8 @@ select lower(data_type) ||
        end FLAG_TYPE,
        case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_true) else to_char(pit_util.c_true) end C_TRUE, 
        case when data_type in ('CHAR', 'VARCHAR2') then dbms_assert.enquote_literal(pit_util.c_false) else to_char(pit_util.c_false) end C_FALSE,
-       pit.get_default_language default_language
+       pit.get_default_language default_language,
+       'true' pit_installed
   from all_tab_columns
  where table_name = 'PARAMETER_LOCAL'
    and column_name = 'PAL_BOOLEAN_VALUE';
@@ -59,6 +61,9 @@ col ver_le_2201 new_val VER_LE_2201 format a5
 col ver_le_2202 new_val VER_LE_2202 format a5
 col ver_le_23 new_val VER_LE_23 format a5
 col ver_le_2301 new_val VER_LE_2301 format a5
+col ver_le_2302 new_val VER_LE_2302 format a5
+col ver_le_24 new_val VER_LE_24 format a5
+col ver_le_2401 new_val VER_LE_2401 format a5
 col apex_version new_val apex_version format a30
 
 with apex_version as(
@@ -98,6 +103,15 @@ select case major_version
        case minor_version
          when 23.1 then 'true'
          else 'false' end ver_le_2301,
+       case minor_version
+         when 23.2 then 'true'
+         else 'false' end ver_le_2302,
+       case major_version 
+         when 24 then 'true'
+         else 'false' end ver_le_24,
+       case minor_version
+         when 24.1 then 'true'
+         else 'false' end ver_le_2401,
        to_char(minor_version, 'fm99.99') apex_version
   from apex_version;
 
@@ -106,8 +120,9 @@ define section="****************************************************************
 define h1="*** "
 define h2="**  "
 define h3="*   "
-define s1=".    - "
+define s1=".   - "
 
-prompt &s1.initialization done.
 set termout on
 set serveroutput on
+
+prompt &s1.initialization done.

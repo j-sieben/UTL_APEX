@@ -10,9 +10,6 @@ prompt
 prompt &section.
 prompt &h1.UTL_APEX Installation
 
-prompt
-prompt &section.
-prompt &h1.Install UTL_APEX core functionality
 @core/install.sql
 
 @tools/check_unit_test_exists.sql "unit_test/install.sql" "installation"
