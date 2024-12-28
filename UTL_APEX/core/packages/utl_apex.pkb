@@ -1221,7 +1221,8 @@ select d.page_items
     p_value_items in varchar2 default null,
     p_value_list in varchar2 default null,
     p_triggering_element in varchar2 default null,
-    p_clear_cache in binary_integer default null)
+    p_clear_cache in binary_integer default null,
+    p_request in varchar2 default null)
     return varchar2
   as
     l_url max_sql_char;
@@ -1231,11 +1232,14 @@ select d.page_items
   begin
     pit.enter_optional(
       p_params => msg_params(
-                    msg_param('p_param_items', p_param_items),
-                    msg_param('p_value_items', p_value_items),
                     msg_param('p_application', p_application),
                     msg_param('p_page', p_page),
-                    msg_param('p_triggering_element', p_triggering_element)));
+                    msg_param('p_param_items', p_param_items),
+                    msg_param('p_value_items', p_value_items),
+                    msg_param('p_value_list', p_value_list),
+                    msg_param('p_triggering_element', p_triggering_element),
+                    msg_param('p_clear_cache', p_clear_cache),
+                    msg_param('p_request', p_request)));
 
     l_param_list := replace(p_param_items, ':', ',');
     if p_value_items is not null then
@@ -1251,6 +1255,7 @@ select d.page_items
                p_application => p_application,
                p_page => p_page,
                p_clear_cache => p_clear_cache,
+               p_request => p_request,
                p_param_list => l_param_list,
                p_value_list => l_value_list,
                p_triggering_element => p_triggering_element);

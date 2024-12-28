@@ -524,6 +524,7 @@ as
    * @param [p_value_list]         colon separated list of values that will be passed to the page. Is used only if P_VALUE_ITEMS is null
    * @param [p_triggering_element] Page item on which the event <code>apexafterclosedialog</code> is raised.
    * @param [p_clear_cache]        Page id for which the session state is cleared.
+   * @param [p_request]            Request value
    * @return URL of the requested page
    * @usage  Is called to create an URL for an APEX page. Wrapper around the respective APEX methods (different, based on APEX version).
    */
@@ -534,7 +535,8 @@ as
     p_value_items in varchar2 default null,
     p_value_list in varchar2 default null,
     p_triggering_element in varchar2 default null,
-    p_clear_cache in binary_integer default null)
+    p_clear_cache in binary_integer default null,
+    p_request in varchar2 default null)
     return varchar2;
     
   /** Overload as procedure to store the calculated URL in a page item identified by P_HIDDEN_ITEM */
