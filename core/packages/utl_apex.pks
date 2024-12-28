@@ -2,7 +2,8 @@ create or replace package utl_apex
   authid definer
 as
   /**
-    Oracle APEX related utilites
+    Package: UTL_APEX
+      Oracle APEX related utilites
   */
 
   /**
@@ -15,13 +16,16 @@ as
   subtype flag_type is &FLAG_TYPE.;
   subtype page_value_t is utl_text.clob_tab;
   
-  /** Type to represent a session state item with label and converted session state values 
-   * %param  item_name    Name of the item. If a column is referenced, no page prefix is used
-   * %param  itm_label    The actually set item label
-   * %param  format_mask  If DATE or NUMBER, the actually set format mask or the default format mask
-   * %param  item_value   The actual item value
-   * %param  is_column    Flag to indicate whether the item is a column in an interactive grid
-   * %param  region_id    ID of the region, necessary when showing errors in an interactive grid
+  /** 
+    Type: ITEM_REC
+      type to represent a session state item with label and converted session state values
+      
+    Parameters:
+      item_name - Name of the item. If a column is referenced, no page prefix is used
+      itm_label - The actually set item labelformat_mask  If DATE or NUMBER, the actually set format mask or the default format mask
+      item_value - The actual item value
+      is_column - Flag to indicate whether the item is a column in an interactive grid
+      region_id - ID of the region, necessary when showing errors in an interactive grid
    */
   type item_rec is record(
     item_name ora_name_type,
@@ -36,7 +40,9 @@ as
   
   NUMBER_FORMAT_MASK constant small_char := '9999999999999999999D99999999999999';
   
-  /* Package constants */
+  /**
+    Group: Package constants 
+  */
   /* APEX Version constants according to DBMS_DB_VERSION */
   VER_LE_20 constant boolean := &VER_LE_20.;
   VER_LE_2001 constant boolean := &VER_LE_2001.;
@@ -50,6 +56,8 @@ as
   VER_LE_23 constant boolean := &VER_LE_23.;
   VER_LE_2301 constant boolean := &VER_LE_2301.;
   VER_LE_2302 constant boolean := &VER_LE_2302.;
+  VER_LE_24 constant boolean := &VER_LE_24.;
+  VER_LE_2401 constant boolean := &VER_LE_2401.;
   
   APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
@@ -59,18 +67,22 @@ as
   FORMAT_JSON constant ora_name_type := 'JSON';
   FORMAT_HTML constant ora_name_type := 'HTML';
   
-  /** Constants to adjust the default item prefixes
-   * @usage  CONVENTION_PAGE_PREFIX means that each item is prefixed according to the APEX standards with <code>Pnn</code>
-   *         CONVENTION_PAGE_ALIAS means that each item is prefixed with the page alias you chose
-   *         CONVENTION_APP_ALIAS means that each item is prefixed with the application alias you chose
-   *         It is assumed that each prefix is followed by an underscore
+  /** 
+    Group: Constants to adjust the default item prefixes
+    
+      CONVENTION_PAGE_PREFIX - means that each item is prefixed according to the APEX standards with <code>Pnn</code>
+      CONVENTION_PAGE_ALIAS - means that each item is prefixed with the page alias you chose
+      CONVENTION_APP_ALIAS - means that each item is prefixed with the application alias you chose
+      It is assumed that each prefix is followed by an underscore
    */
   CONVENTION_PAGE_PREFIX constant binary_integer := 1;
   CONVENTION_PAGE_ALIAS constant binary_integer := 2;
   CONVENTION_APP_ALIAS constant binary_integer := 3;
   
 
-  /* Public function and procedure declarations */
+  /**
+    Group: Public function and procedure declarations 
+   */
     
   /** Getter for boolean values
    * @usage  As it is possible to install UTL_APEX with different settings for the FLAG_TYPE, it is required to access the
