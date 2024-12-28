@@ -8,7 +8,7 @@ define msg_dir=&CORE_DIR.messages/&DEFAULT_LANGUAGE./
 prompt &h2.Messages
 prompt &s1.Message Group UTL_APEX
 @&MSG_DIR.MessageGroup_UTL_APEX
-
+/*
 prompt &h2.Templates
 prompt &s1.Template Group APEX_COLLECTION
 @&SCRIPT_DIR.TemplateGroup_APEX_COLLECTION.sql
@@ -18,7 +18,8 @@ prompt &s1.Template Group APEX_FORM
 
 prompt &s1.Template Group TABLE_API
 @&SCRIPT_DIR.TemplateGroup_TABLE_API.sql
-
+*/
+/*
 prompt &h2.Types
 prompt &s1.Type UTL_DEV_APEX_COL_T
 @&TYPE_DIR.utl_dev_apex_col_t.tps
@@ -31,19 +32,19 @@ prompt &s1.Type UTL_APEX_PAGE_ITEM_T
 
 prompt &s1.Type UTL_APEX_PAGE_ITEM_TAB
 @&TYPE_DIR.utl_apex_page_item_tab.tps
-
+*/
 prompt &h2.Package specifications
 prompt &s1.Package UTL_APEX
 @&PKG_DIR.utl_apex.pks
-
+/**
 prompt &s1.Package UTL_DEV_APEX
 @&PKG_DIR.utl_dev_apex.pks
-
+/
 prompt &h2.Package dependent Views
 
 prompt &s1.View APEX_UI_LIST_MENU
 @&VIEW_DIR.apex_ui_list_menu.vw
-
+/*
 prompt &s1.View UTL_APEX_FETCH_ROW_COLUMNS
 @tools/check_apex_version_gt.sql 5.1 "&VIEW_DIR.utl_apex_fetch_row_columns.vw"
 
@@ -58,14 +59,14 @@ prompt &s1.View UTL_DEV_APEX_COLLECTION
 
 prompt &s1.View UTL_DEV_APEX_FORM_COLLECTION
 @tools/check_apex_version_gt.sql 19 "&VIEW_DIR.utl_dev_apex_form_collection.vw"
-
+*/
 prompt &h2.Package bodies
 prompt &s1.Package Body UTL_APEX
 @&PKG_DIR.utl_apex.pkb
-
+/*
 prompt &s1.Package Body UTL_DEV_APEX
 @&PKG_DIR.utl_dev_apex.pkb
-
+*/
 prompt &h2.Package dependent Scripts
 prompt &s1.Script set_parameter
 @&SCRIPT_DIR.ParameterGroup_UTL_APEX.sql
