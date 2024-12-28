@@ -14,7 +14,7 @@ end;
 
 whenever sqlerror exit
 
-set termout off
+set termout offd
 
 define MIN_UT_VERSION="v3.1"
 variable with_pit_var varchar2(10 byte);
@@ -62,7 +62,7 @@ end;
 /
 
 
-select :flag_type_var FLAG_TYPE, :true_var C_TRUE, :false_var C_FALSE, :default_lang_var, :default_lang_var DEFAULT_LANGUAGE, :with_pit_var PIT_INSTALLED
+select :flag_type_var FLAG_TYPE, :true_var C_TRUE, :false_var C_FALSE, :default_lang_var DEFAULT_LANGUAGE, :with_pit_var PIT_INSTALLED
   from dual;
 
 col ver_le_20 new_val VER_LE_20 format a5
