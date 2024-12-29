@@ -165,7 +165,7 @@ as
     l_page_item ora_name_type;
     l_default_date_format ora_name_type;
     l_default_timestamp_format ora_name_type;
-    C_ITEM_NAME_BLACKLIST constant char_table := char_table('APEX$ROW_STATUS');
+    C_ITEM_NAME_BLACKLIST constant char_table := char_table(C_ROW_DML_ACTION);
   begin
     pit.enter_detailed('get_page_element',
       p_params => msg_params(
