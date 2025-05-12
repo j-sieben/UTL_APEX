@@ -57,7 +57,9 @@ as
   VER_LE_2301 constant boolean := &VER_LE_2301.;
   VER_LE_2302 constant boolean := &VER_LE_2302.;
   VER_LE_24 constant boolean := &VER_LE_24.;
-  VER_LE_2401 constant boolean := &VER_LE_2401.;
+  VER_LE_2401 constant boolean := &VER_LE_2401.; 
+  VER_LE_2402 constant boolean := &VER_LE_2402.;
+
   
   APEX_VERSION constant number := &APEX_VERSION.;
   UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
@@ -249,11 +251,21 @@ as
   /** Method to get a page item value
    * @param  p_page_item  Name of the item of which the acutal value has to be casted
    * @return BOOLEAN-value
-   * @usage  Is used as a "type safe" way to get a string value from the session context.
+   * @usage  Is used as a "type safe" way to get a boolean value from the session context.
    */
   function get_boolean(
     p_page_item in varchar2)
     return boolean;
+    
+  
+  /** Method to get a page item value
+   * @param  p_page_item  Name of the item of which the acutal value has to be casted
+   * @return RAW-value
+   * @usage  Is used as a "type safe" way to get a raw value from the session context.
+   */
+  function get_raw(
+    p_page_item in varchar2)
+    return raw;
     
   
   /** Method to cast a page item value to timestamp, based on the actual format mask

@@ -310,7 +310,7 @@ as
     return flag_type
   as
   begin
-    return 'Y';--&C_TRUE.;
+    return &C_TRUE.;
   end c_true;
 
 
@@ -318,7 +318,7 @@ as
     return flag_type
   as
   begin
-    return 'N';--&C_FALSE.;
+    return &C_FALSE.;
   end c_false;
 
 
@@ -336,22 +336,6 @@ as
   begin
     return 'NO';
   end c_no;
-  
-  
-  function get_true
-    return flag_type
-  as
-  begin
-    return c_true;
-  end get_true;
-  
-  
-  function get_false
-    return flag_type
-  as
-  begin
-    return c_false;
-  end get_false;
 
 
   function get_bool(
@@ -495,6 +479,18 @@ as
     end if;
     return l_result;
   end get_boolean;
+
+
+  function get_raw(
+    p_page_item in varchar2)
+    return raw
+  is
+    l_value varchar2(10 byte);
+    l_result raw(2000);
+  begin
+    l_value := hextoraw(substrb(upper(get_value(p_page_item)), 1, 2000));
+    return l_result;
+  end get_raw;
 
 
   function get_timestamp(
