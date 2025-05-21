@@ -103,16 +103,6 @@ as
   function c_no
     return ora_name_type;
     
-  /** Deprecated getter methods
-   */
-  function get_true
-    return flag_type;
-    pragma deprecate (get_true, 'Deprecated, use utl_apex.C_TRUE instead');
-
-  function get_false
-    return flag_type;
-    pragma deprecate (get_false, 'Deprecated, use utl_apex.C_TRUE instead');
-    
     
   /** Method to cast a boolean value to a flag type representation an vice versa
    * @param  p_bool  The boolean value to convert
