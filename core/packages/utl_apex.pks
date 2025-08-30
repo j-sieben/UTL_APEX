@@ -85,11 +85,11 @@ as
   /**
     Group: Public function and procedure declarations 
    */
-    
-  /** Getter for boolean values
-   * @usage  As it is possible to install UTL_APEX with different settings for the FLAG_TYPE, it is required to access the
-   *         boolean values using either the defined constants <code>C_TRUE</code> or <code>C_FALSE</code> or these getter
-   *         when used in SQL to make the code independent from your flag type
+  /** 
+    Function: C_TRUE/C_FALSE/C_YES/C_NO
+      As it is possible to install UTL_APEX with different settings for the FLAG_TYPE, it is required to access the
+      boolean values using either the defined constants <code>C_TRUE</code> or <code>C_FALSE</code> or these getter
+      when used in SQL to make the code independent from your flag type
    */
   function c_true
     return flag_type;
@@ -104,206 +104,297 @@ as
     return ora_name_type;
     
     
-  /** Method to cast a boolean value to a flag type representation an vice versa
-   * @param  p_bool  The boolean value to convert
-   * @usage  Is used to cast a boolean value to the flag type you defined when installing UTL_APEX.
+  /** 
+    Function: get_bool
+      Method to cast a boolean value to a flag type representation an vice versa
+   
+    Parameter:
+      p_bool - The boolean value to convert
    */
   function get_bool(
     p_bool in boolean)
-    return flag_type;
-    
+    return flag_type;    
   
   function get_bool(
     p_bool in flag_type)
     return boolean;
     
     
-  /** Method to cast the input parameter to FLAG_TYPE.
-   * @param  p_value  Boolean value that is "falsy" or "truely"
-   * @return Recognized boolean value as FLAG_TYPE
-   * @usage  Is used to cast different TRUE or FALSE-flavours to FLAG_TYPE.
-   *         Example: 1, Y, J are recognized as GET_TRUE, 0, N, n are recognized as GET_FALSE
-   *         Caution: Use this with non boolean input values only. If a boolean value exists, use GET_BOOL instead.
+  /** 
+    Function: to_bool
+      Is used to cast different TRUE or FALSE-flavours to FLAG_TYPE.
+   
+    Example:: 
+      1, Y, J are recognized as GET_TRUE, 0, N, n are recognized as GET_FALSE
+   
+    Caution::
+      Use this with non boolean input values only. If a boolean value exists, use GET_BOOL instead.
+  
+    Parameter:
+      p_value - Value to examine
+      
+    Returns:
+      Flag type representing the boolean value
    */
   function to_bool(
     p_value in varchar2)
     return flag_type;
     
-    
-  /** Getter methods as wrapper around APEX provided functionality
-   *  Allows for better testing and refactoring when new APEX versions occur
+  /**
+    Group: Getter methods 
+      Getter methods as wrapper around APEX functionality. Allows for centralized
+      adoption to new or enhanced functionality of APEX
+   */
+  /** 
+    Function: get_apex_version
    */
   function get_apex_version
     return number;
     
+    
+  /** 
+    Function: get_user
+   */
   function get_user
     return varchar2;
-  
+    
+    
+  /** 
+    Function: get_workspace_id
+    
+    Parameter:
+      p_application_id - ID of the application to get the workspace ID for
+   */
   function get_workspace_id(
     p_application_id in number)
     return number;
     
-
+    
+  /** 
+    Function: get_application_id
+    
+    Parameter:
+      p_ignore_translation - Flag to indicate whether this method should return
+      the ID of the base application in case translations exists. Defaults to TRUE.
+   */
   function get_application_id(
     p_ignore_translation in flag_type default C_TRUE)
     return number;
-
+    
+    
+  /** 
+    Function: get_application_alias
+   */
   function get_application_alias
     return varchar2;
     
+    
+  /** 
+    Function: get_page_id
+   */
   function get_page_id(
     p_ignore_translation in flag_type default C_TRUE)
     return number;
     
+    
+  /** 
+    Function: get_page_alias
+   */
   function get_page_alias
     return varchar2;
     
-  
-  /** Method to read a page item's name and format mask.
-   * @param  p_page_item  Item name with or without page prefix
-   * @param  p_item       Item record with information to the requested page item
-   * @usage  Is used to retrieve the page item's settings from the APEX data dictionary. 
+    
+  /** 
+    Procedure: get_page_element
+      Method to read a page item's name and format mask. Is used to retrieve the page item's settings from the APEX data dictionary.
+      
+    Parameters:
+      p_page_item - Item name with or without page prefix
+      p_item - Item record with information to the requested page item
    */
   procedure get_page_element(
     p_page_item in ora_name_type,
     p_item out nocopy item_rec);
     
+    
+  /** 
+    Function: get_page_element
+      Method to read a page item's name and format mask. Is used to retrieve the page item's settings from the APEX data dictionary.
+      
+    Parameters:
+      p_page_item - Item name with or without page prefix
+   */
   function get_page_element(
     p_page_item in ora_name_type)
     return item_rec;
     
-  /** Method to create the page prefix for the actual page
-   * @return Actual page number in the form defined by CONVENTION_... constants, usable as a page prefix.
+    
+  /** 
+    Function: get_page_prefix
+      Method to retrieve the page prefix for the actual page
+    
+    Returns:
+      Actual page number in the form defined by CONVENTION_... constants, usable as a page prefix.
    */
   function get_page_prefix
    return varchar2;
     
+    
+  /** 
+    Function: get_session_id
+   */
   function get_session_id
     return number;
     
+    
+  /** 
+    Function: get_request
+   */
   function get_request
     return varchar2;
     
+    
+  /** 
+    Function: get_debug
+   */
   function get_debug
     return boolean;
     
+    
+  /** 
+    Function: get_default_date_format
+   */
   function get_default_date_format(
     p_application_id in number default null)
     return varchar2;
-
+    
+    
+  /** 
+    Function: get_default_timestamp_format
+   */
   function get_default_timestamp_format(
     p_application_id in number default null)
     return varchar2;
     
-  
-  /** Method to cast a page item value to number, based on the actual format mask
-   * @param  p_page_item  Name of the item of which the acutal value has to be casted
-   * @return NUMBER-value or NULL
-   * @usage  Is used to cast a page item value to number
+  /**
+    Group: Typesave get value methods
+      Retrieves the actual session state values and converts them to the requested
+      type by applying the actually set format mask or the standard format mask
+      of the APEX application.
+      If the conversion is impossible, an exception is added to the APEX error stack.
+   */
+  /** 
+    Function: get_number
    */
   function get_number(
     p_page_item in varchar2)
     return number;
     
   
-  /** Method to cast a page item value to date, based on the actual format mask
-   * @param  p_page_item  Name of the item of which the acutal value has to be casted
-   * @return DATE-value or NULL
-   * @usage  Is used to cast a page item value to number
+  /** 
+    Function: get_date
    */
   function get_date(
     p_page_item in varchar2)
     return date;
     
   
-  /** Method to get a page item value
-   * @param  p_page_item  Name of the item of which the acutal value has to be casted
-   * @return DATE-value or NULL
-   * @usage  Is used as a "type safe" way to get a string value from the session context.
-   *         Functional overload of GET_VALUE, makes it clear that the value is treated as a string
-   *         i.e. no conversion possible.
+  /** 
+    Function: get_string
    */
   function get_string(
     p_page_item in varchar2)
     return varchar2;
     
   
-  /** Method to get a page item value
-   * @param  p_page_item  Name of the item of which the acutal value has to be casted
-   * @return BOOLEAN-value of type FLAG_TYPE or NULL
-   * @usage  Is used as a "type safe" way to get a flag value from the session context.
+  /** 
+    Function: get_flag
    */
   function get_flag(
     p_page_item in varchar2)
     return flag_type;
     
   
-  /** Method to get a page item value
-   * @param  p_page_item  Name of the item of which the acutal value has to be casted
-   * @return BOOLEAN-value
-   * @usage  Is used as a "type safe" way to get a boolean value from the session context.
+  /** 
+    Function: get_boolean
    */
   function get_boolean(
     p_page_item in varchar2)
     return boolean;
     
   
-  /** Method to get a page item value
-   * @param  p_page_item  Name of the item of which the acutal value has to be casted
-   * @return RAW-value
-   * @usage  Is used as a "type safe" way to get a raw value from the session context.
+  /** 
+    Function: get_raw
    */
   function get_raw(
     p_page_item in varchar2)
     return raw;
     
   
-  /** Method to cast a page item value to timestamp, based on the actual format mask
-   * @param  p_page_item  Name of the item of which the acutal value has to be casted
-   * @return TIMESTAMP-value or NULL
-   * @usage  Is used to cast a page item value to number
+  /** 
+    Function: get_timestamp
    */
   function get_timestamp(
     p_page_item in varchar2)
     return timestamp;
+    
   
+  /** 
+    Function: get_value
+   */
+  function get_value(
+    p_page_item in varchar2)
+    return varchar2;
+    
   
-  /** Method to define a flag that indiciates whether reading values of non existing items throws an error or not
-   * @param  p_convention  Convention in use.
-   * @usage  Is used to set/get the convention and to override the default. If NULL, it falls back to the parameter value.
-   *         Defaults to parameter ITEM_VALUE_CONVENTION.
+  /** 
+    Procedure: set_value
+      Setter method to set the value of a session state item.
+      
+    Parameter:
+      p_page_item - Name of the item to set
+      p_value - Value to set
+   */
+  procedure set_value(
+    p_page_item in varchar2,
+    p_value in varchar2);
+    
+  
+  /** 
+    Procedure: set_item_value_convention
+      Method to define whether reading values of non existing items throws an error or not
+   
+    Parameter:
+      p_convention - If TRUE, an error is thrown when trying to read a non existing item. Defaults to parameter ITEM_VALUE_CONVENTION.
    */
   procedure set_item_value_convention(
     p_convention in boolean);
-    
+  
+  
+  /** 
+    Function: get_item_value_convention
+      Method to detect whether reading values of non existing items throws an error or not
+   
+    Returns:
+      TRUE if an error must be thrown when trying to read a non existing item, FALSE otherwise
+   */
   function get_item_value_convention
     return boolean;
   
-  
-  /** Method to define an application wide convention for the item prefixes in use
-   * @param  p_convention  Convention in use. Can be one of the CONVENTION_... constants defined in this package
-   * @usage  Is used to set/get the convention and to override the default. If NULL, it falls back to the parameter value.
-   *         Defaults to parameter ITEM_PREFIX_CONVENTION.
+    
+  /** 
+    Procedure: set_item_value_convention
+      Method to define an application wide convention for the item prefixes in use
+   
+    Parameter:
+      p_convention - Convention in use. Can be one of the CONVENTION_... constants defined in this package.
+                     Defaults to parameter ITEM_PREFIX_CONVENTION.
    */
   procedure set_item_prefix_convention(
     p_convention in binary_integer);
     
   function get_item_prefix_convention
     return binary_integer;
-    
-    
-  /* Method to get/set a session state value for a page item
-   * @param  p_page_item  Name of the page item
-   * @param  p_value Value of the page item
-   * @usage  Is used as a wrapper around apex_util.set/get_session_state or v()
-   */
-  function get_value(
-    p_page_item in varchar2)
-    return varchar2;
-  
-  procedure set_value(
-    p_page_item in varchar2,
-    p_value in varchar2);
     
     
   /* Method to get/set a session state value for an application item

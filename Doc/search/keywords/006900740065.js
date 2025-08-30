@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("ite",["Type"],[["ITEM_REC",,[["UTL_APEX",,,,0,"File:core/packages/utl_apex.pks:UTL_APEX.ITEM_REC","SQLClass:UTL_APEX:ITEM_REC"]]]]);

@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("bod",["Class"],[["Body",,[[,"UTL_APEX Body",,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body","SQLClass:UTL_APEX_Body"],[,"UTL_APEX_SESSION Body",,,0,"File:unit_test/packages/utl_apex_session.pkb:UTL_APEX_SESSION_Body","SQLClass:UTL_APEX_SESSION_Body"]]]]);

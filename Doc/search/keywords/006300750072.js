@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("cur",["Function"],[["current_user_in_group",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.current_user_in_group","SQLClass:UTL_APEX_Body:current_user_in_group"]]]]);

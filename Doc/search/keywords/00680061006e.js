@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("han",["Function"],[["handle_bulk_errors",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.handle_bulk_errors","SQLClass:UTL_APEX_Body:handle_bulk_errors"]]]]);

@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("upd",["Function"],[["updating",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.updating","SQLClass:UTL_APEX_Body:updating"]]]]);

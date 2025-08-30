@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("ini",["Function"],[["initialize",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.initialize","SQLClass:UTL_APEX_Body:initialize"]]]]);

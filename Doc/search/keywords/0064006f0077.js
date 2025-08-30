@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("dow",["Function"],[["download_blob",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.download_blob","SQLClass:UTL_APEX_Body:download_blob"]]],["download_clob",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.download_clob","SQLClass:UTL_APEX_Body:download_clob"]]]]);

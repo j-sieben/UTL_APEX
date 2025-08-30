@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("des",["Function"],[["describe",,[["UTL_APEX_SESSION Body",,,,0,"File:unit_test/packages/utl_apex_session.pkb:UTL_APEX_SESSION_Body.describe","SQLClass:UTL_APEX_SESSION_Body:describe"],["UTL_APEX_SESSION",,,,0,"File:unit_test/packages/utl_apex_sesssion.pks:UTL_APEX_SESSION.describe","SQLClass:UTL_APEX_SESSION:describe"]]]]);

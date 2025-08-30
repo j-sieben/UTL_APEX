@@ -1,0 +1,1 @@
+﻿NDFramePage.OnPageTitleLoaded("SQLClass:UTL_APEX_SESSION_Body","UTL_APEX_SESSION Body");NDSummary.OnSummaryLoaded("SQLClass:UTL_APEX_SESSION_Body",[["SQL","SQL"]],[["Classes","Class"],["Functions","Function"],["Groups","Group"]],[[1,0,0,"UTL_APEX_SESSION Body"],[2,0,2,"Interface","Interface"],[3,0,1,"describe","describe"],[4,0,1,"fetch_session_state","fetch_session_state"]]);

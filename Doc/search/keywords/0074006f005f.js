@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("to_",["Function"],[["to_bool",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.to_bool","SQLClass:UTL_APEX_Body:to_bool"],["UTL_APEX",,,,0,"File:core/packages/utl_apex.pks:UTL_APEX.to_bool","SQLClass:UTL_APEX:to_bool"]]]]);

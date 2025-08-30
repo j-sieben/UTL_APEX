@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("esc",["Function"],[["escape_java_script",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.escape_java_script","SQLClass:UTL_APEX_Body:escape_java_script"]]],["escape_json",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.escape_json","SQLClass:UTL_APEX_Body:escape_json"]]]]);

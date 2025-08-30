@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("val",["Function"],[["validate_simple_sql_name",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.validate_simple_sql_name","SQLClass:UTL_APEX_Body:validate_simple_sql_name"]]]]);

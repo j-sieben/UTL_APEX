@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("ins",["Function"],[["inserting",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.inserting","SQLClass:UTL_APEX_Body:inserting"]]]]);

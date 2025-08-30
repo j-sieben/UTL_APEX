@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("c_t",["Function"],[["c_true",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.c_true","SQLClass:UTL_APEX_Body:c_true"],["UTL_APEX","C_TRUE/C_FALSE/C_YES/C_NO",,,0,"File:core/packages/utl_apex.pks:UTL_APEX.C_TRUE/C_FALSE/C_YES/C_NO","SQLClass:UTL_APEX:C_TRUE/C_FALSE/C_YES/C_NO"]]]]);

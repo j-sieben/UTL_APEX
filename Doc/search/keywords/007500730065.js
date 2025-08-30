@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("use",["Function"],[["user_is_authorized",,[["UTL_APEX Body",,,,0,"File:core/packages/utl_apex.pkb:UTL_APEX_Body.user_is_authorized","SQLClass:UTL_APEX_Body:user_is_authorized"]]]]);

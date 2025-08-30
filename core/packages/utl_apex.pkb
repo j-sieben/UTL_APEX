@@ -1,8 +1,13 @@
 create or replace package body utl_apex
 as
 
-  -- Private type declarations
-  -- Private constant declarations
+  /**
+    Package: UTL_APEX Body
+      Oracle APEX related utilites
+  */
+  /**
+    Group: Constants
+   */
   C_ROW_DML_ACTION constant ora_name_type := 'APEX$ROW_STATUS';
   C_INSERT constant char(1 byte) := 'C';
   C_UPDATE constant char(1 byte) := 'U';
@@ -30,16 +35,22 @@ as
   g_item_prefix_convention binary_integer;
   g_show_item_error apex_error.c_on_error_page%type;
 
-  -- HELPER
-  /** Method to generate an URL based on APEX functionality
-   * @param [p_application]        ID or alias of an APEX application. Defaults to the actual application alias
-   * @param [p_page]               ID or alias of an APEX application page. Defaults to the actual page alias
-   * @param [p_clear_cache]        Comma seperated list of page ids for which the session state will be cleared
-   * @param [p_param_list]         Comma separated list of target page items for which values will be set
-   * @param [p_param_list]         Comma separated list of values that are passed to the target page items
-   * @param [p_triggering_element] Element that retrieves the apexafterdialogclose event
-   * @return URL for the given page
-   * @usage  Is used as an internal helper to mask the different interface implementations
+  /**
+    Group: Helper Methods
+   */
+  /** 
+    Function: get_url
+      Method to generate an URL based on APEX functionality. Is used as an internal helper to mask the different interface implementations
+      
+      p_application - ID or alias of an APEX application. Defaults to the actual application alias
+      p_page - ID or alias of an APEX application page. Defaults to the actual page alias
+      p_clear_cache - Comma seperated list of page ids for which the session state will be cleared
+      p_param_list - Comma separated list of target page items for which values will be set
+      p_param_list - Comma separated list of values that are passed to the target page items
+      p_triggering_element - Element that retrieves the apexafterdialogclose event
+      p_request - Request value for the submitted page
+    Returns:
+      URL for the given page
    */
   function get_url(
     p_application in varchar2 default null,
@@ -63,9 +74,62 @@ as
                p_triggering_element => dbms_assert.enquote_literal(p_triggering_element));
     return l_url;
   end get_url;
+  
+
+  /**
+    Function: get_view_name
+      Method to retrieve the underlying name of the view of a form region
+    
+    Parameters:
+      p_static_id - Static ID of the form to get the view name for
+      p_application_id - ID of the application
+      p_page_id - ID of the page
+   */
+  function get_view_name(
+    p_static_id in varchar2,
+    p_application_id in number,
+    p_page_id in number)
+    return varchar2
+  as
+    l_form_type ora_name_type;
+    l_view_name ora_name_type;
+    C_VIEW_FETCH_ROW constant ora_name_type := 'utl_apex_fetch_row_columns';
+    C_VIEW_FORM constant ora_name_type := 'utl_apex_form_region_columns';
+    C_VIEW_IG constant ora_name_type := 'utl_apex_ig_columns';
+  begin
+    pit.enter_detailed(
+      p_params => msg_params(
+                    msg_param('p_static_id', p_static_id),
+                    msg_param('p_application_id', to_char(p_application_id)),
+                    msg_param('p_page_id', to_char(p_page_id))));
+
+    -- Try to find interactive Grid or form region, fallback to C_PAGE_FORM if not successful
+    select coalesce(max(source_type_code), C_PAGE_FORM) source_type_code
+      into l_form_type
+      from apex_application_page_regions
+     where application_id = p_application_id
+       and page_id  = p_page_id
+       and upper(static_id) = upper(p_static_id)
+       and source_type_code in (C_FORM_REGION, C_IG_REGION);
+
+    case l_form_type
+    when C_PAGE_FORM then
+      l_view_name := C_VIEW_FETCH_ROW;
+    when C_FORM_REGION then
+      l_view_name := C_VIEW_FORM;
+    when C_IG_REGION then
+      l_view_name := C_VIEW_IG;
+    end case;
+
+    pit.leave_optional(msg_params(msg_param('Result', l_view_name)));
+    return l_view_name;
+  end get_view_name;
 
 
-  /** Default initialization method */
+  /**
+    Procedure: initialize
+      Default initialization method 
+   */
   procedure initialize
   as
   begin
@@ -79,7 +143,13 @@ as
   end initialize;
 
 
-  -- INTERFACE
+  /**
+    Group: Public Methods
+   */
+  /**
+    Function: get_apex_version
+      See: <UTL_APEX.get_apex_version>
+   */
   function get_apex_version
     return number
   as
@@ -88,6 +158,10 @@ as
   end get_apex_version;
 
 
+  /**
+    Function: get_user
+      See: <UTL_APEX.get_user>
+   */
   function get_user
     return varchar2
   as
@@ -96,6 +170,10 @@ as
   end get_user;
 
 
+  /**
+    Function: get_workspace_id
+      See: <UTL_APEX.get_workspace_id>
+   */
   function get_workspace_id(
     p_application_id in number)
     return number
@@ -110,6 +188,10 @@ as
   end get_workspace_id;
 
 
+  /**
+    Function: get_application_id
+      See: <UTL_APEX.get_application_id>
+   */
   function get_application_id(
     p_ignore_translation in flag_type default C_TRUE)
     return number
@@ -125,6 +207,10 @@ as
   end get_application_id;
 
 
+  /**
+    Function: get_application_alias
+      See: <UTL_APEX.get_application_alias>
+   */
   function get_application_alias
     return varchar2
   as
@@ -133,6 +219,10 @@ as
   end get_application_alias;
 
 
+  /**
+    Function: get_page_id
+      See: <UTL_APEX.get_page_id>
+   */
   function get_page_id(
     p_ignore_translation in flag_type default C_TRUE)
     return number
@@ -148,6 +238,10 @@ as
   end get_page_id;
 
 
+  /**
+    Function: get_page_alias
+      See: <UTL_APEX.get_page_alias>
+   */
   function get_page_alias
     return varchar2
   as
@@ -156,6 +250,10 @@ as
   end get_page_alias;
 
 
+  /**
+    Function: get_page_element
+      See: <UTL_APEX.get_page_element>
+   */
   procedure get_page_element(
     p_page_item in ora_name_type,
     p_item out nocopy item_rec)
@@ -229,6 +327,10 @@ as
   end get_page_element;
 
 
+  /**
+    Function: get_page_element
+      See: <UTL_APEX.get_page_element>
+   */
   function get_page_element(
     p_page_item in ora_name_type)
     return item_rec
@@ -240,6 +342,10 @@ as
   end get_page_element;
 
 
+  /**
+    Function: get_page_prefix
+      See: <UTL_APEX.get_page_prefix>
+   */
   function get_page_prefix
    return varchar2
   is
@@ -262,6 +368,10 @@ as
   end get_page_prefix;
 
 
+  /**
+    Function: get_session_id
+      See: <UTL_APEX.get_session_id>
+   */
   function get_session_id
     return number
   as
@@ -270,6 +380,10 @@ as
   end get_session_id;
 
 
+  /**
+    Function: get_request
+      See: <UTL_APEX.get_request>
+   */
   function get_request
     return varchar2
   as
@@ -278,6 +392,10 @@ as
   end get_request;
 
 
+  /**
+    Function: get_debug
+      See: <UTL_APEX.get_debug>
+   */
   function get_debug
     return boolean
   as
@@ -286,6 +404,10 @@ as
   end get_debug;
 
 
+  /**
+    Function: get_default_date_format
+      See: <UTL_APEX.get_default_date_format>
+   */
   function get_default_date_format(
     p_application_id in number default null)
     return varchar2
@@ -296,6 +418,10 @@ as
   end get_default_date_format;
 
 
+  /**
+    Function: get_default_timestamp_format
+      See: <UTL_APEX.get_default_timestamp_format>
+   */
   function get_default_timestamp_format(
     p_application_id in number default null)
     return varchar2
@@ -306,6 +432,10 @@ as
   end get_default_timestamp_format;
 
 
+  /**
+    Function: c_true
+      See: <UTL_APEX.c_true>
+   */
   function c_true
     return flag_type
   as
@@ -314,6 +444,10 @@ as
   end c_true;
 
 
+  /**
+    Function: c_false
+      See: <UTL_APEX.c_false>
+   */
   function c_false
     return flag_type
   as
@@ -322,6 +456,10 @@ as
   end c_false;
 
 
+  /**
+    Function: c_yes
+      See: <UTL_APEX.c_yes>
+   */
   function c_yes
     return ora_name_type
   as
@@ -330,6 +468,10 @@ as
   end c_yes;
 
 
+  /**
+    Function: c_no
+      See: <UTL_APEX.c_no>
+   */
   function c_no
     return ora_name_type
   as
@@ -338,6 +480,10 @@ as
   end c_no;
 
 
+  /**
+    Function: get_bool
+      See: <UTL_APEX.get_bool>
+   */
   function get_bool(
     p_bool in boolean)
     return flag_type
@@ -353,6 +499,10 @@ as
   end get_bool;
 
 
+  /**
+    Function: get_bool
+      See: <UTL_APEX.get_bool>
+   */
   function get_bool(
     p_bool in flag_type)
     return boolean
@@ -362,6 +512,10 @@ as
   end get_bool;
 
 
+  /**
+    Function: to_bool
+      See: <UTL_APEX.to_bool>
+   */
   function to_bool(
     p_value in varchar2)
     return flag_type
@@ -379,6 +533,10 @@ as
   end to_bool;
 
 
+  /**
+    Function: get_number
+      See: <UTL_APEX.get_number>
+   */
   function get_number(
       p_page_item in varchar2)
       return number
@@ -406,6 +564,10 @@ as
   end get_number;
 
 
+  /**
+    Function: get_date
+      See: <UTL_APEX.get_date>
+   */
   function get_date(
     p_page_item in varchar2)
     return date
@@ -438,6 +600,10 @@ as
   end get_date;
 
 
+  /**
+    Function: get_string
+      See: <UTL_APEX.get_string>
+   */
   function get_string(
     p_page_item in varchar2)
     return varchar2
@@ -447,6 +613,10 @@ as
   end get_string;
 
 
+  /**
+    Function: get_flag
+      See: <UTL_APEX.get_flag>
+   */
   function get_flag(
     p_page_item in varchar2)
     return flag_type
@@ -464,6 +634,10 @@ as
   end get_flag;
 
 
+  /**
+    Function: get_boolean
+      See: <UTL_APEX.get_boolean>
+   */
   function get_boolean(
     p_page_item in varchar2)
     return boolean
@@ -481,6 +655,10 @@ as
   end get_boolean;
 
 
+  /**
+    Function: get_raw
+      See: <UTL_APEX.get_raw>
+   */
   function get_raw(
     p_page_item in varchar2)
     return raw
@@ -493,6 +671,10 @@ as
   end get_raw;
 
 
+  /**
+    Function: get_timestamp
+      See: <UTL_APEX.get_timestamp>
+   */
   function get_timestamp(
     p_page_item in varchar2)
     return timestamp
@@ -531,6 +713,10 @@ as
   end get_timestamp;
 
 
+  /**
+    Function: get_value
+      See: <UTL_APEX.get_value>
+   */
   function get_value(
     p_page_item in varchar2)
     return varchar2
@@ -558,6 +744,10 @@ as
   end get_value;
 
 
+  /**
+    Procedure: set_value
+      See: <UTL_APEX.set_value>
+   */
   procedure set_value(
     p_page_item in varchar2,
     p_value in varchar2)
@@ -578,6 +768,10 @@ as
   end set_value;
 
 
+  /**
+    Function: get_app_value
+      See: <UTL_APEX.get_app_value>
+   */
   function get_app_value(
     p_app_item in varchar2)
     return varchar2
@@ -610,6 +804,10 @@ as
   end set_app_value;
 
 
+  /**
+    Procedure: set_success_message
+      See: <UTL_APEX.set_success_message>
+   */
   procedure set_success_message(
     p_message in ora_name_type,
     p_msg_args in msg_args default null)
@@ -625,6 +823,10 @@ as
   end set_success_message;
 
 
+  /**
+    Procedure: set_item_value_convention
+      See: <UTL_APEX.set_item_value_convention>
+   */
   procedure set_item_value_convention(
     p_convention in boolean)
   as
@@ -633,6 +835,10 @@ as
   end set_item_value_convention;
 
 
+  /**
+    Function: get_item_value_convention
+      See: <UTL_APEX.get_item_value_convention>
+   */
   function get_item_value_convention
     return boolean
   as
@@ -641,6 +847,10 @@ as
   end get_item_value_convention;
 
 
+  /**
+    Procedure: set_item_prefix_convention
+      See: <UTL_APEX.set_item_prefix_convention>
+   */
   procedure set_item_prefix_convention(
     p_convention in binary_integer)
   as
@@ -653,6 +863,10 @@ as
   end set_item_prefix_convention;
 
 
+  /**
+    Function: get_item_prefix_convention
+      See: <UTL_APEX.get_item_prefix_convention>
+   */
   function get_item_prefix_convention
     return binary_integer
   as
@@ -661,6 +875,10 @@ as
   end get_item_prefix_convention;
 
 
+  /**
+    Function: user_is_authorized
+      See: <UTL_APEX.user_is_authorized>
+   */
   function user_is_authorized(
     p_authorization_scheme in varchar2)
     return flag_type
@@ -682,6 +900,10 @@ as
   end user_is_authorized;
 
 
+  /**
+    Function: current_user_in_group
+      See: <UTL_APEX.current_user_in_group>
+   */
   function current_user_in_group(
     p_group_name in varchar2)
     return utl_apex.flag_type
@@ -691,6 +913,10 @@ as
   end current_user_in_group;
 
 
+  /**
+    Function: get_last_login
+      See: <UTL_APEX.get_last_login>
+   */
   function get_last_login
     return date
   as
@@ -716,6 +942,10 @@ as
   end get_last_login;
 
 
+  /**
+    Function: get_page_items
+      See: <UTL_APEX.get_page_items>
+   */
   function get_page_items(
     p_view_name in ora_name_type,
     p_static_id in varchar2,
@@ -769,54 +999,10 @@ select d.page_items
   end get_page_items;
 
 
-  /** Method to decide upon the view name based on the form type detected on the page for this combination of parameters
-   * @return Name of the view as detected.
-   * @usage  Is used to get the correct view name based upon the type of form. Supported form types are:
-   *         - NATIVE_IG: Interactive Grid, identified by static id => UTL_APEX_IG_COLUMNS
-   *         - NATIVE_FORM: Form region, identified by static id => UTL_APEX_FORM_REGION_COLUMNS
-   *         - FORM: classic form, deprecated since 19.1, fallback solution => UTL_APEX_FETCH_ROW_COLUMNS
+  /**
+    Function: get_page_values
+      See: <UTL_APEX.get_page_values>
    */
-  function get_view_name(
-    p_static_id in varchar2,
-    p_application_id in number,
-    p_page_id in number)
-    return varchar2
-  as
-    l_form_type ora_name_type;
-    l_view_name ora_name_type;
-    C_VIEW_FETCH_ROW constant ora_name_type := 'utl_apex_fetch_row_columns';
-    C_VIEW_FORM constant ora_name_type := 'utl_apex_form_region_columns';
-    C_VIEW_IG constant ora_name_type := 'utl_apex_ig_columns';
-  begin
-    pit.enter_detailed(
-      p_params => msg_params(
-                    msg_param('p_static_id', p_static_id),
-                    msg_param('p_application_id', to_char(p_application_id)),
-                    msg_param('p_page_id', to_char(p_page_id))));
-
-    -- Try to find interactive Grid or form region, fallback to C_PAGE_FORM if not successful
-    select coalesce(max(source_type_code), C_PAGE_FORM) source_type_code
-      into l_form_type
-      from apex_application_page_regions
-     where application_id = p_application_id
-       and page_id  = p_page_id
-       and upper(static_id) = upper(p_static_id)
-       and source_type_code in (C_FORM_REGION, C_IG_REGION);
-
-    case l_form_type
-    when C_PAGE_FORM then
-      l_view_name := C_VIEW_FETCH_ROW;
-    when C_FORM_REGION then
-      l_view_name := C_VIEW_FORM;
-    when C_IG_REGION then
-      l_view_name := C_VIEW_IG;
-    end case;
-
-    pit.leave_optional(msg_params(msg_param('Result', l_view_name)));
-    return l_view_name;
-  end get_view_name;
-
-
   function get_page_values(
     p_static_id in varchar2 default null,
     p_format in varchar2 default null)
@@ -870,6 +1056,10 @@ select d.page_items
   end get_page_values;
 
 
+  /**
+    Function: get_page_record
+      See: <UTL_APEX.get_page_record>
+   */
   function get_page_record(
     p_static_id in varchar2 default null,
     p_table_name in varchar2 default null)
@@ -927,6 +1117,10 @@ select d.page_items
   end get_page_record;
 
 
+  /**
+    Function: get
+      See: <UTL_APEX.get>
+   */
   function get(
     p_page_values in page_value_t,
     p_element_name in ora_name_type)
@@ -951,6 +1145,10 @@ select d.page_items
   end get;
 
 
+  /**
+    Function: validate_simple_sql_name
+      See: <UTL_APEX.validate_simple_sql_name>
+   */
   function validate_simple_sql_name(
     p_name in ora_name_type)
     return ora_name_type
@@ -998,6 +1196,10 @@ select d.page_items
   end validate_simple_sql_name;
 
 
+  /**
+    Procedure: set_error
+      See: <UTL_APEX.set_error>
+   */
   procedure set_error(
     p_page_item in ora_name_type,
     p_message in ora_name_type default null,
@@ -1086,6 +1288,10 @@ select d.page_items
   end set_error;
 
 
+  /**
+    Procedure: set_error
+      See: <UTL_APEX.set_error>
+   */
   procedure set_error(
     p_test in boolean,
     p_page_item in ora_name_type,
@@ -1108,6 +1314,10 @@ select d.page_items
   end set_error;
 
 
+  /**
+    Function: inserting
+      See: <UTL_APEX.inserting>
+   */
   function inserting
    return boolean
   is
@@ -1134,6 +1344,10 @@ select d.page_items
   end inserting;
 
 
+  /**
+    Function: updating
+      See: <UTL_APEX.updating>
+   */
   function updating
    return boolean
   is
@@ -1161,6 +1375,10 @@ select d.page_items
   end updating;
 
 
+  /**
+    Function: deleting
+      See: <UTL_APEX.deleting>
+   */
   function deleting
    return boolean
   is
@@ -1188,6 +1406,10 @@ select d.page_items
   end deleting;
 
 
+  /**
+    Function: request_is
+      See: <UTL_APEX.request_is>
+   */
   function request_is(
     p_request in varchar2)
     return boolean
@@ -1205,6 +1427,10 @@ select d.page_items
   end request_is;
 
 
+  /**
+    Procedure: unhandled_request
+      See: <UTL_APEX.unhandled_request>
+   */
   procedure unhandled_request
   as
   begin
@@ -1212,6 +1438,10 @@ select d.page_items
   end unhandled_request;
 
 
+  /**
+    Function: get_page_url
+      See: <UTL_APEX.get_page_url>
+   */
   function get_page_url(
     p_application in varchar2 default null,
     p_page in varchar2 default null,
@@ -1263,6 +1493,10 @@ select d.page_items
   end get_page_url;
 
 
+  /**
+    Procedure: set_page_url
+      See: <UTL_APEX.set_page_url>
+   */
   procedure set_page_url(
     p_hidden_item in varchar2,
     p_application in varchar2 default null,
@@ -1295,6 +1529,10 @@ select d.page_items
   end set_page_url;
 
 
+  /**
+    Procedure: download_blob
+      See: <UTL_APEX.download_blob>
+   */
   procedure download_blob(
     p_blob in out nocopy blob,
     p_file_name in varchar2,
@@ -1328,6 +1566,10 @@ select d.page_items
   end download_blob;
 
 
+  /**
+    Procedure: download_clob
+      See: <UTL_APEX.download_clob>
+   */
   procedure download_clob(
     p_clob in clob,
     p_file_name in varchar2,
@@ -1342,6 +1584,10 @@ select d.page_items
   end download_clob;
 
 
+  /**
+    Procedure: set_clob
+      See: <UTL_APEX.set_clob>
+   */
   procedure set_clob(
     p_value in clob,
     p_collection in varchar2 := 'CLOB_CONTENT')
@@ -1370,6 +1616,10 @@ select d.page_items
   end set_clob;
 
 
+  /**
+    Procedure: assert
+      See: <UTL_APEX.assert>
+   */
   procedure assert(
     p_condition in boolean,
     p_message_name in ora_name_type default msg.PIT_ASSERT_TRUE,
@@ -1394,6 +1644,10 @@ select d.page_items
   end assert;
 
 
+  /**
+    Procedure: assert_is_null
+      See: <UTL_APEX.assert_is_null>
+   */
   procedure assert_is_null(
     p_condition in varchar2,
     p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NULL,
@@ -1418,6 +1672,10 @@ select d.page_items
   end assert_is_null;
 
 
+  /**
+    Procedure: assert_is_null
+      See: <UTL_APEX.assert_is_null>
+   */
   procedure assert_is_null(
     p_condition in number,
     p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NULL,
@@ -1442,6 +1700,10 @@ select d.page_items
   end assert_is_null;
 
 
+  /**
+    Procedure: assert_is_null
+      See: <UTL_APEX.assert_is_null>
+   */
   procedure assert_is_null(
     p_condition in date,
     p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NULL,
@@ -1466,6 +1728,10 @@ select d.page_items
   end assert_is_null;
 
 
+  /**
+    Procedure: assert_not_null
+      See: <UTL_APEX.assert_not_null>
+   */
   procedure assert_not_null(
     p_condition in varchar2,
     p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NOT_NULL,
@@ -1490,6 +1756,10 @@ select d.page_items
   end assert_not_null;
 
 
+  /**
+    Procedure: assert_not_null
+      See: <UTL_APEX.assert_not_null>
+   */
   procedure assert_not_null(
     p_condition in number,
     p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NOT_NULL,
@@ -1514,6 +1784,10 @@ select d.page_items
   end assert_not_null;
 
 
+  /**
+    Procedure: assert_not_null
+      See: <UTL_APEX.assert_not_null>
+   */
   procedure assert_not_null(
     p_condition in date,
     p_message_name in ora_name_type default msg.PIT_ASSERT_IS_NOT_NULL,
@@ -1538,6 +1812,10 @@ select d.page_items
   end assert_not_null;
 
 
+  /**
+    Procedure: assert_exists
+      See: <UTL_APEX.assert_exists>
+   */
   procedure assert_exists(
     p_stmt in varchar2,
     p_message_name in ora_name_type default msg.PIT_ASSERT_EXISTS,
@@ -1562,6 +1840,10 @@ select d.page_items
   end assert_exists;
 
 
+  /**
+    Procedure: assert_not_exists
+      See: <UTL_APEX.assert_not_exists>
+   */
   procedure assert_not_exists(
     p_stmt in varchar2,
     p_message_name in ora_name_type default msg.PIT_ASSERT_NOT_EXISTS,
@@ -1586,6 +1868,10 @@ select d.page_items
   end assert_not_exists;
 
 
+  /**
+    Procedure: assert_datatype
+      See: <UTL_APEX.assert_datatype>
+   */
   procedure assert_datatype(
     p_value in varchar2,
     p_type in varchar2,
@@ -1616,6 +1902,10 @@ select d.page_items
   end assert_datatype;
 
 
+  /**
+    Procedure: handle_bulk_errors
+      See: <UTL_APEX.handle_bulk_errors>
+   */
   procedure handle_bulk_errors(
     p_mapping in char_table default null)
   as
@@ -1683,6 +1973,10 @@ select d.page_items
   end handle_bulk_errors;
 
 
+  /**
+    Procedure: print
+      See: <UTL_APEX.print>
+   */
   procedure print(
     p_value in clob,
     p_line_feed in boolean default false)
@@ -1710,6 +2004,10 @@ select d.page_items
   end print;
 
 
+  /**
+    Procedure: escape_json
+      See: <UTL_APEX.escape_json>
+   */
   procedure escape_json(
     p_text in out nocopy clob)
   as
@@ -1743,6 +2041,10 @@ select d.page_items
   end escape_json;
 
 
+  /**
+    Procedure: escape_java_script
+      See: <UTL_APEX.escape_java_script>
+   */
   procedure escape_java_script(
     p_text in out nocopy clob)
   as
@@ -1774,8 +2076,12 @@ select d.page_items
     escape_java_script(l_result);
     return l_result;
   end escape_java_script;
-  
-  
+
+
+  /**
+    Procedure: emit_language_selector_list
+      See: <UTL_APEX.emit_language_selector_list>
+   */
   procedure emit_language_selector_list
   as
   begin
