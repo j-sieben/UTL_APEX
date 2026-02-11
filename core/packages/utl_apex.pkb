@@ -49,6 +49,8 @@ as
       p_param_list - Comma separated list of values that are passed to the target page items
       p_triggering_element - Element that retrieves the apexafterdialogclose event
       p_request - Request value for the submitted page
+      p_for_javascript - Flag to indicate whether the returning URL must be wrapped in
+                         apex.navigation.redirect. This is required from version 24.2 onwards.
     Returns:
       URL for the given page
    */
@@ -59,10 +61,12 @@ as
     p_param_list in varchar2 default null,
     p_value_list in varchar2 default null,
     p_triggering_element in varchar2 default null,
-    p_request in varchar2 default null)
+    p_request in varchar2 default null,
+    p_for_javascript in boolean default false)
     return varchar2
   as
     l_url utl_apex.max_sql_char;
+    C_NAVIGATION_TEMPLATE constant small_char := 'apex.navigation.redirect("URL");';
   begin
     l_url := apex_page.get_url(
                p_application => p_application,
@@ -72,6 +76,9 @@ as
                p_items => p_param_list,
                p_values => p_value_list,
                p_triggering_element => dbms_assert.enquote_literal(p_triggering_element));
+    if p_for_javascript and VER_LE_2402 then
+      l_url := replace(C_NAVIGATION_TEMPLATE, 'URL', l_url);
+    end if;
     return l_url;
   end get_url;
   
@@ -1450,7 +1457,8 @@ select d.page_items
     p_value_list in varchar2 default null,
     p_triggering_element in varchar2 default null,
     p_clear_cache in binary_integer default null,
-    p_request in varchar2 default null)
+    p_request in varchar2 default null,
+    p_for_javascript boolean default false)
     return varchar2
   as
     l_url max_sql_char;
@@ -1467,7 +1475,8 @@ select d.page_items
                     msg_param('p_value_list', p_value_list),
                     msg_param('p_triggering_element', p_triggering_element),
                     msg_param('p_clear_cache', p_clear_cache),
-                    msg_param('p_request', p_request)));
+                    msg_param('p_request', p_request),
+                    msg_param('p_for_javascript', p_for_javascript)));
 
     l_param_list := replace(p_param_items, ':', ',');
     if p_value_items is not null then
@@ -1486,7 +1495,8 @@ select d.page_items
                p_request => p_request,
                p_param_list => l_param_list,
                p_value_list => l_value_list,
-               p_triggering_element => p_triggering_element);
+               p_triggering_element => p_triggering_element,
+               p_for_javascript => p_for_javascript);
 
     pit.leave_optional(p_params => msg_params(msg_param('URL', l_url)));
     return l_url;

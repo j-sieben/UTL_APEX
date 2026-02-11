@@ -62,9 +62,6 @@ as
 
   
   APEX_VERSION constant number := &APEX_VERSION.;
-  UTL_APEX_VERSION constant char(8 byte) := '01.00.00';
-  
-  PIT_INSTALLED constant boolean := &PIT_INSTALLED.;
 
   FORMAT_JSON constant ora_name_type := 'JSON';
   FORMAT_HTML constant ora_name_type := 'HTML';
@@ -397,10 +394,14 @@ as
     return binary_integer;
     
     
-  /* Method to get/set a session state value for an application item
-   * @param  p_page_item  Name of the application item
-   * @param  p_value Value of the page item
-   * @usage  Is used as a wrapper around apex_util.set/get_session_state or v()
+  /* 
+    Function: get_app_value
+      Method to get/set a session state value for an application item.
+      Is used as a wrapper around apex_util.set/get_session_state or v()
+    
+    Parameters:
+      p_page_item - Name of the application item
+      p_value - Value of the page item
    */
   function get_app_value(
     p_app_item in varchar2)
@@ -410,66 +411,88 @@ as
     p_app_item in varchar2,
     p_value in varchar2);
     
-  
-  $IF &PIT_INSTALLED. $THEN
-  /** Method to set a success message via a PIT message
-   * @param  p_message   Name of the message, one of the MSG.constants
-   * @param [p_msg_args] Optional arguments for the message
-   * @usage  Is used as a wrapper around apex_application.g_success_message
+    
+  /** 
+    Procedure: set_success_message
+      Method to set a success message via a PIT message. 
+      Is used as a wrapper around apex_application.g_success_message
+      
+    Parameters:
+      p_message - Name of the message, one of the MSG.constants
+      p_msg_args - Optional arguments for the message
+      
    */
   procedure set_success_message(
     p_message in ora_name_type,
     p_msg_args in msg_args default null);
-  $END
     
   
-  /** Method to check whether actual user has got an authorization
-   * @param  p_authorization_scheme  Name of the authorization scheme that is requested for a given ressource.
-   *                                 This name may be taken from the APEX data dictionary
-   * @return C_TRUE if user is authorized, C_FALSE otherwise
-   * @usage  Is called to check whether the actual user has got an authorization
-   *         for a requested ressource. Wrapper around APEX_AUTHORIZATION
+  /** 
+    Function: user_is_authorized
+      Method to check whether actual user has got an authorization.
+      Is called to check whether the actual user has got an authorization
+      for a requested ressource. Wrapper around APEX_AUTHORIZATION
+      
+    Parameter:
+      p_authorization_scheme - Name of the authorization scheme that is requested for a given ressource.
+                               This name may be taken from the APEX data dictionary
+    Returns:
+      C_TRUE if user is authorized, C_FALSE otherwise
    */
   function user_is_authorized(
     p_authorization_scheme in varchar2)
     return flag_type;
 
 
-  /** Method to check whether actual user has an apex user group assigned.
-   * flag_type instead of boolean
-   * @param  p_group_name  Name of the apex user group to check
-   * @return C_TRUE if user has group assigned, C_FALSE otherwise
-   * @usage  Is called to check whether the actual user has got an apex user group assinged.
-   *         for a requested ressource. 
-   *         Wrapper around APEX_UTIL.CURRENT_USER_IN_GROUP that returns FLAG_TYPE instead of Boolean
+  /** 
+    Function: current_user_in_group
+      Method to check whether actual user has an apex user group assigned.
+      Returns flag_type instead of boolean to allow for usage in SQL.
+      
+    Parameter:
+      p_group_name - Name of the apex user group to check
+    
+    Returns:
+      C_TRUE if user has group assigned, C_FALSE otherwise
    */
   function current_user_in_group(
     p_group_name in varchar2)
     return utl_apex.flag_type;
     
     
-  /** Method retrieves last login date for the actual user
-   * @return Date of the last login, NULL, if no entry was found
-   * @usage  Is called to get the last login date of a user to decide upon
-   *         what's new information or similar
+  /**
+    Function: get_last_login
+      Method retrieves last login date for the actual user. 
+      Is called to get the last login date of a user to decide upon
+      what's new information or similar
+      
+    Returns:
+      Date of the last login, NULL, if no entry was found
    */  
   function get_last_login
     return date;
 
 
-  /** Method to read all page item values from the session state and store them in an instance of PAGE_VALUE_T.
-   * @param [p_static_id]  Required, if an interactive grid or a form region has to be processed.
-   *                       As there are potentially more than one IG or form region per page, it is required to distinguish them 
-   *                       using the static id property of the regions. Normal form pages may have set this attribute or not.
-   * @param [p_format]     Optional formatting. Allowed values are all FORMAT_... constants of this package.
-   *                       If set, all session state values are escaped using the respective method from APEX_ESCAPE
-   * @return Instance of PAGE_VALUE_T.<br>Key of that type is the page item name WITHOUT the page prefix (Pn_), or, if present,
-   *         the name of the column the item gets its value from. This is especially true for FORM regions (Apex 19 and later).
-   *         The value is always given as a string, no conversion takes place.
-   *         LIMITATIONS: As of now, this method only works with:
-   *         - normal form pages if they contain a fetch row process
-   *         - form regions
-   *         - interactive grids
+  /** 
+    Function: get_page_values
+      Method to read all page item values from the session state and store them in an instance of PAGE_VALUE_T.
+      
+    Parameters:
+        p_static_id - Required, if an interactive grid or a form region has to be processed.
+                      As there are potentially more than one IG or form region per page, it is required to distinguish them 
+                      using the static id property of the regions. Normal form pages may have set this attribute or not.
+        p_format - Optional formatting. Allowed values are all FORMAT_... constants of this package.
+                   If set, all session state values are escaped using the respective method from APEX_ESCAPE
+                   
+    Returns:
+      Instance of PAGE_VALUE_T.
+      Key of that type is the page item name WITHOUT the page prefix (Pn_), or, if present,
+      the name of the column the item gets its value from. This is especially true for FORM regions (Apex 19 and later).
+      The value is always given as a string, no conversion takes place.
+      LIMITATIONS: As of now, this method only works with:
+      - normal form pages if they contain a fetch row process
+      - form regions
+      - interactive grids
    */
   function get_page_values(
     p_static_id in varchar2 default null,
@@ -477,21 +500,25 @@ as
     return page_value_t;
     
     
-  /** Method to grant access to page items based on different views
-   * @param  p_view_name       Name of the view that implements the interface given for page item views @see RETURN documentation
-   * @param  p_static_id       Optional static id used to identify interactive grids or form regions
-   * @param  p_application_id  ID of the application. Used if in a static execution scenario a script for a different app/page is to be created
-   * @param  p_page_id         ID of the page. Used if in a static execution scenario a script for a different app/page is to be created
-   * @param [p_only_columns]   Optional flag that indicates whether only page items based on database tables should be read.
-   *                           This is required if a record is to be created, as the record is of TABLE%rowtype and won't include
-   *                           a rowid column for instance.
-   * @return The view must return the following columns:
-   *         - STATIC_ID (NULL if not present),
-   *         - APPLCIATION_ID / PAGE_ID
-   *         - IS_COLUMN_BASED (flag_type): Flag that indicates whether the page item value is taken from a database column
-   *         - PAGE_ITEMS (utl_apex_page_item_t): Instance of the user defined type. @see UTL_APEX_PAGE_ITEM
-   * @usage  Is used to read the page items along with meta data for these items from various APEX data dictionary views.
-   *         The implementation must follow the guidelines outlined above, for examples see UTL_APEX_FETCH_ROW_COLUMNS view.
+  /**
+    Function: get_page_items:
+      Method to grant access to page items based on different views.
+      Is used to read the page items along with meta data for these items from various APEX data dictionary views.
+      The implementation must follow the guidelines outlined above, for examples see UTL_APEX_FETCH_ROW_COLUMNS view.
+      
+    Parameters:
+      p_view_name - Name of the view that implements the interface given for page item views @see RETURN documentation
+      p_static_id - Optional static id used to identify interactive grids or form regions
+      p_application_id - ID of the application. Used if in a static execution scenario a script for a different app/page is to be created
+      p_page_id - ID of the page. Used if in a static execution scenario a script for a different app/page is to be created
+      p_only_columns - Optional flag that indicates whether only page items based on database tables should be read.
+                       This is required if a record is to be created, as the record is of TABLE%rowtype and won't include
+                       a rowid column for instance.
+    Returns: The view must return the following columns:
+      - STATIC_ID (NULL if not present),
+      - APPLCIATION_ID / PAGE_ID
+      - IS_COLUMN_BASED (flag_type): Flag that indicates whether the page item value is taken from a database column
+      - PAGE_ITEMS (utl_apex_page_item_t): Instance of the user defined type. @see UTL_APEX_PAGE_ITEM
    */
   function get_page_items(
     p_view_name in ora_name_type,
@@ -503,28 +530,34 @@ as
     pipelined;
     
     
-  /** Method to create a dynamic SQL to gather all table values of the actual page as a record.
-   * @param [p_static_id]  Required, if an interactive grid or a form region has to be processed.
-   *                       As there are potentially more than one IG or form region per page, it is required to distinguish them 
-   *                       using the static id property of the regions. Normal form pages may have set this attribute or not.
-   * @param [p_table_name] Is required if a form region has an inline SQL query or a interactive grid is used, as in these
-   *                       cases no information on the table used is available. If set, it is used as a fallback information
-   *                       in case no better information is available (such as from a fetch row process or a form region)
-   * @return PL/SQL block that can be executed immediate to return a record instance filled with the page values in a type save
-   *         manner. Conversion is done based on the page meta data.
-   * @usage  Method retrieves all session state values in a type save manner. It works with normal form pages (pre 19.1) as well 
-   *         as with form regions (since 19.1) and interactive grid rows (since 5.1).
-   *         As form regions and interactive grids can occur more than once on a page, it is required to mark the regions using
-   *         a static id property. Without this, the method will not return any values.
-   *         If the form region uses an inline SQL query or if an interactive grid, you must pass in the name of the table
-   *         the record gets its structure from.
-   *         If used with a regular form page, it is required that the page has a fetch row process to get its data, otherwise
-   *         this method will not work.
-   *         EXAMPLE: To use this method, call it with execute immediate and pass the record to a predefined output record L_ROW:
-   *         <code> l_row your_table%rowtype;</code>
-   *         <code> execute immediate utl_apex.get_page_record using out l_row;</code>
-   *         You may want to examine the output of this method to understand how it works. Before you do so, create an APEX
-   *         session using APEX_SESSION and point to a page with a form or IG on it. Then call this method in SQL.
+  /**
+    Function: get_page_record
+      Method to create a dynamic SQL to gather all table values of the actual page as a record.
+      Method retrieves all session state values in a type save manner. It works with normal form pages (pre 19.1) as well 
+      as with form regions (since 19.1) and interactive grid rows (since 5.1).
+      As form regions and interactive grids can occur more than once on a page, it is required to mark the regions using
+      a static id property. Without this, the method will not return any values.
+      If the form region uses an inline SQL query or if an interactive grid, you must pass in the name of the table
+      the record gets its structure from.
+      If used with a regular form page, it is required that the page has a fetch row process to get its data, otherwise
+      this method will not work.
+      EXAMPLE: To use this method, call it with execute immediate and pass the record to a predefined output record L_ROW:
+      <code> l_row your_table%rowtype;</code>
+      <code> execute immediate utl_apex.get_page_record using out l_row;</code>
+      You may want to examine the output of this method to understand how it works. Before you do so, create an APEX
+      session using APEX_SESSION and point to a page with a form or IG on it. Then call this method in SQL.
+      
+    Parameters:
+      p_static_id - Required, if an interactive grid or a form region has to be processed.
+                    As there are potentially more than one IG or form region per page, it is required to distinguish them 
+                    using the static id property of the regions. Normal form pages may have set this attribute or not.
+      p_table_name - Is required if a form region has an inline SQL query or a interactive grid is used, as in these
+                     cases no information on the table used is available. If set, it is used as a fallback information
+                     in case no better information is available (such as from a fetch row process or a form region)
+                     
+    Returns: 
+      PL/SQL block that can be executed immediate to return a record instance filled with the page values in a type save
+      manner. Conversion is done based on the page meta data.
    */
   function get_page_record(
     p_static_id in varchar2 default null,
@@ -532,11 +565,17 @@ as
     return varchar2;
 
 
-  /** Method to read a session state value from PAGE_VALUE_T.
-   * @usage  Wrapper around the collection to catch exceptions if a key is requested that does not exist.
-   * @param  p_page_values   Instance of the page values read by GET_PAGE_VALUES
-   * @param  p_element_name  Name of the page item for which the value is requested
-   * @return Session state value as string
+  /**
+    Function: get
+      Method to read a session state value from PAGE_VALUE_T.
+      Wrapper around the collection to catch exceptions if a key is requested that does not exist.
+      
+    Parameters:
+      p_page_values - Instance of the page values read by GET_PAGE_VALUES
+      p_element_name - Name of the page item for which the value is requested
+      
+    Returns: 
+      Session state value as string
    */
   function get(
     p_page_values in page_value_t,
@@ -544,26 +583,35 @@ as
     return varchar2;
 
 
-  /** Method checks and converts a name to adhere to simple SQL naming conventions
-   * @param  p_name  Name to check
-   * @return Error message if the name does not conform to the naming conventions, NULL otherwise
-   * @usage  Wrapper around DBMS_ASSERT with an additional test to prevent umlauts to be part of the name
+  /**
+    Function: validate_simple_sql_name
+      Method checks and converts a name to adhere to simple SQL naming conventions
+      Wrapper around DBMS_ASSERT with an additional test to prevent umlauts to be part of the name
+      
+    Parameter.
+      p_name - Name to check
+    
+    Returns: 
+      Error message if the name does not conform to the naming conventions, NULL otherwise
    */
   function validate_simple_sql_name(
     p_name in ora_name_type)
     return ora_name_type;
 
 
-  $IF &PIT_INSTALLED. $THEN
-  /** Method to register validation error messages.
-   * @param  p_page_item  page item or column that is affected by the validation
-   * @param [p_message]   Name of a PIT message name, If NULL, PIT.GET_ACTIVE_MESSAGE is used.
-   * @param [p_msg_args]  Optional message arguments
-   * @param [p_region_id] Optional static region id, required to create validations for interactive grids
-   * @usage  This method is called during validation checks to pass an error message to the UI. It will pass the message if
-   *         it is not null and do nothing otherwise. This way, it can be called anyway without prior check whether an error
-   *         has occurred. This is useful when <code>P_MESSAGE</code> is provided via a method that throws an error message 
-   *         if the validation fails and NULL if everything is OK.
+  /** 
+    Procedure: set_error
+      Method to register validation error messages.
+      This method is called during validation checks to pass an error message to the UI. It will pass the message if
+      it is not null and do nothing otherwise. This way, it can be called anyway without prior check whether an error
+      has occurred. This is useful when <code>P_MESSAGE</code> is provided via a method that throws an error message 
+      if the validation fails and NULL if everything is OK.
+      
+    Parameters:
+      p_page_item - page item or column that is affected by the validation
+      p_message - Name of a PIT message name, If NULL, PIT.GET_ACTIVE_MESSAGE is used.
+      p_msg_args - Optional message arguments
+      p_region_id - Optional static region id, required to create validations for interactive grids
    */
   procedure set_error(
     p_page_item in ora_name_type,
@@ -572,15 +620,19 @@ as
     p_region_id in ora_name_type default null);
   
 
-  /** Method to register validation error messages.
-   * @param  p_test       Test expression
-   * @param  p_page_item  page item or column that is affected by the validation
-   * @param [p_message]   Name of a PIT message name, If NULL, PIT.GET_ACTIVE_MESSAGE is used.
-   * @param [p_msg_args]  Optional message arguments
-   * @param [p_region_id] Optional static region id, required to create validations for interactive grids
-   * @usage  This method is called during validation checks to pass an error message to the UI. It will pass the message if
-   *         <code>P_TEST</code> evaluates to <code>FALSE</code> and do nothing otherwise.<br>The message has to be a PIT 
-   *         message name with an optional attribute set.
+  /**
+    Procedure: set_error
+      Method to register validation error messages.
+      This method is called during validation checks to pass an error message to the UI. It will pass the message if
+      <code>P_TEST</code> evaluates to <code>FALSE</code> and do nothing otherwise.<br>The message has to be a PIT 
+      message name with an optional attribute set.
+      
+    Parameters:
+      p_test - Test expression
+      p_page_item - page item or column that is affected by the validation
+      p_message - Name of a PIT message name, If NULL, PIT.GET_ACTIVE_MESSAGE is used.
+      p_msg_args - Optional message arguments
+      p_region_id - Optional static region id, required to create validations for interactive grids
    */
   procedure set_error(
     p_test in boolean,
@@ -588,12 +640,17 @@ as
     p_message in ora_name_type default null,
     p_msg_args in msg_args default null,
     p_region_id in ora_name_type default null);
-  $END
+    
 
-  /** Methods to analyse the requested operation during a page submit
-   * @return TRUE, if the respective operation was requested
-   * @usage  This method is used within a method to process user entries for a given page. By calling these methods, the package
-   *         can decide on the respective action to take, analogous to the trigger constants.
+  /**
+    Function: inserting, updating, deleting
+      Methods to analyse the requested operation during a page submit
+      This method is used within a method to process user entries for a given page. 
+      By calling these methods, the package can decide on the respective action to take, 
+      analogous to the trigger constants.
+      
+    Returns: 
+      TRUE, if the respective operation was requested
    */
   function inserting
     return boolean;
@@ -604,34 +661,51 @@ as
   function deleting
     return boolean;
 
-  /** Method to check whether the request is equal to P_REQUEST.
-   * @param  p_request  Request value to check against the actual request value
-   * @return Outcome of the comparison
-   * @usage  This method is used to check for arbitrary request values outside the scope of CRUD. Wrapper around
-   *         <code>v('REQUEST') (apex_application.g_request)</code>.
+
+  /**
+    Function. request_is
+      Method to check whether the request is equal to P_REQUEST.
+      This method is used to check for arbitrary request values outside the scope of CRUD. 
+      Wrapper around <code>v('REQUEST') (apex_application.g_request)</code>.
+    
+    Parameter:
+      p_request  Request value to check against the actual request value
+         
+    Returns: 
+      Outcome of the comparison
    */
   function request_is(
     p_request in varchar2)
     return boolean;
 
 
-  /** Method to raise an exception to the APEX UI if an unhandled request was provided
-   * @usage  Is used in <code>CASE</code> operations to handle unexpected request values.
+  /**
+    Procedure: unhandled_request
+      Method to raise an exception to the APEX UI if an unhandled request was provided
+      Is used in <code>CASE</code> operations to handle unexpected request values.
    */
   procedure unhandled_request;
 
 
-  /** Method to dynamically create an URL for an APEX application
-   * @param [p_application]        Optional application id. If NULL, the actual application is chosen.
-   * @param [p_page]               Optional page id. If NULL, the actual page is chosen
-   * @param [p_param_items]        colon separated list of parameter items to set
-   * @param [p_value_items]        colon separated list of page items on the source page that will be passed to the target page
-   * @param [p_value_list]         colon separated list of values that will be passed to the page. Is used only if P_VALUE_ITEMS is null
-   * @param [p_triggering_element] Page item on which the event <code>apexafterclosedialog</code> is raised.
-   * @param [p_clear_cache]        Page id for which the session state is cleared.
-   * @param [p_request]            Request value
-   * @return URL of the requested page
-   * @usage  Is called to create an URL for an APEX page. Wrapper around the respective APEX methods (different, based on APEX version).
+  /**
+    Function: get_page_url
+      Method to dynamically create an URL for an APEX application.
+      Is called to create an URL for an APEX page. Wrapper around the respective APEX methods (different, based on APEX version).
+      
+    Parameters:
+      p_application - Optional application id. If NULL, the actual application is chosen.
+      p_page - Optional page id. If NULL, the actual page is chosen
+      p_param_items - colon separated list of parameter items to set
+      p_value_items - colon separated list of page items on the source page that will be passed to the target page
+      p_value_list - colon separated list of values that will be passed to the page. Is used only if P_VALUE_ITEMS is null
+      p_triggering_element - Page item on which the event <code>apexafterclosedialog</code> is raised.
+      p_clear_cache - Page id for which the session state is cleared.
+      p_request - Request value
+      p_for_javascript - Flag to indicate whether the URL is used within a JavaScript snippet.
+                         Starting with Version 24.2, the URL must be wrapped in apex.navigation.redirect in this case.
+                         
+    Returns: 
+      URL of the requested page
    */
   function get_page_url(
     p_application in varchar2 default null,
@@ -641,10 +715,14 @@ as
     p_value_list in varchar2 default null,
     p_triggering_element in varchar2 default null,
     p_clear_cache in binary_integer default null,
-    p_request in varchar2 default null)
+    p_request in varchar2 default null,
+    p_for_javascript in boolean default false)
     return varchar2;
     
-  /** Overload as procedure to store the calculated URL in a page item identified by P_HIDDEN_ITEM */
+  /**
+    Procedure: set_page_url
+      Overload as procedure to store the calculated URL in a page item identified by P_HIDDEN_ITEM 
+   */
   procedure set_page_url(
     p_hidden_item in varchar2,
     p_application in varchar2 default null,
@@ -653,11 +731,15 @@ as
     p_value_items in varchar2 default null);
 
 
-  /** Methods to download a LOB over the browser
-   * @param  p_blob       BLOB instance to download
-   * @param  p_file_name  Name of the file to download
-   * @param  p_mime_type  Optional mime type of the download
-   * @usage  Is called to offer a file as a download over APEX
+  /**
+    Procedure: download_blob
+      Methods to download a LOB over the browser.
+    Is called to offer a file as a download over APEX.
+      
+    Parameters:
+      p_blob - BLOB instance to download
+      p_file_name - Name of the file to download
+      p_mime_type - Optional mime type of the download
    */
   procedure download_blob(
     p_blob in out nocopy blob,
@@ -672,29 +754,36 @@ as
     p_mime_type in varchar2 default 'application/octet-stream');
     
     
-  /** Method to pass a CLOB to an apex collection
-   * @param  p_value       CLOB instance to be put into the collection
-   * @param [p_collection] Name of the collection. Defaults to CLOB_CONTENT
-   * @usage  Is used to pass a CLOB instance to a collection in order to read it client side
+  /**
+    Procedure: set_clob
+      Method to pass a CLOB to an apex collection.
+      Is used to pass a CLOB instance to a collection in order to read it client side.
+    
+    Parameters:
+      p_value - CLOB instance to be put into the collection
+      p_collection - Name of the collection. Defaults to CLOB_CONTENT
    */
   procedure set_clob(
     p_value in clob,
     p_collection in varchar2 default 'CLOB_CONTENT');  
 
 
-  $IF &PIT_INSTALLED. $THEN
   /* ASSERTIONS-Wrapper */
-  /** Methods call <code>PIT.PIT_ASSERT...</code> catch them and pass them to the APEX UI by adding them to the APEX error stack
-   * @param  p_condition     Test to execute
-   * @param [p_message_name] Optional PIT message name to throw if <code>P_CONDITION</code> evaluates to <code>FALSE</code>
-   *                         If NULL, PIT.GET_ACTIVE_MESSAGE is used.
-   * @param [p_page_item]    Page item( with or without page prefix or IG column name to bind the error message to.
-   *                         If NULL, the error message is shown without page item relation
-   * @param [p_msg_args]     Optional message arguments. If null, the item label is passed
-   * @param [p_region_id]    Optional static region id, required to create validations for interactive grids
-   * @usage  These methods are used as a convenience wrapper around <code>PIT.PIT_ASSERT...</code> by eliminating repetitive code
-   *         to encorporate the error message into the APEX error stack and assign it to a page item.
-   *         Further documentation @see PIT
+  /**
+    Procedure: assert
+      Methods call <code>PIT.PIT_ASSERT...</code> catch them and pass them to the APEX UI by adding them to the APEX error stack.
+      These methods are used as a convenience wrapper around <code>PIT.PIT_ASSERT...</code> by eliminating repetitive code
+      to encorporate the error message into the APEX error stack and assign it to a page item.
+      Further documentation @see PIT
+      
+    Parameters:
+      p_condition - Test to execute
+      p_message_name - Optional PIT message name to throw if <code>P_CONDITION</code> evaluates to <code>FALSE</code>
+                       If NULL, PIT.GET_ACTIVE_MESSAGE is used.
+      p_page_item - Page item( with or without page prefix or IG column name to bind the error message to.
+                    If NULL, the error message is shown without page item relation
+      p_msg_args - Optional message arguments. If null, the item label is passed
+      p_region_id - Optional static region id, required to create validations for interactive grids
    */
   procedure assert(
     p_condition in boolean,
@@ -777,36 +866,48 @@ as
     p_msg_args msg_args default null,
     p_region_id in ora_name_type default null,
     p_accept_null in boolean default true);
-  $END
+    
   
-  /** Method to encapsulate PIT collection mode error treatment
-   * @param [p_mapping] CHAR_TABLE instance with error code - page item names couples, according to DECODE function
-   * @usage  Is used to retrieve the collection of messages collected during validation of a use case in PIT collect mode.
-   *         The method retrieves the messages and maps the error codes to page items passed in via P_MAPPING.
-   *         If found, it shows the exception inline with field and notification to those items, otherwise it shows the
-   *         message without item reference in the notification area only.
-   *         Supports #LABEL# replacement, page item name may be passed in with or without page prefix.
+  /**
+    Procedure: handle_bulk_errors
+      Method to encapsulate PIT collection mode error treatment.
+      Is used to retrieve the collection of messages collected during validation of a use case in PIT collect mode.
+      The method retrieves the messages and maps the error codes to page items passed in via P_MAPPING.
+      If found, it shows the exception inline with field and notification to those items, otherwise it shows the
+      message without item reference in the notification area only.
+      Supports #LABEL# replacement, page item name may be passed in with or without page prefix.
+      
+    Parameter:
+      p_mapping CHAR_TABLE instance with error code - page item names couples, according to DECODE function
    */
   procedure handle_bulk_errors(
     p_mapping in char_table default null);
 
 
-  /* Procedure for outputting text on the surface with or without output of a \n character
-   * @param  p_value      Value to print
-   * @param [p_line_feed] Flag indicating whether a \n character should be output after an output
-   * @usage  This implementation is a wrapper around htp.prn and does not care about the size.
-   *         Used when small chunks are often to be output as part of a procedure.
-   *         If there is a danger that the total size exceeds 32KByte, a local clob should be filled and apex.print selected.
+  /**
+    Procedure: print
+      Method for outputting text on the surface with or without output of a \n character.
+      This implementation is a wrapper around htp.prn and does not care about the size.
+      Used when small chunks are often to be output as part of a procedure.
+      If there is a danger that the total size exceeds 32KByte, a local clob should be filled and apex.print selected.
+      
+    Parameters:
+      p_value - Value to print
+      p_line_feed - Flag indicating whether a \n character should be output after an output
    */
   procedure print(
     p_value in clob,
     p_line_feed in boolean default false);
     
   
-  /** Method to escape a CLOB instance for JSON
-   * @param  p_text  CLOB instance that gets converted. 
-   * @usage  Wrapper around APEX_ESCAPE.JSON without the limitation of 32K
-   *         Overloaded version as procedure and function
+  /** 
+    Procedure: escape_json
+      Method to escape a CLOB instance for JSON.
+      Wrapper around APEX_ESCAPE.JSON without the limitation of 32K
+      Overloaded version as procedure and function
+      
+    Parameter:
+      p_text - CLOB instance that gets converted. 
    */
   procedure escape_json(
     p_text in out nocopy clob);
@@ -816,10 +917,14 @@ as
     return clob;
     
   
-  /** Method to escape a CLOB instance for JavaScript
-   * @param  p_text  CLOB instance that gets converted. 
-   * @usage  Wrapper around APEX_ESCAPE.JS_LITERAL without the limitation of 32K
-   *         Overloaded version as procedure and function
+  /**
+    Procedure: escape_java_script
+      Method to escape a CLOB instance for JavaScript.
+      Wrapper around APEX_ESCAPE.JS_LITERAL without the limitation of 32K
+      Overloaded version as procedure and function.
+    
+    Parameter:
+      p_text  CLOB instance that gets converted. 
    */
   procedure escape_java_script(
     p_text in out nocopy clob);
@@ -829,9 +934,11 @@ as
     return clob;
     
     
-  /** Method to emit a language selector
-   * @usage  Wrapper around APEX_LANG.EMIT_LANGUAGE_SELECTOR_LIST which emits a 
-   *         respective list. Adds CSS to beautify the appearance
+  /**
+    Procedure: emit_language_selector_list
+      Method to emit a language selector
+      Wrapper around APEX_LANG.EMIT_LANGUAGE_SELECTOR_LIST which emits a 
+      respective list. Adds CSS to beautify the appearance
    */
   procedure emit_language_selector_list;
 
