@@ -42,6 +42,7 @@ as
     Function: get_url
       Method to generate an URL based on APEX functionality. Is used as an internal helper to mask the different interface implementations
       
+    Parameters:
       p_application - ID or alias of an APEX application. Defaults to the actual application alias
       p_page - ID or alias of an APEX application page. Defaults to the actual page alias
       p_clear_cache - Comma seperated list of page ids for which the session state will be cleared
@@ -76,7 +77,7 @@ as
                p_items => p_param_list,
                p_values => p_value_list,
                p_triggering_element => dbms_assert.enquote_literal(p_triggering_element));
-    if p_for_javascript and VER_LE_2402 then
+    if p_for_javascript and APEX_VERSION >= 24.2 then
       l_url := replace(C_NAVIGATION_TEMPLATE, 'URL', l_url);
     end if;
     return l_url;
