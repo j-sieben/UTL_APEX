@@ -13,7 +13,7 @@ exception
 end;
 /
 
-whenever sqlerror exit
+whenever sqlerror exit failure rollback
 
 set termout off
 

@@ -1,3 +1,5 @@
+@install_scripts/validate_version.sql
+
 define core_dir=core/
 define pkg_dir=&CORE_DIR.packages/
 define script_dir=&CORE_DIR.scripts/
@@ -36,6 +38,7 @@ prompt &s1.View UTL_APEX_IG_COLUMNS
 
 prompt &h2.Package bodies
 prompt &s1.Package Body UTL_APEX
+set define &
 @&PKG_DIR.utl_apex.pkb
 
 prompt &h2.Package dependent Scripts
@@ -56,21 +59,22 @@ declare
 begin
   for o in obj_cur loop
     if o.recompile_order = 1 then
-      execute immediate 'alter ' || o.object_type || ' compile';
+      execute immediate 'alter ' || o.object_type || ' ' ||
+        dbms_assert.enquote_name(o.object_name, false) || ' compile';
     else
-      execute immediate 'alter ' || o.object_type || ' compile body';
+      execute immediate 'alter ' || replace(o.object_type, ' BODY') || ' ' ||
+        dbms_assert.enquote_name(o.object_name, false) || ' compile body';
     end if;
   end loop;
-  
+
   select count(*)
     into l_invalid_objects
     from user_objects
    where status = 'INVALID';
-   
+
   dbms_output.put_line(l_invalid_objects || ' invalid objects found');
 end;
 /
+@tools/check_version.sql
+
 prompt &h1.Finished UTL_APEX Installation
-
-exit
-

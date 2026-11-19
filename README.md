@@ -31,3 +31,125 @@ This package is a work in progress, I add new functionality when I need it, so s
 
 ## Dependencies
 `UTL_APEX` is dependent on [`PIT`](https://github.com/j-sieben/PIT) as it reuses it's assertion and message providing mechanism. It is also dependent on [`UTL_TEXT`](https://github.com/j-sieben/UTL_TEXT) from which I use the `bulk_replace`methods and my code generator to generate the stubs.
+
+## Installation and product version
+
+The public `UTL_APEX.get_version()` and `UTL_APEX.get_git_commit()` functions return
+installation-time constants and can also be called from SQL:
+
+```sql
+select utl_apex.get_version(), utl_apex.get_git_commit() from dual;
+```
+
+`VERSION` centrally contains `Major.Minor`, initially `1.0`. The third component is
+`git rev-list --count <full-commit-hash>`: all commits reachable from the captured
+commit, including merged branches. Changing Major/Minor does not reset this count.
+The existing `APEX_VERSION` and `VER_LE_*` constants describe Oracle APEX, not this
+product, and retain their existing meaning.
+
+Commit your changes before installing or exporting. Launch from any working
+directory (paths containing spaces are supported):
+
+```sh
+bash "/path/to/UTL_APEX/install.sh"
+bash "/path/to/UTL_APEX/install_devtools.sh"
+```
+
+On Windows, run `install.bat` or `install_devtools.bat`. They use the existing
+PowerShell prerequisite (Windows PowerShell 5.1 or PowerShell 7 for direct `.ps1`
+invocation). Git is required for checkout installations; SQL*Plus is required by
+the launchers. The SQL scripts also support SQLcl, as shown below. Database
+prerequisites remain Oracle APEX, PIT and UTL_TEXT; DevTools require the core.
+There is no separate build step or additional database package/table.
+
+The launchers capture one full commit hash before version calculation. All
+commit-dependent Git operations use this hash; replacement objects are disabled.
+They reject tracked, staged and untracked changes (ordinary Git-ignored local
+files are excluded), shallow histories, partial clones, grafts and missing Git
+objects before opening a database connection. A valid checkout always takes
+precedence over prepared release metadata; a broken checkout does not fall back
+to that metadata. Do not change files while an installation is running.
+
+The validated version and full commit hash are passed to the outer SQL script.
+It defines `UTL_APEX_VERSION` and `UTL_APEX_GIT_COMMIT` before initialization/DDL.
+Substitution is explicitly enabled before the package body is read, replacing
+`'&UTL_APEX_VERSION.'` and `'&UTL_APEX_GIT_COMMIT.'` with fixed source literals.
+The installer logs both values, verifies that specification and body are VALID,
+and calls both functions from SQL to compare their results with the supplied
+values. SQL/OS errors return a failure exit status. Oracle DDL commits implicitly;
+an installation failure cannot roll back earlier DDL.
+
+For SQLcl, first obtain the same validated values without connecting to a database.
+On Unix, run these commands from the repository/distribution root:
+
+```sh
+ROOT=$(pwd -P)
+source tools/version.sh
+resolve_version || exit 1
+sql -L 'schema/password@service' @install_scripts/install.sql "$UTL_APEX_VERSION" "$UTL_APEX_GIT_COMMIT"
+# DevTools: use @install_scripts/install_devtools.sql instead.
+```
+
+On Windows, `powershell.exe -NoProfile -File tools\install.ps1 -Action Resolve`
+prints the validated version and commit without connecting. Pass those values as
+the two arguments to the same SQL scripts when invoking SQLcl. Low-level SQL
+entry points assume host-validated arguments from a clean checkout or prepared
+release; invoking them manually bypasses the launchers' Git provenance checks.
+
+### Distributions without Git
+
+There was no release/export pipeline in this repository. Create a distribution
+from a complete, clean checkout with either command below. The destination must
+be a new directory outside the checkout, and its parent must already exist.
+Unix relative destinations are relative to the checkout root; the PowerShell
+export uses the same convention. Absolute destinations are recommended.
+
+```sh
+bash tools/export.sh "/path/to/releases/UTL_APEX"
+```
+
+```powershell
+powershell.exe -NoProfile -File tools\install.ps1 -Action Export -Destination "C:\Releases\UTL_APEX"
+```
+
+These export the captured commit with `git archive` and add
+`install_scripts/version.properties` to the distribution only. The two data
+lines contain `UTL_APEX_VERSION` and `UTL_APEX_GIT_COMMIT`; the metadata is parsed
+as data and never executed. Installation of this distribution requires no Git.
+It uses the same launchers and validates metadata format and agreement with
+`VERSION`. The distribution directory may be zipped or copied for delivery.
+No checked-in files are rewritten during installation or export.
+
+A plain GitHub source archive or `git archive` without these prepared values
+cannot be installed: it has neither history nor reliable version metadata.
+Use the export commands instead. Prepared metadata identifies the export commit;
+it is not a cryptographic integrity check of a subsequently modified archive.
+
+### Reinstalling an individual body
+
+Re-reading a body from its source file requires the version variables again.
+For the new API, first perform a full installation so that the specification
+already declares both functions. Obtain validated values using the resolver
+above, start SQL*Plus or SQLcl from the distribution root and run:
+
+```sql
+-- Replace the placeholders with the validated resolver output, not guessed values.
+@install_scripts/version_args.sql <Major.Minor.CommitCount> <full-commit-hash>
+@install_scripts/init.sql
+@tools/set_compiler_flags.sql
+set define &
+@core/packages/utl_apex.pkb
+@tools/check_version.sql
+```
+
+Initialization also sets the existing APEX/PIT substitutions used elsewhere in
+the body. Use the matching source distribution and its own version values.
+`alter package utl_apex compile body;` recompiles the stored database source,
+which already contains fixed literals, and needs no substitution variables.
+
+### Offline checks
+
+Run `python3 tests/test_versioning.py` and `git diff --check`. The tests create
+isolated temporary repositories and substitute a fake SQL*Plus executable; they
+never connect to a database. PowerShell checks run when `pwsh` is available.
+Live compilation and SQL result checks are part of the actual installation.

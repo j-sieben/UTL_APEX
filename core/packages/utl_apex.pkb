@@ -155,6 +155,30 @@ as
     Group: Public Methods
    */
   /**
+    Function: get_version
+      See: <UTL_APEX.get_version>
+   */
+  function get_version
+    return varchar2
+  as
+  begin
+    return '&UTL_APEX_VERSION.';
+  end get_version;
+
+
+  /**
+    Function: get_git_commit
+      See: <UTL_APEX.get_git_commit>
+   */
+  function get_git_commit
+    return varchar2
+  as
+  begin
+    return '&UTL_APEX_GIT_COMMIT.';
+  end get_git_commit;
+
+
+  /**
     Function: get_apex_version
       See: <UTL_APEX.get_apex_version>
    */

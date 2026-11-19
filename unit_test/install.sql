@@ -48,7 +48,7 @@ set echo off
 set feedback off
 set lines 120
 set pages 9999
-whenever sqlerror exit
+whenever sqlerror exit failure rollback
 
 prompt
 prompt &section.

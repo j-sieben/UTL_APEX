@@ -1,8 +1,14 @@
 -- Parameters:
--- None, UTL_APEX will be installed into the actually connected user, using the
--- default language of PIT
+-- 1: validated UTL_APEX product version
+-- 2: validated full Git commit hash
+-- Install into the connected user, using the default language of PIT
 
-@install_scripts/init.sql
+set define &
+set concat .
+set verify off
+@@version_args.sql "&1." "&2."
+
+@@init.sql
 
 @tools/set_compiler_flags.sql
 
@@ -14,4 +20,8 @@ prompt &h1.UTL_APEX Installation
 
 @tools/check_unit_test_exists.sql "unit_test/install.sql" "installation"
 
+@tools/check_version.sql
+
 prompt &h1.Finished UTL_APEX Installation
+
+exit success

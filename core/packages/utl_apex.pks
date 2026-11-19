@@ -82,6 +82,24 @@ as
   /**
     Group: Public function and procedure declarations 
    */
+  /**
+    Function: get_version
+      Return the installed UTL_APEX product version as Major.Minor.CommitCount.
+    Returns:
+      Product version fixed at installation time, independent of the APEX version.
+   */
+  function get_version
+    return varchar2;
+
+  /**
+    Function: get_git_commit
+      Return the full Git commit identifying the installed UTL_APEX sources.
+    Returns:
+      Full Git commit hash fixed at installation time.
+   */
+  function get_git_commit
+    return varchar2;
+
   /** 
     Function: C_TRUE/C_FALSE/C_YES/C_NO
       As it is possible to install UTL_APEX with different settings for the FLAG_TYPE, it is required to access the

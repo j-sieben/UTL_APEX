@@ -1,3 +1,5 @@
+@install_scripts/validate_version.sql
+
 define core_dir=devtools/
 define pkg_dir=&CORE_DIR.packages/
 define script_dir=&CORE_DIR.scripts/
@@ -54,6 +56,3 @@ begin
 end;
 /
 prompt &h1.Finished UTL_APEX DevTools Installation
-
-exit
-
