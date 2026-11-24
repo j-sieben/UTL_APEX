@@ -24,43 +24,16 @@ as
     p_application_id in apex_applications.application_id%type,
     p_page_id in apex_application_pages.page_id%type default 1)
   as
-    $IF UTL_APEX.VER_LE_05 $THEN
-    l_workspace_id apex_applications.workspace_id%type;
-    l_param_name owa.vc_arr;
-    l_param_val owa.vc_arr;
-    $END
   begin
     pit.enter_optional(p_params => msg_params(
       msg_param('p_apex_user', p_apex_user),
       msg_param('p_application_id', to_char(p_application_id)),
       msg_param('p_page_id', to_char(p_page_id))));
 
-    $IF UTL_APEX.VER_LE_05 $THEN
-    htp.init;
-    l_param_name(1) := 'REQUEST_PROTOCOL';
-    l_param_val(1) := 'HTTP';
-
-    owa.init_cgi_env(
-      num_params => 1,
-      param_name => l_param_name,
-      param_val =>l_param_val);
-
-    wwv_flow_api.set_security_group_id(apex_application_install.get_workspace_id);
-
-    apex_application.g_instance := 1;
-    apex_application.g_flow_id := p_application_id;
-
-    apex_custom_auth.post_login(
-      p_uname => p_apex_user,
-      p_session_id => apex_custom_auth.get_next_session_id,
-      p_app_page => utl_apex.get_application_id || ':' || p_page_id);
-
-    $ELSE
     apex_session.create_session (
       p_app_id => p_application_id,
       p_page_id => p_page_id,
       p_username => p_apex_user);
-    $END
 
     pit.leave_optional;
   end create_apex_session;
@@ -73,11 +46,7 @@ as
     pit.enter_optional(p_params => msg_params(
       msg_param('p_session_id', to_char(p_session_id))));
 
-  $IF UTL_APEX.VER_LE_05 $THEN
-    apex_custom_auth.logout;
-  $ELSE
     apex_session.delete_session(p_session_id);
-  $END
 
     pit.leave_optional;
   end delete_apex_session;

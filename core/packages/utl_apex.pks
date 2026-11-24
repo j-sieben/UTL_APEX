@@ -59,6 +59,9 @@ as
   VER_LE_24 constant boolean := &VER_LE_24.;
   VER_LE_2401 constant boolean := &VER_LE_2401.; 
   VER_LE_2402 constant boolean := &VER_LE_2402.;
+  VER_LE_26 constant boolean := &VER_LE_26.;
+  VER_LE_2601 constant boolean := &VER_LE_2601.;
+  VER_LE_2602 constant boolean := &VER_LE_2602.;
 
   
   APEX_VERSION constant number := &APEX_VERSION.;

@@ -30,6 +30,8 @@ If you work with these methods, you will get access to the session state using t
 This package is a work in progress, I add new functionality when I need it, so stay informed on new developments.
 
 ## Dependencies
+Oracle APEX 5 is no longer supported. Test sessions use `APEX_SESSION` directly.
+
 `UTL_APEX` is dependent on [`PIT`](https://github.com/j-sieben/PIT) as it reuses it's assertion and message providing mechanism. It is also dependent on [`UTL_TEXT`](https://github.com/j-sieben/UTL_TEXT) from which I use the `bulk_replace`methods and my code generator to generate the stubs.
 
 ## Installation and product version

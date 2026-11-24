@@ -65,6 +65,9 @@ col ver_le_2302 new_val VER_LE_2302 format a5
 col ver_le_24 new_val VER_LE_24 format a5
 col ver_le_2401 new_val VER_LE_2401 format a5
 col ver_le_2402 new_val VER_LE_2402 format a5
+col ver_le_26 new_val VER_LE_26 format a5
+col ver_le_2601 new_val VER_LE_2601 format a5
+col ver_le_2602 new_val VER_LE_2602 format a5
 col apex_version new_val apex_version format a30
 
 with apex_version as(
@@ -116,6 +119,15 @@ select case major_version
        case minor_version
          when 24.2 then 'true'
          else 'false' end ver_le_2402,
+       case major_version
+         when 26 then 'true'
+         else 'false' end ver_le_26,
+       case minor_version
+         when 26.1 then 'true'
+         else 'false' end ver_le_2601,
+       case minor_version
+         when 26.2 then 'true'
+         else 'false' end ver_le_2602,
        to_char(minor_version, 'fm99.99') apex_version
   from apex_version;
 
